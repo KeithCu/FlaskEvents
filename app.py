@@ -279,3 +279,6 @@ def delete_event(id):
 if __name__ == '__main__':
     Base.metadata.create_all(engine)
     app.run(debug=True) 
+
+# WSGI application
+application = app 
