@@ -41,6 +41,10 @@ def populate_events(total_events=100000):
             print("No venues found. Please run populate_venues.py first.")
             return
 
+        print(f"Found {len(venues)} venues:")
+        for venue in venues:
+            print(f"ID: {venue.id}, Name: {venue.name}")
+
         # Calculate number of days needed with 30 events per day
         events_per_day = 30
         total_days = total_events // events_per_day
@@ -50,6 +54,8 @@ def populate_events(total_events=100000):
         
         # Generate events
         events = []
+        venue_counts = {venue.id: 0 for venue in venues}  # Track venue usage
+        
         for day in range(total_days):
             current_date = start_date + timedelta(days=day)
             
@@ -81,8 +87,9 @@ def populate_events(total_events=100000):
                 
                 color, bg = generate_event_colors()
                 
-                # Randomly select a venue
-                venue = random.choice(venues)
+                # Select venue with least events
+                venue = min(venues, key=lambda v: venue_counts[v.id])
+                venue_counts[venue.id] += 1
                 
                 event = Event(
                     title=generate_event_title(),
@@ -102,6 +109,9 @@ def populate_events(total_events=100000):
                     session.bulk_save_objects(events)
                     session.commit()
                     print(f"Added {len(events)} events...")
+                    print("Current venue distribution:")
+                    for v in venues:
+                        print(f"Venue {v.name}: {venue_counts[v.id]} events")
                     events = []
         
         # Commit any remaining events
@@ -111,6 +121,9 @@ def populate_events(total_events=100000):
             session.bulk_save_objects(events)
             session.commit()
             print(f"Added final {len(events)} events...")
+            print("Final venue distribution:")
+            for v in venues:
+                print(f"Venue {v.name}: {venue_counts[v.id]} events")
         
         print("All events have been added successfully!")
         
