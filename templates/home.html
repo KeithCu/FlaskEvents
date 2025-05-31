@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Today's Events{% endblock %}
+
+{% block extra_css %}
+<style>
+    .event-list {
+        margin-top: 20px;
+    }
+    .event-item {
+        padding: 10px;
+        margin-bottom: 10px;
+        border-left: 4px solid #3788d8;
+        background-color: #f8f9fa;
+    }
+    .event-time {
+        font-weight: bold;
+        color: #666;
+    }
+    .event-title {
+        font-size: 1.1em;
+        margin: 5px 0;
+    }
+    .event-description {
+        color: #666;
+        font-size: 0.9em;
+    }
+    .event-venue {
+        color: #666;
+        font-size: 0.9em;
+        font-style: italic;
+    }
+    #mini-calendar {
+        max-width: 300px;
+        margin: 0 auto;
+    }
+    #mini-calendar .fc-header-toolbar {
+        padding: 2px !important;
+        font-size: 0.8em !important;
+        margin-bottom: 2px !important;
+    }
+    #mini-calendar .fc-button {
+        padding: 1px 3px !important;
+        font-size: 0.8em !important;
+    }
+    #mini-calendar .fc-daygrid-day {
+        height: 20px !important;
+    }
+    #mini-calendar .fc-daygrid-day-number {
+        font-size: 0.8em !important;
+        padding: 1px !important;
+    }
+    #mini-calendar .fc-col-header-cell {
+        padding: 1px !important;
+    }
+    #mini-calendar .fc-col-header-cell-cushion {
+        font-size: 0.7em !important;
+        padding: 1px !important;
+    }
+    .navigation-buttons {
+        margin-top: 20px;
+        text-align: center;
+    }
+    .navigation-buttons .btn {
+        margin: 0 5px;
+    }
+    /* Add styles for selected date */
+    #mini-calendar .fc-day-today {
+        background-color: #fff3cd !important;
+    }
+    #mini-calendar .fc-day-selected {
+        background-color: #ffc107 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h2>Today's Events</h2>
+        <div class="event-list">
+            {% if events %}
+                {% for event in events %}
+                    <div class="event-item">
+                        <div class="event-time">{{ event.start.strftime('%I:%M %p') }}</div>
+                        <div class="event-title">{{ event.title }}</div>
+                        {% if event.description %}
+                            <div class="event-description">{{ event.description }}</div>
+                        {% endif %}
+                        {% if event.venue %}
+                            <div class="event-venue">at {{ event.venue.name }}</div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No events scheduled for today.</p>
+            {% endif %}
+        </div>
+        <div class="navigation-buttons">
+            <button id="prev-day" class="btn btn-primary">Previous Day</button>
+            <button id="next-day" class="btn btn-primary">Next Day</button>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div id="mini-calendar"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('mini-calendar');
+    const initialDate = '{{ year }}-{{ "%02d"|format(month) }}-{{ "%02d"|format(day) }}';
+    
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        initialDate: initialDate,
+        headerToolbar: {
+            left: 'prev',
+            center: 'title',
+            right: 'next'
+        },
+        dateClick: function(info) {
+            window.location.href = '/day/' + info.dateStr;
+        },
+        height: 'auto',
+        dayMaxEvents: false,
+        nowIndicator: true,
+        firstDay: 1,
+        locale: 'en',
+        selectable: true
+    });
+    
+    calendar.render();
+    calendar.select(initialDate); // Select the initial date
+
+    // Navigation buttons functionality
+    document.getElementById('prev-day').addEventListener('click', function() {
+        const date = new Date(initialDate);
+        date.setDate(date.getDate() - 1);
+        window.location.href = '/day/' + date.toISOString().split('T')[0];
+    });
+
+    document.getElementById('next-day').addEventListener('click', function() {
+        const date = new Date(initialDate);
+        date.setDate(date.getDate() + 1);
+        window.location.href = '/day/' + date.toISOString().split('T')[0];
+    });
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Daily View - {{ date }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    #selected-date-display {
+        color: red;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    #event-list-area h3 { /* Time headings like "11:00 AM" */
+        margin-top: 20px;
+        margin-bottom: 10px;
+        font-size: 1.2em; /* From original CSS */
+        font-weight: bold;
+    }
+    #event-list-area p { /* Event item paragraphs */
+        margin: 5px 0 5px 20px; /* Indent events under time */
+    }
+    /* Mini-calendar specific styling */
+    #mini-calendar-area {
+        max-width: 400px; /* Constrain calendar width */
+    }
+    #mini-calendar-area .fc-header-toolbar {
+        background-color: white !important;
+        color: black !important;
+        padding: 5px !important;
+        font-size: 0.9em; /* Smaller font for mini calendar toolbar */
+    }
+    #mini-calendar-area .fc-header-toolbar .fc-button {
+        background-color: #f8f9fa !important; /* Light gray for buttons */
+        border: 1px solid #dee2e6 !important;
+        color: #212529 !important; /* Dark text for buttons */
+        box-shadow: none !important;
+    }
+    #mini-calendar-area .fc-daygrid-day-number,
+    #mini-calendar-area .fc-col-header-cell-cushion { /* Day numbers and M T W headers */
+        color: black !important;
+        text-decoration: none !important; /* Remove underline from day numbers */
+    }
+    #mini-calendar-area .fc .fc-highlight { /* Selected day in mini-calendar */
+        background: red !important; /* Selected day red background */
+        color: white !important;
+    }
+    .navigation-buttons {
+        margin-top: 20px;
+    }
+    .event-link, .venue-link {
+        color: red;
+        text-decoration: none;
+    }
+    .venue-link {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 id="selected-date-display"></h2>
+    <p>Click red arrow (←) for event info : Click venue name for venue details</p>
+
+    <div class="row">
+        <div class="col-md-7" id="event-list-area">
+            </div>
+        <div class="col-md-5">
+            <div id="mini-calendar-area"></div>
+        </div>
+    </div>
+
+    <div class="text-center navigation-buttons">
+        <button id="prev-day" class="btn btn-primary">Previous Day</button>
+        <button id="next-day" class="btn btn-primary">Next Day</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{# FullCalendar v6 is loaded from base.html, no need for v5 links here #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var miniCalendarEl = document.getElementById('mini-calendar-area');
+    var currentDate = '{{ date }}'; // Initial date from Flask
+    var eventListEl = document.getElementById('event-list-area');
+    var selectedDateDisplayEl = document.getElementById('selected-date-display');
+
+    var miniCalendar = new FullCalendar.Calendar(miniCalendarEl, {
+        initialView: 'dayGridMonth',
+        initialDate: currentDate,
+        headerToolbar: {
+            left: 'prev',
+            center: 'title',
+            right: 'next'
+        },
+        selectable: true,
+        dateClick: function(info) {
+            // When a date is clicked on the mini-calendar, navigate to that day's view
+            navigateToDate(info.dateStr);
+        },
+        dayHeaderFormat: { weekday: 'short' }, // e.g., 'Sun', 'Mon'
+        height: 'auto', // Adjusts height to content
+        contentHeight: 'auto'
+    });
+    miniCalendar.render(); //
+    miniCalendar.select(currentDate); // Visually select the current date on the mini-calendar
+
+    function navigateToDate(dateStr) {
+        // Update URL and reload page for the new date.
+        // This uses the existing Flask route '/day/<date>'
+        window.location.href = '/day/' + dateStr;
+    }
+
+    function updateCurrentPageDisplay(dateStr) {
+        currentDate = dateStr;
+        selectedDateDisplayEl.innerText = formatDateForDisplay(currentDate);
+        fetchEventsForDay(currentDate);
+        // The mini-calendar's date is already set by initialDate or will be correct on page load
+        // but ensure it's selected if the page was navigated to by other means.
+        miniCalendar.gotoDate(currentDate); // Ensure the calendar view shifts if month changes
+        miniCalendar.select(currentDate);
+    }
+
+    document.getElementById('prev-day').addEventListener('click', function() {
+        var dateObj = new Date(currentDate + 'T00:00:00Z'); // Parse as UTC then operate
+        dateObj.setUTCDate(dateObj.getUTCDate() - 1);
+        navigateToDate(dateObj.toISOString().split('T')[0]);
+    });
+
+    document.getElementById('next-day').addEventListener('click', function() { //
+        var dateObj = new Date(currentDate + 'T00:00:00Z'); // Parse as UTC then operate
+        dateObj.setUTCDate(dateObj.getUTCDate() + 1);
+        navigateToDate(dateObj.toISOString().split('T')[0]);
+    });
+
+    function formatDateForDisplay(dateStr) { // Adapted from original formatDate
+        // Assuming dateStr is 'YYYY-MM-DD'
+        // JavaScript's Date parsing of 'YYYY-MM-DD' can be tricky with timezones.
+        // Appending 'T00:00:00Z' makes it parse as UTC consistently.
+        var date = new Date(dateStr + 'T00:00:00Z');
+        var dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' }); //
+        var month = String(date.getUTCMonth() + 1).padStart(2, '0'); // Use UTC methods
+        var day = String(date.getUTCDate()).padStart(2, '0');
+        var year = String(date.getUTCFullYear()).slice(-2); //
+        return `<span class="math-inline">\{dayOfWeek\} \(</span>{month}-<span class="math-inline">\{day\}\-</span>{

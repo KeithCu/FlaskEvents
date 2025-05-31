@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Monthly View - {{ month }}/{{ year }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>{{ month }}/{{ year }}</h2>
+    </div>
+</div>
+<div class="row">
+    <div class="col">
+        <div id="calendar"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('calendar');
+    const initialDate = '{{ year }}-{{ "%02d"|format(month) }}-01';
+    console.log('Initial date:', initialDate);
+    
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        initialDate: initialDate,
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        events: {
+            url: '/events',
+            failure: function() {
+                console.error('Failed to load events');
+            }
+        },
+        eventClick: function(info) {
+            window.location.href = '/event/' + info.event.id + '/edit';
+        },
+        dateClick: function(info) {
+            window.location.href = '/day/' + info.dateStr;
+        },
+        height: 'auto',
+        navLinks: true,
+        editable: true,
+        dayMaxEvents: true,
+        nowIndicator: true,
+        firstDay: 1,
+        locale: 'en',
+        buttonText: {
+            today: 'Today',
+            month: 'Month',
+            week: 'Week',
+            day: 'Day'
+        }
+    });
+    
+    calendar.render();
+    console.log('Calendar rendered');
+});
+</script>
+{% endblock %} 
