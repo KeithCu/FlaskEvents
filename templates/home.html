@@ -78,6 +78,10 @@
 <div class="row">
     <div class="col-md-8">
         <h2>Today's Events</h2>
+        <div class="navigation-buttons">
+            <button id="prev-day-top" class="btn btn-primary">Previous Day</button>
+            <button id="next-day-top" class="btn btn-primary">Next Day</button>
+        </div>
         <div class="event-list">
             {% if events %}
                 {% for event in events %}
@@ -135,18 +139,25 @@ document.addEventListener('DOMContentLoaded', function() {
     calendar.render();
     calendar.select(initialDate); // Select the initial date
 
-    // Navigation buttons functionality
-    document.getElementById('prev-day').addEventListener('click', function() {
+    // Function to navigate to previous day
+    function goToPreviousDay() {
         const date = new Date(initialDate);
         date.setDate(date.getDate() - 1);
         window.location.href = '/day/' + date.toISOString().split('T')[0];
-    });
+    }
 
-    document.getElementById('next-day').addEventListener('click', function() {
+    // Function to navigate to next day
+    function goToNextDay() {
         const date = new Date(initialDate);
         date.setDate(date.getDate() + 1);
         window.location.href = '/day/' + date.toISOString().split('T')[0];
-    });
+    }
+
+    // Add event listeners for both top and bottom navigation buttons
+    document.getElementById('prev-day').addEventListener('click', goToPreviousDay);
+    document.getElementById('next-day').addEventListener('click', goToNextDay);
+    document.getElementById('prev-day-top').addEventListener('click', goToPreviousDay);
+    document.getElementById('next-day-top').addEventListener('click', goToNextDay);
 });
 </script>
 {% endblock %} 
