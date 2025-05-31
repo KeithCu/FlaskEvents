@@ -4,13 +4,18 @@ from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 from sqlalchemy.types import PickleType
 from datetime import datetime
 from dateutil.rrule import rrule, DAILY, WEEKLY, MONTHLY
+import os
+
+# Get the directory where app.py is located
+basedir = os.path.abspath(os.path.dirname(__file__))
+db_path = os.path.join(basedir, 'events.db')
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///events.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 Base = declarative_base()
-engine = create_engine('sqlite:///events.db', connect_args={"check_same_thread": False})
+engine = create_engine(f'sqlite:///{db_path}', connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(bind=engine)
 
 # Event model
