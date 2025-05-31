@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for
-from sqlalchemy import PrimaryKeyConstraint, create_engine, Column, String, Float, DateTime, Integer, Float, Date, ForeignKey, Text
+from sqlalchemy import PrimaryKeyConstraint, create_engine, Column, String, Float, DateTime, Integer, Float, Date, ForeignKey, Text, Index, Sequence, text
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 from sqlalchemy.types import PickleType
 from datetime import datetime
@@ -17,7 +17,9 @@ SessionLocal = sessionmaker(bind=engine)
 class Event(Base):
     __tablename__ = 'event'
     
-    id = Column(Integer, primary_key=True)
+    # Composite primary key for clustering by date
+    start_date = Column(Date, nullable=False)
+    id = Column(Integer, nullable=True)  # Make id nullable since it's part of composite key
     title = Column(String(100), nullable=False)
     description = Column(Text)
     start = Column(DateTime, nullable=False)
@@ -28,6 +30,18 @@ class Event(Base):
     bg = Column(String(20))
     
     venue = relationship("Venue", back_populates="events")
+    
+    # Define composite primary key and indexes
+    __table_args__ = (
+        PrimaryKeyConstraint('start_date', 'id'),
+        Index('idx_start_end', 'start', 'end'),
+    )
+    
+    def __init__(self, **kwargs):
+        super(Event, self).__init__(**kwargs)
+        # Automatically set start_date from start
+        if self.start:
+            self.start_date = self.start.date()
 
 # Venue model
 class Venue(Base):
@@ -39,18 +53,47 @@ class Venue(Base):
     
     events = relationship("Event", back_populates="venue")
 
+# Add this after the SessionLocal definition
+def get_next_event_id(session, start_date):
+    print(f"Getting next ID for date: {start_date}")
+    # Get the max ID for the specific date
+    query = text("SELECT MAX(id) FROM event WHERE start_date = :start_date")
+    print(f"Executing query with params: {{'start_date': {start_date}}}")
+    result = session.execute(query, {"start_date": start_date}).scalar()
+    print(f"Query result: {result}")
+    next_id = (result or 0) + 1
+    print(f"Generated next ID: {next_id}")
+    return next_id
+
+def get_next_event_ids(session, events):
+    print("Getting next IDs for multiple events")
+    # Group events by date
+    date_to_events = {}
+    for event in events:
+        if event.start_date not in date_to_events:
+            date_to_events[event.start_date] = []
+        date_to_events[event.start_date].append(event)
+    
+    print(f"Grouped events by date: {date_to_events.keys()}")
+    
+    # Assign IDs for each date
+    for start_date, date_events in date_to_events.items():
+        next_id = get_next_event_id(session, start_date)
+        for event in date_events:
+            event.id = next_id
+            next_id += 1
+            print(f"Assigned ID {event.id} to event '{event.title}' on {start_date}")
+
 # Home route (redirect to current month)
 @app.route('/')
 def home():
     now = datetime.now()
     session = SessionLocal()
     try:
-        # Get today's events
-        today_start = datetime(now.year, now.month, now.day)
-        today_end = datetime(now.year, now.month, now.day, 23, 59, 59)
+        # Get today's events using start_date for better performance
+        today = now.date()
         today_events = session.query(Event).filter(
-            Event.start >= today_start,
-            Event.start <= today_end
+            Event.start_date == today
         ).order_by(Event.start).all()
         
         return render_template('home.html', 
@@ -69,18 +112,23 @@ def month_view(year, month):
 # Daily view
 @app.route('/day/<date>')
 def day_view(date):
+    print("="*50)
+    print(f"DAY VIEW ENDPOINT CALLED for date: {date}")
+    print("="*50)
+    
     try:
         # Parse the date string into a datetime object
         date_obj = datetime.strptime(date, '%Y-%m-%d')
         session = SessionLocal()
         try:
-            # Get events for the specified day
-            day_start = datetime(date_obj.year, date_obj.month, date_obj.day)
-            day_end = datetime(date_obj.year, date_obj.month, date_obj.day, 23, 59, 59)
+            # Get events for the specified day using start_date
             day_events = session.query(Event).filter(
-                Event.start >= day_start,
-                Event.start <= day_end
+                Event.start_date == date_obj.date()
             ).order_by(Event.start).all()
+            
+            print(f"Found {len(day_events)} events for {date}")
+            for event in day_events:
+                print(f"Event: {event.title} on {event.start_date} with ID {event.id}")
             
             return render_template('home.html', 
                                  year=date_obj.year, 
@@ -90,12 +138,17 @@ def day_view(date):
         finally:
             session.close()
     except ValueError:
+        print(f"Invalid date format: {date}")
         # If date parsing fails, redirect to home
         return redirect(url_for('home'))
 
 # JSON feed for events
 @app.route('/events')
 def get_events():
+    print("="*50)
+    print("EVENTS ENDPOINT CALLED")
+    print("="*50)
+    
     start = request.args.get('start')
     end = request.args.get('end')
     
@@ -105,16 +158,19 @@ def get_events():
     start_date = datetime.fromisoformat(start.replace('Z', '+00:00'))
     end_date = datetime.fromisoformat(end.replace('Z', '+00:00'))
     
-    print(f"Converted dates - start: {start_date}, end: {end_date}")
+    print(f"Converted dates - start: {start_date.date()}, end: {end_date.date()}")
     
     session = SessionLocal()
     try:
+        # Use start_date for filtering to take advantage of clustering
         events = session.query(Event).filter(
-            Event.start >= start_date,
-            Event.end <= end_date
-        ).all()
+            Event.start_date >= start_date.date(),
+            Event.start_date <= end_date.date()
+        ).order_by(Event.start).all()
         
         print(f"Found {len(events)} events in the database")
+        for event in events:
+            print(f"Event: {event.title} on {event.start_date} with ID {event.id}")
         
         event_list = []
         for event in events:
@@ -140,8 +196,13 @@ def get_events():
 # Add new event
 @app.route('/event/new', methods=['GET', 'POST'])
 def add_event():
+    print("="*50)
+    print("ADD EVENT ENDPOINT CALLED")
+    print("="*50)
+    
     session = SessionLocal()
     if request.method == 'POST':
+        print("Processing POST request")
         title = request.form['title']
         description = request.form['description']
         start = datetime.fromisoformat(request.form['start'])
@@ -150,10 +211,34 @@ def add_event():
         venue_id = request.form.get('venue_id')
         color = request.form.get('color', '#3788d8')
         bg = request.form.get('bg', '#3788d8')
-        event = Event(title=title, description=description, start=start, end=end,
-                      rrule=rrule_str, venue_id=venue_id, color=color, bg=bg)
+        
+        print(f"Creating event: {title} on {start.date()}")
+        
+        event = Event(
+            title=title, 
+            description=description, 
+            start=start, 
+            end=end,
+            rrule=rrule_str, 
+            venue_id=venue_id, 
+            color=color, 
+            bg=bg
+        )
+        
+        # Generate ID for the new event based on its date
+        event.id = get_next_event_id(session, event.start_date)
+        print(f"Generated ID {event.id} for event on {event.start_date}")
+        
         session.add(event)
         session.commit()
+        
+        # Verify the event was stored
+        stored_event = session.query(Event).filter(
+            Event.start_date == event.start_date,
+            Event.id == event.id
+        ).first()
+        print(f"Stored event: {stored_event.title if stored_event else 'Not found'}")
+        
         session.close()
         return redirect(url_for('home'))
     venues = session.query(Venue).all()
