@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 from sqlalchemy import PrimaryKeyConstraint, create_engine, Column, String, Float, DateTime, Integer, Float, Date, ForeignKey, Text, Index, Sequence, text
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 from sqlalchemy.types import PickleType
@@ -217,6 +217,21 @@ def add_event():
         color = request.form.get('color', '#3788d8')
         bg = request.form.get('bg', '#3788d8')
         
+        # Validate venue_id
+        if not venue_id:
+            flash('Please select a venue', 'error')
+            venues = session.query(Venue).all()
+            session.close()
+            return render_template('event_form.html', 
+                                venues=venues,
+                                title=title,
+                                description=description,
+                                start=start,
+                                end=end,
+                                rrule=rrule_str,
+                                color=color,
+                                bg=bg)
+        
         print(f"Creating event: {title} on {start.date()}")
         
         event = Event(
@@ -256,14 +271,39 @@ def edit_event(id):
     session = SessionLocal()
     event = session.query(Event).get_or_404(id)
     if request.method == 'POST':
-        event.title = request.form['title']
-        event.description = request.form['description']
-        event.start = datetime.fromisoformat(request.form['start'])
-        event.end = datetime.fromisoformat(request.form['end'])
-        event.rrule = request.form.get('rrule')
-        event.venue_id = request.form.get('venue_id')
-        event.color = request.form.get('color', '#3788d8')
-        event.bg = request.form.get('bg', '#3788d8')
+        title = request.form['title']
+        description = request.form['description']
+        start = datetime.fromisoformat(request.form['start'])
+        end = datetime.fromisoformat(request.form['end'])
+        rrule_str = request.form.get('rrule')
+        venue_id = request.form.get('venue_id')
+        color = request.form.get('color', '#3788d8')
+        bg = request.form.get('bg', '#3788d8')
+        
+        # Validate venue_id
+        if not venue_id:
+            flash('Please select a venue', 'error')
+            venues = session.query(Venue).all()
+            session.close()
+            return render_template('event_form.html', 
+                                event=event,
+                                venues=venues,
+                                title=title,
+                                description=description,
+                                start=start,
+                                end=end,
+                                rrule=rrule_str,
+                                color=color,
+                                bg=bg)
+        
+        event.title = title
+        event.description = description
+        event.start = start
+        event.end = end
+        event.rrule = rrule_str
+        event.venue_id = venue_id
+        event.color = color
+        event.bg = bg
         session.commit()
         session.close()
         return redirect(url_for('home'))
