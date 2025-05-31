@@ -2,6 +2,7 @@ from app import Base, engine, SessionLocal, Event, Venue, get_next_event_ids
 from datetime import datetime, timedelta
 import random
 from faker import Faker
+import argparse
 
 fake = Faker()
 
@@ -26,7 +27,7 @@ def generate_event_colors():
     color = random.choice(colors)
     return color, color
 
-def populate_events():
+def populate_events(total_events=100000):
     # Create tables
     Base.metadata.create_all(engine)
     
@@ -34,14 +35,13 @@ def populate_events():
     session = SessionLocal()
     
     try:
-        # Get a venue for the events
-        venue = session.query(Venue).first()
-        if not venue:
+        # Get all venues
+        venues = session.query(Venue).all()
+        if not venues:
             print("No venues found. Please run populate_venues.py first.")
             return
 
-        # Calculate number of days needed for 100,000 events with 30 events per day
-        total_events = 100000
+        # Calculate number of days needed with 30 events per day
         events_per_day = 30
         total_days = total_events // events_per_day
         
@@ -53,7 +53,7 @@ def populate_events():
         for day in range(total_days):
             current_date = start_date + timedelta(days=day)
             
-            # Generate 30 events for this day
+            # Generate events for this day
             for _ in range(events_per_day):
                 # Random start time between 8 AM and 8 PM
                 start_hour = random.randint(8, 20)
@@ -80,6 +80,9 @@ def populate_events():
                     end_time = start_time.replace(hour=23, minute=59)
                 
                 color, bg = generate_event_colors()
+                
+                # Randomly select a venue
+                venue = random.choice(venues)
                 
                 event = Event(
                     title=generate_event_title(),
@@ -118,4 +121,8 @@ def populate_events():
         session.close()
 
 if __name__ == "__main__":
-    populate_events() 
+    parser = argparse.ArgumentParser(description='Populate events in the database')
+    parser.add_argument('--total-events', type=int, default=100000,
+                      help='Total number of events to create (default: 100000)')
+    args = parser.parse_args()
+    populate_events(args.total_events) 
