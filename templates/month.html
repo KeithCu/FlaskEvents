@@ -2,6 +2,109 @@
 
 {% block title %}Monthly View - {{ month }}/{{ year }}{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Force all calendar styles */
+    #calendar * {
+        box-sizing: border-box !important;
+    }
+    
+    #calendar .fc {
+        font-size: 10px !important;
+        line-height: 1 !important;
+    }
+    
+    #calendar .fc-header-toolbar {
+        padding: 0 !important;
+        margin: 0 !important;
+        font-size: 10px !important;
+        height: 20px !important;
+        min-height: 20px !important;
+    }
+    
+    #calendar .fc-button {
+        padding: 0 2px !important;
+        font-size: 10px !important;
+        height: 16px !important;
+        line-height: 14px !important;
+        margin: 0 !important;
+    }
+    
+    #calendar .fc-daygrid-day {
+        height: 16px !important;
+        min-height: 16px !important;
+        max-height: 16px !important;
+    }
+    
+    #calendar .fc-daygrid-day-number {
+        font-size: 10px !important;
+        padding: 0 !important;
+        line-height: 16px !important;
+        height: 16px !important;
+    }
+    
+    #calendar .fc-col-header-cell {
+        padding: 0 !important;
+        height: 16px !important;
+        min-height: 16px !important;
+        max-height: 16px !important;
+    }
+    
+    #calendar .fc-col-header-cell-cushion {
+        font-size: 10px !important;
+        padding: 0 !important;
+        line-height: 16px !important;
+        height: 16px !important;
+    }
+    
+    #calendar .fc-daygrid-body {
+        width: 100% !important;
+    }
+    
+    #calendar .fc-scrollgrid {
+        border: none !important;
+    }
+    
+    #calendar .fc-scrollgrid-section > * {
+        border: none !important;
+    }
+    
+    #calendar .fc-toolbar-title {
+        font-size: 12px !important;
+        line-height: 20px !important;
+        height: 20px !important;
+    }
+    
+    #calendar .fc-daygrid-day-frame {
+        padding: 0 !important;
+        height: 16px !important;
+        min-height: 16px !important;
+        max-height: 16px !important;
+    }
+    
+    #calendar .fc-view-harness {
+        height: auto !important;
+    }
+    
+    #calendar .fc-daygrid-view {
+        height: auto !important;
+    }
+    
+    /* Debug styles to verify our CSS is being applied */
+    #calendar {
+        border: 2px solid red !important;
+    }
+    
+    #calendar .fc-header-toolbar {
+        border: 2px solid blue !important;
+    }
+    
+    #calendar .fc-daygrid-day {
+        border: 1px solid green !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row mb-4">
     <div class="col">
@@ -49,6 +152,8 @@ document.addEventListener('DOMContentLoaded', function() {
         nowIndicator: true,
         firstDay: 1,
         locale: 'en',
+        dayHeaderFormat: { weekday: 'narrow' },
+        aspectRatio: 2.5,
         buttonText: {
             today: 'Today',
             month: 'Month',
@@ -58,7 +163,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     calendar.render();
-    console.log('Calendar rendered');
+    
+    // Force calendar to update its size
+    setTimeout(() => {
+        calendar.updateSize();
+    }, 100);
 });
 </script>
 {% endblock %} 

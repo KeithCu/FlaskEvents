@@ -30,32 +30,78 @@
         font-size: 0.9em;
         font-style: italic;
     }
-    #mini-calendar {
-        max-width: 300px;
-        margin: 0 auto;
+    #events-calendar * {
+        box-sizing: border-box !important;
     }
-    #mini-calendar .fc-header-toolbar {
-        padding: 2px !important;
-        font-size: 0.8em !important;
-        margin-bottom: 2px !important;
+    #events-calendar {
+        max-width: 300px !important;
     }
-    #mini-calendar .fc-button {
-        padding: 1px 3px !important;
-        font-size: 0.8em !important;
+    #events-calendar .fc {
+        font-size: 12px !important;
+        line-height: 1.2 !important;
     }
-    #mini-calendar .fc-daygrid-day {
+    #events-calendar .fc-header-toolbar {
+        padding: 0 !important;
+        margin: 0 !important;
+        font-size: 12px !important;
+        height: 24px !important;
+        min-height: 24px !important;
+    }
+    #events-calendar .fc-button {
+        padding: 0 2px !important;
+        font-size: 12px !important;
+        height: 20px !important;
+        line-height: 18px !important;
+        margin: 0 !important;
+    }
+    #events-calendar .fc-daygrid-day {
+        height: 20px !important;
+        min-height: 20px !important;
+        max-height: 20px !important;
+    }
+    #events-calendar .fc-daygrid-day-number {
+        font-size: 12px !important;
+        padding: 0 !important;
+        line-height: 20px !important;
         height: 20px !important;
     }
-    #mini-calendar .fc-daygrid-day-number {
-        font-size: 0.8em !important;
-        padding: 1px !important;
+    #events-calendar .fc-col-header-cell {
+        padding: 0 !important;
+        height: 20px !important;
+        min-height: 20px !important;
+        max-height: 20px !important;
     }
-    #mini-calendar .fc-col-header-cell {
-        padding: 1px !important;
+    #events-calendar .fc-col-header-cell-cushion {
+        font-size: 12px !important;
+        padding: 0 !important;
+        line-height: 20px !important;
+        height: 20px !important;
     }
-    #mini-calendar .fc-col-header-cell-cushion {
-        font-size: 0.7em !important;
-        padding: 1px !important;
+    #events-calendar .fc-daygrid-body {
+        width: 100% !important;
+    }
+    #events-calendar .fc-scrollgrid {
+        border: none !important;
+    }
+    #events-calendar .fc-scrollgrid-section > * {
+        border: none !important;
+    }
+    #events-calendar .fc-toolbar-title {
+        font-size: 14px !important;
+        line-height: 24px !important;
+        height: 24px !important;
+    }
+    #events-calendar .fc-daygrid-day-frame {
+        padding: 0 !important;
+        height: 20px !important;
+        min-height: 20px !important;
+        max-height: 20px !important;
+    }
+    #events-calendar .fc-view-harness {
+        height: auto !important;
+    }
+    #events-calendar .fc-daygrid-view {
+        height: auto !important;
     }
     .navigation-buttons {
         margin-top: 20px;
@@ -63,13 +109,6 @@
     }
     .navigation-buttons .btn {
         margin: 0 5px;
-    }
-    /* Add styles for selected date */
-    #mini-calendar .fc-day-today {
-        background-color: #fff3cd !important;
-    }
-    #mini-calendar .fc-day-selected {
-        background-color: #ffc107 !important;
     }
 </style>
 {% endblock %}
@@ -106,7 +145,7 @@
         </div>
     </div>
     <div class="col-md-4">
-        <div id="mini-calendar"></div>
+        <div id="events-calendar"></div>
     </div>
 </div>
 {% endblock %}
@@ -114,7 +153,7 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const calendarEl = document.getElementById('mini-calendar');
+    const calendarEl = document.getElementById('events-calendar');
     const initialDate = '{{ year }}-{{ "%02d"|format(month) }}-{{ "%02d"|format(day) }}';
     
     const calendar = new FullCalendar.Calendar(calendarEl, {
@@ -133,11 +172,13 @@ document.addEventListener('DOMContentLoaded', function() {
         nowIndicator: true,
         firstDay: 1,
         locale: 'en',
-        selectable: true
+        dayHeaderFormat: { weekday: 'narrow' },
+        aspectRatio: 3,
+        width: '300px'
     });
     
     calendar.render();
-    calendar.select(initialDate); // Select the initial date
+    calendar.select(initialDate);
 
     // Function to navigate to previous day
     function goToPreviousDay() {

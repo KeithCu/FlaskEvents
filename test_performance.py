@@ -229,15 +229,21 @@ def test_conventional_index(session, num_queries=200):
         'std_dev': statistics.stdev(times) if len(times) > 1 else 0
     } for query_type, times in results.items()}
 
+def check_database_size(session):
+    """Check if database has sufficient test data"""
+    try:
+        # Check both tables
+        event_count = session.query(Event).count()
+        conventional_event_count = session.query(ConventionalEvent).count()
+        return event_count, conventional_event_count
+    except Exception as e:
+        print(f"Error checking database size: {e}")
+        return 0, 0
+
 def run_performance_test():
     """Run the complete performance test"""
-    # Drop existing database and create a new one
+    # Check if database exists and has data
     db_path = 'test_events.db'
-    if os.path.exists(db_path):
-        print(f"Removing existing database: {db_path}")
-        os.remove(db_path)
-    
-    # Create a new test database
     engine = create_engine('sqlite:///test_events.db')
     Base.metadata.create_all(engine)
     ConventionalBase.metadata.create_all(engine)
@@ -245,8 +251,24 @@ def run_performance_test():
     
     session = SessionLocal()
     try:
-        # Create test data
-        create_test_data(session)
+        # Check if we have enough data
+        event_count, conventional_event_count = check_database_size(session)
+        required_events = 3334 * 30  # num_days * events_per_day
+        
+        if event_count < required_events or conventional_event_count < required_events:
+            print(f"Database needs more data. Current counts: Events={event_count}, Conventional Events={conventional_event_count}")
+            print(f"Required events: {required_events}")
+            # Drop existing database and create a new one
+            if os.path.exists(db_path):
+                print(f"Removing existing database: {db_path}")
+                os.remove(db_path)
+                # Recreate tables
+                Base.metadata.create_all(engine)
+                ConventionalBase.metadata.create_all(engine)
+            # Create test data
+            create_test_data(session)
+        else:
+            print(f"Using existing database with {event_count} events and {conventional_event_count} conventional events")
         
         # Run tests
         clustered_results = test_clustered_index(session)

@@ -32,13 +32,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function loadEvents(date) {
             const dateStr = date.toISOString().split('T')[0];
-            eventsListEl.innerHTML = '<div class="loading">Loading events...</div>';
+            eventsListEl.innerHTML = '';  // Start with empty content
 
-            fetch(eventsCalendar.restUrl + 'day-events?date=' + dateStr, {
-                headers: {
-                    'X-WP-Nonce': eventsCalendar.nonce
-                }
-            })
+            fetch('/events?date=' + dateStr)
             .then(response => response.json())
             .then(events => {
                 if (events.length === 0) {

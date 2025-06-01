@@ -89,9 +89,14 @@ def get_next_event_ids(session, events):
             next_id += 1
             print(f"Assigned ID {event.id} to event '{event.title}' on {start_date}")
 
-# Home route (redirect to current month)
+# Home route (widget test page)
 @app.route('/')
 def home():
+    return render_template('widget_test.html')
+
+# Python route (original home page)
+@app.route('/python')
+def python_view():
     now = datetime.now()
     session = SessionLocal()
     try:
@@ -287,7 +292,7 @@ def add_event():
         print(f"Stored event: {stored_event.title if stored_event else 'Not found'}")
         
         session.close()
-        return redirect(url_for('home'))
+        return redirect(url_for('python_view'))
     venues = session.query(Venue).all()
     session.close()
     return render_template('event_form.html', venues=venues)
@@ -346,7 +351,7 @@ def delete_event(id):
     session.delete(event)
     session.commit()
     session.close()
-    return redirect(url_for('home'))
+    return redirect(url_for('python_view'))
 
 @app.route('/widget-test')
 def widget_test():

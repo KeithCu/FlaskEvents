@@ -17,7 +17,6 @@
                         <div id="next-day">Next Day »</div>
                     </div>
                     <div id="events-list" class="event-list">
-                        <div class="loading">Loading events...</div>
                     </div>
                 </div>
             </div>
@@ -42,6 +41,12 @@
 <style>
     .event-list {
         margin-top: 20px;
+        min-height: 800px;  /* Maintain minimum height */
+        opacity: 1;
+        transition: opacity 0.2s ease-in-out;
+    }
+    .event-list.updating {
+        opacity: 0;
     }
     .event-item {
         padding: 10px;
@@ -145,26 +150,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function loadEvents(date) {
             const dateStr = date.toISOString().split('T')[0];
-            eventsListEl.innerHTML = '<div class="loading">Loading events...</div>';
+            
+            // Create a placeholder with the same height as current content
+            const placeholder = document.createElement('div');
+            placeholder.style.height = eventsListEl.offsetHeight + 'px';
+            placeholder.style.backgroundColor = '#f8f9fa';
+            placeholder.style.borderRadius = '4px';
+            eventsListEl.innerHTML = '';
+            eventsListEl.appendChild(placeholder);
 
             fetch('/events?date=' + dateStr)
             .then(response => response.json())
             .then(events => {
                 if (events.length === 0) {
                     eventsListEl.innerHTML = '<p>No events scheduled for this day.</p>';
-                    return;
+                } else {
+                    const eventsHtml = events.map(event => `
+                        <div class="event-item">
+                            <div class="event-time">${formatTime(event.start)}</div>
+                            <div class="event-title">${event.title}</div>
+                            ${event.description ? `<div class="event-description">${event.description}</div>` : ''}
+                            ${event.venue ? `<div class="event-venue">at ${event.venue}</div>` : ''}
+                        </div>
+                    `).join('');
+                    eventsListEl.innerHTML = eventsHtml;
                 }
-
-                const eventsHtml = events.map(event => `
-                    <div class="event-item">
-                        <div class="event-time">${formatTime(event.start)}</div>
-                        <div class="event-title">${event.title}</div>
-                        ${event.description ? `<div class="event-description">${event.description}</div>` : ''}
-                        ${event.venue ? `<div class="event-venue">at ${event.venue}</div>` : ''}
-                    </div>
-                `).join('');
-
-                eventsListEl.innerHTML = eventsHtml;
             })
             .catch(error => {
                 console.error('Error loading events:', error);

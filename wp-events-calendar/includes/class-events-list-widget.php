@@ -16,11 +16,10 @@ class Events_List_Widget extends WP_Widget {
         ?>
         <div class="events-list-widget">
             <div class="navigation-buttons">
-                <button id="prev-day" class="btn btn-primary">Previous Day</button>
-                <button id="next-day" class="btn btn-primary">Next Day</button>
+                <div id="prev-day">« Previous Day</div>
+                <div id="next-day">Next Day »</div>
             </div>
             <div id="events-list" class="event-list">
-                <div class="loading">Loading events...</div>
             </div>
         </div>
         <?php
