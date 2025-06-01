@@ -24,7 +24,7 @@ class Event(Base):
     
     # Composite primary key for clustering by date
     start_date = Column(Date, nullable=False)
-    id = Column(Integer, nullable=True)  # Make id nullable since it's part of composite key
+    id = Column(Integer, nullable=True)  # Nullable to allow ID generation after object creation
     title = Column(String(100), nullable=False)
     description = Column(Text)
     start = Column(DateTime, nullable=False)

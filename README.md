@@ -114,16 +114,25 @@ Single Day Queries:
    class Event(Base):
        __tablename__ = 'event'
        start_date = Column(Date, nullable=False)
-       id = Column(Integer, nullable=False)
+       id = Column(Integer, nullable=True)  # Nullable to allow ID generation after object creation
        __table_args__ = (
            PrimaryKeyConstraint('start_date', 'id'),
        )
    ```
 
-2. **ID Generation**
-   - IDs are generated per date to maintain clustering
-   - Ensures events for the same date are stored together
-   - Maintains uniqueness across the entire table
+2. **ID Generation and Nullability**
+   - The `id` column is nullable to support a two-step object creation process:
+     1. Create event object (initially with null ID)
+     2. Generate and assign ID based on the date
+   - This is safe because:
+     - `start_date` is always present (NOT NULL)
+     - `id` is only null during object creation
+     - Final database state never has null values in the composite key
+   - SQLite treats NULL values as distinct in composite keys
+   - Clustering still works effectively because:
+     - Primary clustering is by `start_date` (always present)
+     - Secondary clustering by `id` within each date
+     - Temporary nullability doesn't affect query performance
 
 3. **Query Optimization**
    - Queries use the clustered index naturally
