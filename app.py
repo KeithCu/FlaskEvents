@@ -190,11 +190,7 @@ def day_view(date):
             for event in day_events:
                 print(f"Event: {event.title} on {event.start_date} with ID {event.id}")
             
-            # Check if this is a widget request
-            is_widget = request.args.get('widget', 'false').lower() == 'true'
-            template = 'widget_test.html' if is_widget else 'home.html'
-            
-            return render_template(template, 
+            return render_template('widget_test.html', 
                                  year=date_obj.year, 
                                  month=date_obj.month, 
                                  day=date_obj.day,
