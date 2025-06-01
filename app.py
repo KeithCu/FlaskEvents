@@ -18,6 +18,56 @@ Base = declarative_base()
 engine = create_engine(f'sqlite:///{db_path}', connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(bind=engine)
 
+def configure_database():
+    # Check if database exists and is empty
+    db_exists = os.path.exists(db_path)
+    if db_exists:
+        with engine.connect() as conn:
+            # Check if any tables exist
+            result = conn.execute(text("SELECT name FROM sqlite_master WHERE type='table'")).fetchall()
+            if result:
+                print("Database already has tables, cannot change page size")
+                return
+    
+    # Set page size to 16KB (16384 bytes)
+    with engine.connect() as conn:
+        conn.execute(text('PRAGMA page_size = 16384'))
+        print("Database page size set to 16KB")
+
+def check_database_stats():
+    with engine.connect() as conn:
+        # Get page count and free pages
+        page_count = conn.execute(text('PRAGMA page_count')).scalar()
+        free_pages = conn.execute(text('PRAGMA freelist_count')).scalar()
+        page_size = conn.execute(text('PRAGMA page_size')).scalar()
+        
+        # Calculate fragmentation
+        total_size = page_count * page_size
+        free_size = free_pages * page_size
+        fragmentation = (free_pages / page_count * 100) if page_count > 0 else 0
+        
+        print(f"Database stats:")
+        print(f"Total pages: {page_count}")
+        print(f"Free pages: {free_pages}")
+        print(f"Page size: {page_size} bytes")
+        print(f"Total size: {total_size/1024:.1f} KB")
+        print(f"Free space: {free_size/1024:.1f} KB")
+        print(f"Fragmentation: {fragmentation:.1f}%")
+        
+        # Only vacuum if fragmentation is significant
+        if fragmentation > 10:  # More than 10% fragmented
+            print("Fragmentation is high, running VACUUM...")
+            with engine.begin() as conn:
+                conn.execute(text('VACUUM'))
+            print("Database vacuum completed")
+        else:
+            print("Database is well-optimized, skipping VACUUM")
+
+# Configure and initialize database
+configure_database()
+Base.metadata.create_all(engine)
+check_database_stats()
+
 # Event model
 class Event(Base):
     __tablename__ = 'event'
@@ -140,7 +190,11 @@ def day_view(date):
             for event in day_events:
                 print(f"Event: {event.title} on {event.start_date} with ID {event.id}")
             
-            return render_template('home.html', 
+            # Check if this is a widget request
+            is_widget = request.args.get('widget', 'false').lower() == 'true'
+            template = 'widget_test.html' if is_widget else 'home.html'
+            
+            return render_template(template, 
                                  year=date_obj.year, 
                                  month=date_obj.month, 
                                  day=date_obj.day,
@@ -358,7 +412,6 @@ def widget_test():
     return render_template('widget_test.html')
 
 if __name__ == '__main__':
-    Base.metadata.create_all(engine)
     app.run(debug=True) 
 
 # WSGI application
