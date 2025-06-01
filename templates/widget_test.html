@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Widget Test Page{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Events List Widget -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Events List Widget</h5>
+            </div>
+            <div class="card-body">
+                <div class="events-list-widget">
+                    <div class="navigation-buttons">
+                        <div id="prev-day">« Previous Day</div>
+                        <div id="next-day">Next Day »</div>
+                    </div>
+                    <div id="events-list" class="event-list">
+                        <div class="loading">Loading events...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Widget -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Calendar Widget</h5>
+            </div>
+            <div class="card-body">
+                <div id="events-calendar" class="events-calendar-widget"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .event-list {
+        margin-top: 20px;
+    }
+    .event-item {
+        padding: 10px;
+        margin-bottom: 10px;
+        border-left: 4px solid #3788d8;
+        background-color: #f8f9fa;
+    }
+    .event-time {
+        font-weight: bold;
+        color: #666;
+    }
+    .event-title {
+        font-size: 1.1em;
+        margin: 5px 0;
+    }
+    .event-description {
+        color: #666;
+        font-size: 0.9em;
+    }
+    .event-venue {
+        color: #666;
+        font-size: 0.9em;
+        font-style: italic;
+    }
+    .navigation-buttons {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    .loading {
+        text-align: center;
+        color: #666;
+        padding: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add our custom styles after Bootstrap
+    const style = document.createElement('style');
+    style.textContent = `
+        #prev-day, #next-day {
+            flex: 1 !important;
+            border-radius: 0 !important;
+            background-color: #808080 !important;
+            border: 1px solid #808080 !important;
+            color: white !important;
+            padding: 8px 15px !important;
+            font-size: 0.9em !important;
+            cursor: pointer !important;
+            text-align: center !important;
+            display: inline-block !important;
+            text-decoration: none !important;
+            margin: 0 !important;
+            line-height: 1.5 !important;
+            vertical-align: middle !important;
+            user-select: none !important;
+        }
+        #prev-day:hover, #next-day:hover {
+            background-color: #666666 !important;
+            border-color: #666666 !important;
+            color: white !important;
+            text-decoration: none !important;
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Initialize calendar if the element exists
+    const calendarEl = document.getElementById('events-calendar');
+    if (calendarEl) {
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev',
+                center: 'title',
+                right: 'next'
+            },
+            dateClick: function(info) {
+                // Redirect to the day view
+                window.location.href = '/day/' + info.dateStr;
+            },
+            height: 'auto',
+            dayMaxEvents: false,
+            nowIndicator: true,
+            firstDay: 1,
+            locale: 'en'
+        });
+        
+        calendar.render();
+    }
+
+    // Initialize events list if the element exists
+    const eventsListEl = document.getElementById('events-list');
+    if (eventsListEl) {
+        const prevDayBtn = document.getElementById('prev-day');
+        const nextDayBtn = document.getElementById('next-day');
+        let currentDate = new Date();
+
+        function loadEvents(date) {
+            const dateStr = date.toISOString().split('T')[0];
+            eventsListEl.innerHTML = '<div class="loading">Loading events...</div>';
+
+            fetch('/events?date=' + dateStr)
+            .then(response => response.json())
+            .then(events => {
+                if (events.length === 0) {
+                    eventsListEl.innerHTML = '<p>No events scheduled for this day.</p>';
+                    return;
+                }
+
+                const eventsHtml = events.map(event => `
+                    <div class="event-item">
+                        <div class="event-time">${formatTime(event.start)}</div>
+                        <div class="event-title">${event.title}</div>
+                        ${event.description ? `<div class="event-description">${event.description}</div>` : ''}
+                        ${event.venue ? `<div class="event-venue">at ${event.venue}</div>` : ''}
+                    </div>
+                `).join('');
+
+                eventsListEl.innerHTML = eventsHtml;
+            })
+            .catch(error => {
+                console.error('Error loading events:', error);
+                eventsListEl.innerHTML = '<p>Error loading events. Please try again.</p>';
+            });
+        }
+
+        function formatTime(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            });
+        }
+
+        function goToPreviousDay() {
+            currentDate.setDate(currentDate.getDate() - 1);
+            loadEvents(currentDate);
+        }
+
+        function goToNextDay() {
+            currentDate.setDate(currentDate.getDate() + 1);
+            loadEvents(currentDate);
+        }
+
+        // Add event listeners
+        prevDayBtn.addEventListener('click', goToPreviousDay);
+        nextDayBtn.addEventListener('click', goToNextDay);
+
+        // Load initial events
+        loadEvents(currentDate);
+    }
+});
+</script>
+{% endblock %} 

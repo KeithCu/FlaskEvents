@@ -154,10 +154,40 @@ def get_events():
     print("EVENTS ENDPOINT CALLED")
     print("="*50)
     
+    # Check if this is a single-day request (from events list widget)
+    date = request.args.get('date')
+    if date:
+        print(f"Single day request for date: {date}")
+        session = SessionLocal()
+        try:
+            # Get events for the specified day using start_date
+            day_events = session.query(Event).filter(
+                Event.start_date == datetime.strptime(date, '%Y-%m-%d').date()
+            ).order_by(Event.start).all()
+            
+            print(f"Found {len(day_events)} events for {date}")
+            
+            event_list = []
+            for event in day_events:
+                event_data = {
+                    'id': event.id,
+                    'title': event.title,
+                    'start': event.start.isoformat(),
+                    'end': event.end.isoformat(),
+                    'description': event.description,
+                    'venue': event.venue.name if event.venue else None
+                }
+                event_list.append(event_data)
+            
+            return jsonify(event_list)
+        finally:
+            session.close()
+    
+    # Calendar widget request (date range)
     start = request.args.get('start')
     end = request.args.get('end')
     
-    print(f"Received request for events between {start} and {end}")
+    print(f"Calendar request for events between {start} and {end}")
     
     # Convert string dates to datetime objects
     start_date = datetime.fromisoformat(start.replace('Z', '+00:00'))
@@ -174,8 +204,6 @@ def get_events():
         ).order_by(Event.start).all()
         
         print(f"Found {len(events)} events in the database")
-        for event in events:
-            print(f"Event: {event.title} on {event.start_date} with ID {event.id}")
         
         event_list = []
         for event in events:
@@ -191,7 +219,6 @@ def get_events():
                 'venue': event.venue.name if event.venue else None
             }
             event_list.append(event_data)
-            print(f"Event data: {event_data}")
         
         print(f"Returning {len(event_list)} events")
         return jsonify(event_list)
@@ -320,6 +347,10 @@ def delete_event(id):
     session.commit()
     session.close()
     return redirect(url_for('home'))
+
+@app.route('/widget-test')
+def widget_test():
+    return render_template('widget_test.html')
 
 if __name__ == '__main__':
     Base.metadata.create_all(engine)
