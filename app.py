@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
-from sqlalchemy import PrimaryKeyConstraint, create_engine, Column, String, Float, DateTime, Integer, Float, Date, ForeignKey, Text, Index, Sequence, text
+from sqlalchemy import PrimaryKeyConstraint, create_engine, Column, String, Float, DateTime, Integer, Float, Date, ForeignKey, Text, Index, Sequence, text, Boolean
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 from sqlalchemy.types import PickleType
 from datetime import datetime
@@ -222,12 +222,17 @@ class Event(Base):
     color = Column(String(20))
     bg = Column(String(20))
     
+    # Add fields for recurring events
+    is_recurring = Column(Boolean, default=False)
+    recurring_until = Column(Date)  # When does the series end?
+    
     venue = relationship("Venue", back_populates="events")
     
     # Define composite primary key and indexes
     __table_args__ = (
         PrimaryKeyConstraint('start_date', 'id'),
         Index('idx_title', 'title'),
+        Index('idx_recurring', 'is_recurring', 'recurring_until'),  # Index for recurring queries
     )
     
     def __init__(self, **kwargs):
@@ -365,15 +370,40 @@ def get_events():
         print(f"Single day request for date: {date}")
         session = SessionLocal()
         try:
-            # Get events for the specified day using start_date
+            target_date = datetime.strptime(date, '%Y-%m-%d').date()
+            
+            # Get non-recurring events for this specific day
             day_events = session.query(Event).filter(
-                Event.start_date == datetime.strptime(date, '%Y-%m-%d').date()
+                Event.is_recurring == False,
+                Event.start_date == target_date
             ).order_by(Event.start).all()
             
-            print(f"Found {len(day_events)} events for {date}")
+            # Get recurring events that might occur on this day
+            recurring_events = session.query(Event).filter(
+                Event.is_recurring == True,
+                Event.start_date <= target_date,  # Started before or on this day
+                (Event.recurring_until == None) | (Event.recurring_until >= target_date)  # Ends after or on this day
+            ).all()
+            
+            # Expand recurring events for this specific day
+            expanded_events = []
+            for event in recurring_events:
+                instances = expand_recurring_events(event, 
+                                                  datetime.combine(target_date, datetime.min.time()),
+                                                  datetime.combine(target_date, datetime.max.time()))
+                # Filter to only include instances that fall on the target date
+                for instance in instances:
+                    if instance.start.date() == target_date:
+                        expanded_events.append(instance)
+            
+            # Combine and sort all events
+            all_events = day_events + expanded_events
+            all_events.sort(key=lambda x: x.start)
+            
+            print(f"Found {len(day_events)} non-recurring events and {len(expanded_events)} recurring instances for {date}")
             
             event_list = []
-            for event in day_events:
+            for event in all_events:
                 event_data = {
                     'id': event.id,
                     'title': event.title,
@@ -402,16 +432,34 @@ def get_events():
     
     session = SessionLocal()
     try:
-        # Use start_date for filtering to take advantage of clustering
-        events = session.query(Event).filter(
+        # Get non-recurring events in range
+        non_recurring = session.query(Event).filter(
+            Event.is_recurring == False,
             Event.start_date >= start_date.date(),
             Event.start_date <= end_date.date()
-        ).order_by(Event.start).all()
+        ).all()
+
+        # Get recurring events that might affect this range
+        recurring = session.query(Event).filter(
+            Event.is_recurring == True,
+            Event.start_date <= end_date.date(),  # Started before or during range
+            (Event.recurring_until == None) | (Event.recurring_until >= start_date.date())  # Ends after or during range
+        ).all()
         
-        print(f"Found {len(events)} events in the database")
+        print(f"Found {len(non_recurring)} non-recurring events and {len(recurring)} recurring events")
+        
+        # Expand recurring events for the date range
+        expanded_events = []
+        for event in recurring:
+            instances = expand_recurring_events(event, start_date, end_date)
+            expanded_events.extend(instances)
+        
+        # Combine all events
+        all_events = non_recurring + expanded_events
+        all_events.sort(key=lambda x: x.start)
         
         event_list = []
-        for event in events:
+        for event in all_events:
             event_data = {
                 'id': event.id,
                 'title': event.title,
@@ -425,7 +473,7 @@ def get_events():
             }
             event_list.append(event_data)
         
-        print(f"Returning {len(event_list)} events")
+        print(f"Returning {len(event_list)} events (including {len(expanded_events)} expanded recurring instances)")
         return jsonify(event_list)
     finally:
         session.close()
@@ -466,6 +514,14 @@ def add_event():
         
         print(f"Creating event: {title} on {start.date()}")
         
+        # Determine if this is a recurring event
+        is_recurring = bool(rrule_str and rrule_str.strip())
+        recurring_until = None
+        
+        # If recurring, calculate when the series should end (default: 2 years from start)
+        if is_recurring:
+            recurring_until = start.date().replace(year=start.date().year + 2)
+        
         event = Event(
             title=title, 
             description=description, 
@@ -474,12 +530,15 @@ def add_event():
             rrule=rrule_str, 
             venue_id=venue_id, 
             color=color, 
-            bg=bg
+            bg=bg,
+            is_recurring=is_recurring,
+            recurring_until=recurring_until
         )
         
         # Generate ID for the new event based on its date
         event.id = get_next_event_id(session, event.start_date)
         print(f"Generated ID {event.id} for event on {event.start_date}")
+        print(f"Event is recurring: {is_recurring}, until: {recurring_until}")
         
         session.add(event)
         session.commit()
@@ -528,6 +587,14 @@ def edit_event(id):
                                 color=color,
                                 bg=bg)
         
+        # Determine if this is a recurring event
+        is_recurring = bool(rrule_str and rrule_str.strip())
+        recurring_until = None
+        
+        # If recurring, calculate when the series should end (default: 2 years from start)
+        if is_recurring:
+            recurring_until = start.date().replace(year=start.date().year + 2)
+        
         event.title = title
         event.description = description
         event.start = start
@@ -536,6 +603,9 @@ def edit_event(id):
         event.venue_id = venue_id
         event.color = color
         event.bg = bg
+        event.is_recurring = is_recurring
+        event.recurring_until = recurring_until
+        
         session.commit()
         session.close()
         return redirect(url_for('home'))
@@ -620,3 +690,50 @@ if __name__ == '__main__':
 
 # WSGI application
 application = app 
+
+def expand_recurring_events(event, start_date, end_date):
+    if not event.rrule:
+        return [event]
+    
+    # Parse RRULE and generate all instances
+    rule = rrule.rrulestr(event.rrule, dtstart=event.start)
+    instances = rule.between(start_date, end_date)
+    
+    # Create event objects for each instance
+    expanded_events = []
+    for instance_start in instances:
+        # Calculate instance end time
+        duration = event.end - event.start
+        instance_end = instance_start + duration
+        
+        # Create new event object for this instance
+        instance_event = Event(
+            title=event.title,
+            description=event.description,
+            start=instance_start,
+            end=instance_end,
+            venue_id=event.venue_id,
+            color=event.color,
+            bg=event.bg
+        )
+        expanded_events.append(instance_event)
+    
+    return expanded_events 
+
+def get_events_with_recurring():
+    # Get all events (including old ones that might recur)
+    all_events = session.query(Event).all()
+    
+    # Expand recurring events for the requested date range
+    expanded_events = []
+    for event in all_events:
+        if event.rrule:
+            # Expand this recurring event
+            instances = expand_recurring_events(event, start_date, end_date)
+            expanded_events.extend(instances)
+        else:
+            # Non-recurring event - only include if in range
+            if start_date.date() <= event.start_date <= end_date.date():
+                expanded_events.append(event)
+    
+    return expanded_events 

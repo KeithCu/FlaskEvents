@@ -4,7 +4,7 @@ A simple event calendar application built with [Flask](https://flask.palletsproj
 
 ## Performance Advantage
 
-**This calendar application solves a critical performance problem that plagues WordPress Events Calendar Pro:**
+**This calendar application solves a critical performance problem that plagues [WordPress Events Calendar Pro](https://theeventscalendar.com/products/wordpress-events-calendar/):**
 
 - WordPress Events Calendar Pro starts to slow down around 1,000 events
 - At 5,000 events, most queries take 2+ seconds per request
@@ -55,6 +55,32 @@ The application supports recurring events using the iCalendar RRULE format. Exam
 - Weekly on Monday, Wednesday, Friday: `FREQ=WEEKLY;BYDAY=MO,WE,FR`
 - Daily: `FREQ=DAILY`
 - Monthly on the 15th: `FREQ=MONTHLY;BYMONTHDAY=15`
+
+## Recurring Events Implementation
+
+This application supports recurring events using the iCalendar RRULE format. Here's how recurring events are handled:
+
+- **Storage**: Each recurring event is stored as a single row in the database, with its recurrence rule (RRULE) saved in the `rrule` column. The event also has `is_recurring` and `recurring_until` fields to indicate recurrence and the end of the series.
+- **Expansion**: When the calendar or a day view is requested, the backend dynamically expands recurring events into their individual instances for the requested date range. This is done using the `dateutil.rrule` library, which parses the RRULE and generates all occurrences within the range.
+- **Query Logic**: For each request, the backend:
+  - Fetches all non-recurring events in the date range directly (using the clustered index for speed).
+  - Fetches all recurring events that could possibly have instances in the date range (using an index on `is_recurring` and `recurring_until`).
+  - Expands only those recurring events that are relevant to the requested range, minimizing unnecessary computation.
+- **Editing**: The event form allows users to specify or edit the recurrence rule and the end date for the series. The backend updates the relevant fields and ensures the event is treated as recurring or non-recurring as appropriate.
+
+### Performance Optimizations for Recurring Events
+
+To ensure the application remains fast even with a large number of events and recurring series, several optimizations are used:
+
+- **Clustered Indexing**: The database uses a composite primary key `(start_date, id)` so that events for the same date are stored together on disk. This makes range and day queries extremely efficient for non-recurring events.
+- **Targeted Recurring Queries**: Instead of expanding all recurring events, the backend only considers those whose recurrence could affect the requested date range. This is achieved by filtering on `start_date`, `is_recurring`, and `recurring_until` with proper indexes.
+- **On-the-fly Expansion**: Recurring events are expanded in memory only for the relevant date range, avoiding the need to store every instance in the database and keeping storage requirements low.
+- **Efficient Algorithms**: The use of the `dateutil.rrule` library allows for fast, reliable expansion of recurrence rules without custom logic.
+
+  The `dateutil.rrule` library is a robust, well-tested implementation of the iCalendar recurrence rule (RRULE) standard. Instead of writing and maintaining custom code to interpret and expand recurrence rules—which is error-prone and can be very complex for edge cases like leap years, daylight saving time, or complex BYDAY/BYMONTH rules—`dateutil.rrule` handles all of this efficiently. It is written in C and Python, optimized for performance, and used in many production systems. By leveraging this library, the application can quickly generate all event instances for any recurrence pattern, ensuring both correctness and speed, and freeing developers from having to debug or optimize custom recurrence logic.
+- **Indexing**: An additional index on `(is_recurring, recurring_until)` ensures that queries for recurring events are fast, even as the number of events grows.
+
+These strategies ensure that the calendar remains highly performant, even with thousands of events and complex recurrence patterns.
 
 # Flask Events Calendar - Performance Optimized
 
