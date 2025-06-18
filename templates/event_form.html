@@ -55,16 +55,24 @@
             
             <div class="mb-3">
                 <label for="venue_id" class="form-label">Venue <span class="text-danger">*</span></label>
-                <select class="form-control" id="venue_id" name="venue_id" required>
-                    <option value="">Select a venue</option>
-                    {% for venue in venues %}
-                    <option value="{{ venue.id }}" {% if event and event.venue_id == venue.id %}selected{% endif %}>
-                        {{ venue.name }}
-                    </option>
-                    {% endfor %}
-                </select>
+                <div class="d-flex gap-2 align-items-start">
+                    <select class="form-control" id="venue_id" name="venue_id" required>
+                        <option value="">Select a venue</option>
+                        {% for venue in venues %}
+                        <option value="{{ venue.id }}" {% if event and event.venue_id == venue.id %}selected{% endif %}>
+                            {{ venue.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <a href="{{ url_for('add_venue') }}" class="btn btn-outline-secondary" target="_blank">
+                        Add Venue
+                    </a>
+                </div>
                 <div class="invalid-feedback">
                     Please select a venue
+                </div>
+                <div class="form-text">
+                    Don't see the venue you need? <a href="{{ url_for('add_venue') }}" target="_blank">Add a new venue</a> and then refresh this page.
                 </div>
             </div>
             
