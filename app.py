@@ -130,6 +130,11 @@ class Event(Base):
     is_recurring = Column(Boolean, default=False)
     recurring_until = Column(Date)  # When does the series end?
     
+    # Add fields for virtual and hybrid events
+    is_virtual = Column(Boolean, default=False)
+    is_hybrid = Column(Boolean, default=False)
+    url = Column(String(500))  # General URL for any event (website, Facebook page, virtual meeting, etc.)
+    
     venue = relationship("Venue", back_populates="events")
     
     # Define composite primary key and indexes
@@ -137,6 +142,7 @@ class Event(Base):
         PrimaryKeyConstraint('start_date', 'id'),
         Index('idx_title', 'title'),
         Index('idx_recurring', 'is_recurring', 'recurring_until'),  # Index for recurring queries
+        Index('idx_virtual', 'is_virtual', 'is_hybrid'),  # Index for virtual/hybrid queries
     )
     
     def __init__(self, **kwargs):
@@ -350,7 +356,10 @@ def get_events():
                     'start': event.start.isoformat(),
                     'end': event.end.isoformat(),
                     'description': event.description,
-                    'venue': event.venue.name if event.venue else None
+                    'venue': event.venue.name if event.venue else None,
+                    'is_virtual': event.is_virtual,
+                    'is_hybrid': event.is_hybrid,
+                    'url': event.url,
                 }
                 event_list.append(event_data)
             
@@ -423,7 +432,10 @@ def get_events():
                     'color': event.color,
                     'backgroundColor': event.bg,
                     'description': event.description,
-                    'venue': event.venue.name if event.venue else None
+                    'venue': event.venue.name if event.venue else None,
+                    'is_virtual': event.is_virtual,
+                    'is_hybrid': event.is_hybrid,
+                    'url': event.url,
                 }
                 event_list.append(event_data)
             
@@ -457,6 +469,11 @@ def add_event():
         color = request.form.get('color', '#3788d8')
         bg = request.form.get('bg', '#3788d8')
         
+        # Get virtual event fields
+        is_virtual = request.form.get('is_virtual') == 'on'
+        is_hybrid = request.form.get('is_hybrid') == 'on'
+        url = request.form.get('url', '').strip()
+        
         # Validate venue_id
         if not venue_id:
             flash('Please select a venue', 'error')
@@ -470,7 +487,10 @@ def add_event():
                                 end=end,
                                 rrule=rrule_str,
                                 color=color,
-                                bg=bg)
+                                bg=bg,
+                                is_virtual=is_virtual,
+                                is_hybrid=is_hybrid,
+                                url=url)
         
         print(f"Creating event: {title} on {start.date()}")
         
@@ -492,7 +512,10 @@ def add_event():
             color=color, 
             bg=bg,
             is_recurring=is_recurring,
-            recurring_until=recurring_until
+            recurring_until=recurring_until,
+            is_virtual=is_virtual,
+            is_hybrid=is_hybrid,
+            url=url if url else None
         )
         
         # Generate ID for the new event based on its date
@@ -534,6 +557,11 @@ def edit_event(id):
         color = request.form.get('color', '#3788d8')
         bg = request.form.get('bg', '#3788d8')
         
+        # Get virtual event fields
+        is_virtual = request.form.get('is_virtual') == 'on'
+        is_hybrid = request.form.get('is_hybrid') == 'on'
+        url = request.form.get('url', '').strip()
+        
         # Validate venue_id
         if not venue_id:
             flash('Please select a venue', 'error')
@@ -548,7 +576,10 @@ def edit_event(id):
                                 end=end,
                                 rrule=rrule_str,
                                 color=color,
-                                bg=bg)
+                                bg=bg,
+                                is_virtual=is_virtual,
+                                is_hybrid=is_hybrid,
+                                url=url)
         
         # Determine if this is a recurring event
         is_recurring = bool(rrule_str and rrule_str.strip())
@@ -568,6 +599,9 @@ def edit_event(id):
         event.bg = bg
         event.is_recurring = is_recurring
         event.recurring_until = recurring_until
+        event.is_virtual = is_virtual
+        event.is_hybrid = is_hybrid
+        event.url = url if url else None
         
         session.commit()
         
@@ -771,7 +805,10 @@ def expand_recurring_events(event, start_date, end_date):
             end=instance_end,
             venue_id=event.venue_id,
             color=event.color,
-            bg=event.bg
+            bg=event.bg,
+            is_virtual=event.is_virtual,
+            is_hybrid=event.is_hybrid,
+            url=event.url,
         )
         expanded_events.append(instance_event)
     
