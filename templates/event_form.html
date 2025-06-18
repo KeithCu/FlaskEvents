@@ -86,7 +86,13 @@
                        value="{{ event.rrule if event else '' }}"
                        placeholder="Example: FREQ=WEEKLY;BYDAY=MO,WE,FR">
                 <div class="form-text">
-                    Leave empty for one-time events. Use iCalendar RRULE format for recurring events.
+                    <strong>Leave empty for one-time events.</strong> Use iCalendar RRULE format for recurring events.<br><br>
+                    <strong>Common Examples:</strong><br>
+                    • <code>FREQ=WEEKLY;BYDAY=MO</code> - Every Monday<br>
+                    • <code>FREQ=MONTHLY;BYDAY=1MO</code> - First Monday of every month<br>
+                    • <code>FREQ=YEARLY;BYMONTH=12;BYMONTHDAY=25</code> - December 25th every year<br>
+                    • <code>FREQ=WEEKLY;INTERVAL=2</code> - Every other week<br>
+                    <strong>Day Codes:</strong> MO=Monday, TU=Tuesday, WE=Wednesday, TH=Thursday, FR=Friday, SA=Saturday, SU=Sunday
                 </div>
             </div>
             
