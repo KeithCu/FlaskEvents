@@ -6,7 +6,11 @@ from datetime import datetime
 from dateutil.rrule import rrule
 from cacheout import Cache
 import os
+import sys
 import time
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from fts import setup_fts_triggers, verify_fts_setup
 from database import engine, db_path
 
