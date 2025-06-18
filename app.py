@@ -11,8 +11,8 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from fts import setup_fts_triggers, verify_fts_setup
-from database import engine, db_path
+from fts import setup_fts_triggers, ensure_fts_setup
+from database import engine, db_path, Base, SessionLocal, Event, Venue, EventFTS, migrate_database, get_next_event_id
 
 # Global cache configuration - can be adjusted
 CACHE_TTL_HOURS = 1
@@ -30,183 +30,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Enable response compression
 Compress(app)
 
-Base = declarative_base()
-SessionLocal = sessionmaker(bind=engine)
-
-def configure_database():
-    # Check if database exists and is empty
-    db_exists = os.path.exists(db_path)
-    if db_exists:
-        with engine.connect() as conn:
-            # Check if any tables exist
-            result = conn.execute(text("SELECT name FROM sqlite_master WHERE type='table'")).fetchall()
-            if result:
-                print("Database already has tables, cannot change page size")
-                return
-    
-    # Set page size to 16KB (16384 bytes)
-    with engine.connect() as conn:
-        conn.execute(text('PRAGMA page_size = 16384'))
-        print("Database page size set to 16KB")
-
-def optimize_database():
-    """Set SQLite optimizations for read-heavy workloads with large database but recent event access"""
-    with engine.connect() as conn:
-        # For read-heavy workloads, DELETE mode is often faster than WAL
-        # WAL adds overhead for infrequent writes and small databases
-        conn.execute(text('PRAGMA journal_mode = DELETE'))
-        
-        # Smaller cache size appropriate for 300MB database
-        # 8MB cache (8192 pages) is sufficient for this size
-        conn.execute(text('PRAGMA cache_size = -8192'))  # 8MB in pages
-        
-        # Enable memory-mapped I/O for better performance
-        # Even with 300MB database, most queries are for recent events
-        conn.execute(text('PRAGMA mmap_size = 67108864'))  # 64MB
-        
-        # Use memory for temp store (faster for small operations)
-        conn.execute(text('PRAGMA temp_store = 2'))
-        
-        # Enable foreign key constraints
-        conn.execute(text('PRAGMA foreign_keys = ON'))
-        
-        # Optimize for read performance
-        conn.execute(text('PRAGMA synchronous = NORMAL'))  # Faster than FULL, still safe
-        
-        # Disable WAL mode features that add overhead for small DBs
-        conn.execute(text('PRAGMA wal_autocheckpoint = 0'))
-        
-        print("Database optimized for read-heavy workload with large database but recent event access")
-
-def check_database_stats():
-    with engine.connect() as conn:
-        # Get page count and free pages
-        page_count = conn.execute(text('PRAGMA page_count')).scalar()
-        free_pages = conn.execute(text('PRAGMA freelist_count')).scalar()
-        page_size = conn.execute(text('PRAGMA page_size')).scalar()
-        
-        # Calculate fragmentation
-        total_size = page_count * page_size
-        free_size = free_pages * page_size
-        fragmentation = (free_pages / page_count * 100) if page_count > 0 else 0
-        
-        print(f"Database stats:")
-        print(f"Total pages: {page_count}")
-        print(f"Free pages: {free_pages}")
-        print(f"Page size: {page_size} bytes")
-        print(f"Total size: {total_size/1024:.1f} KB")
-        print(f"Free space: {free_size/1024:.1f} KB")
-        print(f"Fragmentation: {fragmentation:.1f}%")
-        
-        # Only vacuum if fragmentation is significant
-        if fragmentation > 10:  # More than 10% fragmented
-            print("Fragmentation is high, running VACUUM...")
-            with engine.begin() as conn:
-                conn.execute(text('VACUUM'))
-            print("Database vacuum completed")
-        else:
-            print("Database is well-optimized, skipping VACUUM")
-
-
-# Configure and initialize database
-configure_database()
-optimize_database()
-Base.metadata.create_all(engine)  # Create all tables first
-
-# Event model
-class Event(Base):
-    __tablename__ = 'event'
-    
-    # Composite primary key for clustering by date
-    start_date = Column(Date, nullable=False)
-    id = Column(Integer, nullable=True)  # Nullable to allow ID generation after object creation
-    
-    title = Column(String(100), nullable=False)
-    description = Column(Text)
-    start = Column(DateTime, nullable=False)
-    end = Column(DateTime, nullable=False)
-    rrule = Column(String(255))
-    venue_id = Column(Integer, ForeignKey('venue.id'))
-    color = Column(String(20))
-    bg = Column(String(20))
-    
-    # Add fields for recurring events
-    is_recurring = Column(Boolean, default=False)
-    recurring_until = Column(Date)  # When does the series end?
-    
-    # Add fields for virtual and hybrid events
-    is_virtual = Column(Boolean, default=False)
-    is_hybrid = Column(Boolean, default=False)
-    url = Column(String(500))  # General URL for any event (website, Facebook page, virtual meeting, etc.)
-    
-    venue = relationship("Venue", back_populates="events")
-    
-    # Define composite primary key and indexes
-    __table_args__ = (
-        PrimaryKeyConstraint('start_date', 'id'),
-        Index('idx_title', 'title'),
-        Index('idx_recurring', 'is_recurring', 'recurring_until'),  # Index for recurring queries
-        Index('idx_virtual', 'is_virtual', 'is_hybrid'),  # Index for virtual/hybrid queries
-    )
-    
-    def __init__(self, **kwargs):
-        super(Event, self).__init__(**kwargs)
-        # Automatically set start_date from start
-        if self.start:
-            self.start_date = self.start.date()
-
-# FTS5 virtual table for full-text search
-class EventFTS(Base):
-    __tablename__ = 'event_fts'
-    
-    id = Column(Integer, primary_key=True)
-    title = Column(String)
-    description = Column(Text)
-    
-    __table_args__ = (
-        {'sqlite_autoincrement': True},
-    )
-
-# Venue model
-class Venue(Base):
-    __tablename__ = 'venue'
-    
-    id = Column(Integer, primary_key=True)
-    name = Column(String(100), nullable=False)
-    address = Column(Text)
-    
-    events = relationship("Event", back_populates="venue")
-
-# Add this after the SessionLocal definition
-def get_next_event_id(session, start_date):
-    print(f"Getting next ID for date: {start_date}")
-    # Get the max ID for the specific date
-    query = text("SELECT MAX(id) FROM event WHERE start_date = :start_date")
-    print(f"Executing query with params: {{'start_date': {start_date}}}")
-    result = session.execute(query, {"start_date": start_date}).scalar()
-    print(f"Query result: {result}")
-    next_id = (result or 0) + 1
-    print(f"Generated next ID: {next_id}")
-    return next_id
-
-def get_next_event_ids(session, events):
-    print("Getting next IDs for multiple events")
-    # Group events by date
-    date_to_events = {}
-    for event in events:
-        if event.start_date not in date_to_events:
-            date_to_events[event.start_date] = []
-        date_to_events[event.start_date].append(event)
-    
-    print(f"Grouped events by date: {date_to_events.keys()}")
-    
-    # Assign IDs for each date
-    for start_date, date_events in date_to_events.items():
-        next_id = get_next_event_id(session, start_date)
-        for event in date_events:
-            event.id = next_id
-            next_id += 1
-            print(f"Assigned ID {event.id} to event '{event.title}' on {start_date}")
 
 # Home route (widget test page)
 @app.route('/')
@@ -770,31 +593,13 @@ def search():
     finally:
         session.close()
 
-def ensure_fts_setup():
-    """Ensure FTS is set up, initialize if needed"""
-    try:
-        with engine.connect() as conn:
-            # Check if FTS table exists and has data
-            fts_count = conn.execute(text("SELECT COUNT(*) FROM event_fts")).scalar()
-            event_count = conn.execute(text("SELECT COUNT(*) FROM event")).scalar()
-            
-            if fts_count == 0 and event_count > 0:
-                print("FTS table is empty but events exist, setting up FTS...")
-                setup_fts_triggers()
-                print("FTS setup completed")
-            elif fts_count != event_count:
-                print(f"FTS count ({fts_count}) doesn't match event count ({event_count}), reinitializing FTS...")
-                setup_fts_triggers()
-                print("FTS reinitialization completed")
-    except Exception as e:
-        print(f"Error checking FTS setup: {e}")
-        # If FTS table doesn't exist, set it up
-        try:
-            print("Setting up FTS table...")
-            setup_fts_triggers()
-            print("FTS setup completed")
-        except Exception as setup_error:
-            print(f"FTS setup failed: {setup_error}")
+
+# Run migration automatically after models are defined
+try:
+    migrate_database()
+except Exception as e:
+    print(f"Migration failed: {e}")
+    print("Continuing with app startup...")
 
 # Initialize FTS automatically when the app starts
 try:

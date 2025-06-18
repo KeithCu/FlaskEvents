@@ -11,7 +11,7 @@ def migrate_database():
         # Check if the new columns already exist
         result = conn.execute(text("""
             SELECT name FROM pragma_table_info('event') 
-            WHERE name IN ('is_recurring', 'recurring_until')
+            WHERE name IN ('is_recurring', 'recurring_until', 'is_virtual', 'is_hybrid', 'url')
         """)).fetchall()
         
         existing_columns = [row[0] for row in result]
@@ -31,19 +31,49 @@ def migrate_database():
             conn.commit()
             print("Added recurring_until column")
         
-        # Create index for recurring queries if it doesn't exist
+        # Add virtual event columns if they don't exist
+        if 'is_virtual' not in existing_columns:
+            print("Adding is_virtual column...")
+            conn.execute(text("ALTER TABLE event ADD COLUMN is_virtual BOOLEAN DEFAULT FALSE"))
+            conn.commit()
+            print("Added is_virtual column")
+        
+        if 'is_hybrid' not in existing_columns:
+            print("Adding is_hybrid column...")
+            conn.execute(text("ALTER TABLE event ADD COLUMN is_hybrid BOOLEAN DEFAULT FALSE"))
+            conn.commit()
+            print("Added is_hybrid column")
+        
+        # Handle URL field migration
+        if 'url' not in existing_columns:
+            print("Adding url column...")
+            conn.execute(text("ALTER TABLE event ADD COLUMN url VARCHAR(500)"))
+            conn.commit()
+            print("Added url column")
+        
+        # Create indexes if they don't exist
         indexes = conn.execute(text("""
             SELECT name FROM sqlite_master 
-            WHERE type='index' AND name='idx_recurring'
+            WHERE type='index' AND name IN ('idx_recurring', 'idx_virtual')
         """)).fetchall()
         
-        if not indexes:
+        existing_indexes = [row[0] for row in indexes]
+        
+        if 'idx_recurring' not in existing_indexes:
             print("Creating recurring events index...")
             conn.execute(text("""
                 CREATE INDEX idx_recurring ON event (is_recurring, recurring_until)
             """))
             conn.commit()
             print("Created recurring events index")
+        
+        if 'idx_virtual' not in existing_indexes:
+            print("Creating virtual events index...")
+            conn.execute(text("""
+                CREATE INDEX idx_virtual ON event (is_virtual, is_hybrid)
+            """))
+            conn.commit()
+            print("Created virtual events index")
         
         # Update existing events to set is_recurring flag
         print("Updating existing events...")
