@@ -105,6 +105,26 @@
         transform: translateY(-50%);
         pointer-events: none;
     }
+    
+    /* Virtual event styles */
+    .badge {
+        font-size: 0.75em;
+        padding: 0.25em 0.5em;
+    }
+    
+    .btn-sm {
+        font-size: 0.875em;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .event-item .btn {
+        margin-right: 0.5rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .event-item .btn i {
+        margin-right: 0.25rem;
+    }
 </style>
 {% endblock %}
 
@@ -205,9 +225,20 @@ document.addEventListener('DOMContentLoaded', function() {
                         const eventsHtml = events.map(event => `
                             <div class="event-item">
                                 <div class="event-time">${formatTime(event.start)}</div>
-                                <div class="event-title">${event.title}</div>
+                                <div class="event-title">
+                                    ${event.title}
+                                    ${event.is_virtual ? '<span class="badge bg-primary ms-2">Virtual</span>' : ''}
+                                    ${event.is_hybrid ? '<span class="badge bg-success ms-2">Hybrid</span>' : ''}
+                                </div>
                                 ${event.description ? `<div class="event-description">${event.description}</div>` : ''}
                                 ${event.venue ? `<div class="event-venue">at ${event.venue}</div>` : ''}
+                                ${event.url ? `
+                                    <div class="mt-2">
+                                        <a href="${event.url}" target="_blank" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-external-link-alt"></i> ${event.is_virtual || event.is_hybrid ? 'Join Event' : 'View Details'}
+                                        </a>
+                                    </div>
+                                ` : ''}
                             </div>
                         `).join('');
                         eventsListEl.innerHTML = eventsHtml;
@@ -243,9 +274,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     const eventsHtml = events.map(event => `
                         <div class="event-item">
                             <div class="event-time">${formatTime(event.start)}</div>
-                            <div class="event-title">${event.title}</div>
+                            <div class="event-title">
+                                ${event.title}
+                                ${event.is_virtual ? '<span class="badge bg-primary ms-2">Virtual</span>' : ''}
+                                ${event.is_hybrid ? '<span class="badge bg-success ms-2">Hybrid</span>' : ''}
+                            </div>
                             ${event.description ? `<div class="event-description">${event.description}</div>` : ''}
                             ${event.venue ? `<div class="event-venue">at ${event.venue}</div>` : ''}
+                            ${event.url ? `
+                                <div class="mt-2">
+                                    <a href="${event.url}" target="_blank" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-external-link-alt"></i> ${event.is_virtual || event.is_hybrid ? 'Join Event' : 'View Details'}
+                                    </a>
+                                </div>
+                            ` : ''}
                         </div>
                     `).join('');
                     eventsListEl.innerHTML = eventsHtml;
