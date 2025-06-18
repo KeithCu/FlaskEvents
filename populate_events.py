@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import random
 from faker import Faker
 import argparse
+from fts import setup_fts_triggers
 
 fake = Faker()
 
@@ -126,6 +127,11 @@ def populate_events(total_events=50000):
                 print(f"Venue {v.name}: {venue_counts[v.id]} events")
         
         print("All events have been added successfully!")
+        
+        # Set up FTS after populating events
+        print("Setting up FTS for search functionality...")
+        setup_fts_triggers()
+        print("FTS setup completed!")
         
     except Exception as e:
         print(f"An error occurred: {e}")

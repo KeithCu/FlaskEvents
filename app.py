@@ -540,6 +540,9 @@ def add_event():
         # Clear cache since we added a new event
         clear_expanded_events_cache()
         
+        # Ensure FTS is set up and updated
+        ensure_fts_setup()
+        
         session.close()
         return redirect(url_for('python_view'))
     venues = session.query(Venue).all()
@@ -612,6 +615,9 @@ def edit_event(id):
         # Clear cache since we modified an event
         clear_expanded_events_cache()
         
+        # Ensure FTS is set up and updated
+        ensure_fts_setup()
+        
         session.close()
         return redirect(url_for('home'))
     venues = session.query(Venue).all()
@@ -628,6 +634,9 @@ def delete_event(id):
     
     # Clear cache since we deleted an event
     clear_expanded_events_cache()
+    
+    # Ensure FTS is set up and updated
+    ensure_fts_setup()
     
     session.close()
     return redirect(url_for('python_view'))
@@ -761,26 +770,41 @@ def search():
     finally:
         session.close()
 
-def initialize_fts():
-    """Initialize FTS after tables are created"""
+def ensure_fts_setup():
+    """Ensure FTS is set up, initialize if needed"""
     try:
-        print("Initializing FTS...")
-        setup_fts_triggers()
-        check_database_stats()
-        print("FTS initialization completed")
+        with engine.connect() as conn:
+            # Check if FTS table exists and has data
+            fts_count = conn.execute(text("SELECT COUNT(*) FROM event_fts")).scalar()
+            event_count = conn.execute(text("SELECT COUNT(*) FROM event")).scalar()
+            
+            if fts_count == 0 and event_count > 0:
+                print("FTS table is empty but events exist, setting up FTS...")
+                setup_fts_triggers()
+                print("FTS setup completed")
+            elif fts_count != event_count:
+                print(f"FTS count ({fts_count}) doesn't match event count ({event_count}), reinitializing FTS...")
+                setup_fts_triggers()
+                print("FTS reinitialization completed")
     except Exception as e:
-        print(f"FTS initialization failed: {e}")
-        print("Continuing without FTS functionality...")
+        print(f"Error checking FTS setup: {e}")
+        # If FTS table doesn't exist, set it up
+        try:
+            print("Setting up FTS table...")
+            setup_fts_triggers()
+            print("FTS setup completed")
+        except Exception as setup_error:
+            print(f"FTS setup failed: {setup_error}")
+
+# Initialize FTS automatically when the app starts
+try:
+    ensure_fts_setup()
+except Exception as e:
+    print(f"FTS setup failed: {e}")
+    print("Starting app without FTS...")
 
 # Only initialize FTS if this file is run directly
 if __name__ == '__main__':
-    # Initialize FTS in a non-blocking way
-    try:
-        initialize_fts()
-    except Exception as e:
-        print(f"FTS setup failed: {e}")
-        print("Starting app without FTS...")
-    
     app.run(debug=True)
 
 # WSGI application
@@ -896,6 +920,4 @@ def internal_error(error):
 @app.errorhandler(404)
 def not_found_error(error):
     """Handle 404 errors"""
-    return jsonify({'error': 'Not found'}), 404
-
-# Only initialize FTS if this file is run directly 
+    return jsonify({'error': 'Not found'}), 404 

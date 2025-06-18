@@ -1,5 +1,6 @@
 from app import Base, engine, SessionLocal, Venue
 import re
+from fts import setup_fts_triggers
 
 # List of venues extracted from the provided text
 venues = [
@@ -63,6 +64,9 @@ def populate_venues():
         # Commit the changes
         session.commit()
         print("All venues have been added successfully!")
+        
+        # Set up FTS triggers
+        setup_fts_triggers()
         
     except Exception as e:
         print(f"An error occurred: {e}")
