@@ -1,5 +1,6 @@
 import os
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text, PrimaryKeyConstraint, Column, String, Float, DateTime, Integer, Date, ForeignKey, Text, Index, Boolean
+from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 
 # Get the directory where the files are located
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -12,7 +13,7 @@ engine = create_engine(
     pool_size=10,  # Number of connections to maintain
     max_overflow=20,  # Additional connections that can be created
     pool_pre_ping=True,  # Verify connections before use
-    pool_recycle=3600  # Recycle connections after 1 hour
+    pool_recycle=300  # Recycle connections after 5 minutes (300 seconds)
 ) 
 
 

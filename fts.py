@@ -101,6 +101,34 @@ def setup_fts_triggers():
                 print("FTS setup failed after all retries. Continuing without FTS...")
                 return
 
+
+def ensure_fts_setup():
+    """Ensure FTS is set up, initialize if needed"""
+    try:
+        with engine.connect() as conn:
+            # Check if FTS table exists and has data
+            fts_count = conn.execute(text("SELECT COUNT(*) FROM event_fts")).scalar()
+            event_count = conn.execute(text("SELECT COUNT(*) FROM event")).scalar()
+            
+            if fts_count == 0 and event_count > 0:
+                print("FTS table is empty but events exist, setting up FTS...")
+                setup_fts_triggers()
+                print("FTS setup completed")
+            elif fts_count != event_count:
+                print(f"FTS count ({fts_count}) doesn't match event count ({event_count}), reinitializing FTS...")
+                setup_fts_triggers()
+                print("FTS reinitialization completed")
+    except Exception as e:
+        print(f"Error checking FTS setup: {e}")
+        # If FTS table doesn't exist, set it up
+        try:
+            print("Setting up FTS table...")
+            setup_fts_triggers()
+            print("FTS setup completed")
+        except Exception as setup_error:
+            print(f"FTS setup failed: {setup_error}")
+
+
 def verify_fts_setup():
     """Verify that FTS table and triggers are properly set up"""
     try:

@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 from flask_compress import Compress
-from sqlalchemy import PrimaryKeyConstraint, Column, String, Float, DateTime, Integer, Float, Date, ForeignKey, Text, Index, text, Boolean
-from sqlalchemy.orm import sessionmaker, declarative_base, relationship
+from sqlalchemy import text
 from datetime import datetime
 from dateutil.rrule import rrule
 from cacheout import Cache
@@ -552,24 +551,6 @@ def search():
     
     session = SessionLocal()
     try:
-        # Debug: Check FTS table contents
-        with engine.connect() as conn:
-            try:
-                fts_count = conn.execute(text("SELECT COUNT(*) FROM event_fts")).scalar()
-                print(f"Total rows in FTS table: {fts_count}")
-                
-                # Debug: Check if the search query works directly
-                test_results = conn.execute(
-                    text("SELECT * FROM event_fts WHERE event_fts MATCH :query"), 
-                    {"query": query}
-                ).fetchall()
-                print(f"Direct FTS query results count: {len(test_results)}")
-                if test_results:
-                    print("Sample result:", test_results[0])
-            except Exception as e:
-                print(f"Error querying FTS table: {e}")
-                return jsonify([])
-        
         results = search_events(query, session)
         print(f"Search results count: {len(results)}")
         
@@ -675,24 +656,22 @@ def set_cached_calendar_events(start_str, end_str, events):
 def search_events(query, session):
     """Search for events using FTS"""
     try:
-        # Use FTS for full-text search
-        with engine.connect() as conn:
-            # Search in FTS table
-            fts_results = conn.execute(text("""
-                SELECT id FROM event_fts 
-                WHERE event_fts MATCH :query 
-                ORDER BY rank
-                LIMIT 50
-            """), {"query": query}).fetchall()
-            
-            if not fts_results:
-                return []
-            
-            # Get the actual event objects
-            event_ids = [row[0] for row in fts_results]
-            events = session.query(Event).filter(Event.id.in_(event_ids)).all()
-            
-            return events
+        # Use FTS for full-text search through the session
+        fts_results = session.execute(text("""
+            SELECT id FROM event_fts 
+            WHERE event_fts MATCH :query 
+            ORDER BY rank
+            LIMIT 50
+        """), {"query": query}).fetchall()
+        
+        if not fts_results:
+            return []
+        
+        # Get the actual event objects
+        event_ids = [row[0] for row in fts_results]
+        events = session.query(Event).filter(Event.id.in_(event_ids)).all()
+        
+        return events
     except Exception as e:
         print(f"Error in search_events: {e}")
         # Fallback to simple LIKE search
@@ -725,4 +704,17 @@ def internal_error(error):
 @app.errorhandler(404)
 def not_found_error(error):
     """Handle 404 errors"""
-    return jsonify({'error': 'Not found'}), 404 
+    return jsonify({'error': 'Not found'}), 404
+
+@app.route('/pool-stats')
+def pool_stats():
+    """Endpoint to check connection pool statistics"""
+    pool = engine.pool
+    stats = {
+        'pool_size': pool.size(),
+        'checked_out': pool.checkedout(),
+        'overflow': pool.overflow(),
+        'checked_in': pool.checkedin(),
+        'total_connections': pool.size() + pool.overflow()
+    }
+    return jsonify(stats) 
