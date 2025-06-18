@@ -1,6 +1,34 @@
 from sqlalchemy import text
 import time
-from database import engine
+from database import engine, Event
+
+def search_events(query, session):
+    """Search for events using FTS"""
+    try:
+        # Use FTS for full-text search through the session
+        fts_results = session.execute(text("""
+            SELECT id FROM event_fts 
+            WHERE event_fts MATCH :query 
+            ORDER BY rank
+            LIMIT 50
+        """), {"query": query}).fetchall()
+        
+        if not fts_results:
+            return []
+        
+        # Get the actual event objects
+        event_ids = [row[0] for row in fts_results]
+        events = session.query(Event).filter(Event.id.in_(event_ids)).all()
+        
+        return events
+    except Exception as e:
+        print(f"Error in search_events: {e}")
+        # Fallback to simple LIKE search
+        return session.query(Event).filter(
+            Event.title.ilike(f'%{query}%') | 
+            Event.description.ilike(f'%{query}%')
+        ).limit(50).all()
+
 
 def setup_fts_triggers():
     """Set up triggers to keep FTS table in sync with main table"""
