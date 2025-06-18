@@ -9,6 +9,7 @@ A simple event calendar application built with [Flask](https://flask.palletsproj
 - WordPress Events Calendar Pro starts to slow down around 1,000 events
 - At 5,000 events, most queries take 2+ seconds per request
 - This design provides nearly instantaneous speed even with a million events
+- **Most requests complete in under 0.02 seconds** 😊
 
 The performance difference is achieved through an innovative clustered index database design that optimizes for calendar-specific queries.
 
@@ -221,7 +222,7 @@ This document outlines a plan to enhance your Flask-based events calendar protot
 ### 1. Venue and Organizer Management
 - **Description**: Enable users to create and manage venues (event locations) and organizers (individuals or organizations hosting events). Associate events with venues and organizers, and display their details on dedicated pages or sections.
 - **Importance**: High (Rank: 1)
-- **Why It’s Important**: Complete event information includes where and who is hosting the event, enhancing professionalism and usability. This is critical for users seeking detailed event context.
+- **Why It's Important**: Complete event information includes where and who is hosting the event, enhancing professionalism and usability. This is critical for users seeking detailed event context.
 - **Implementation Considerations**:
   - **Database**:
     - Create `Venue` model: `id` (primary key), `name`, `address`, `city`, `state`, `zip`, `country`, `latitude`, `longitude`.
@@ -256,7 +257,7 @@ This document outlines a plan to enhance your Flask-based events calendar protot
 ### 2. Custom Event Fields
 - **Description**: Allow users to add custom fields to events (e.g., event type, category, ticket price) to accommodate diverse event requirements.
 - **Importance**: High (Rank: 2)
-- **Why It’s Important**: Custom fields provide flexibility, enabling users to tailor event information to their needs, such as adding dress codes or special instructions.
+- **Why It's Important**: Custom fields provide flexibility, enabling users to tailor event information to their needs, such as adding dress codes or special instructions.
 - **Implementation Considerations**:
   - **Database**:
     - Create a `CustomField` model: `id`, `event_id` (foreign key), `field_name`, `field_value`, `field_type` (e.g., text, number, dropdown).
@@ -279,7 +280,7 @@ This document outlines a plan to enhance your Flask-based events calendar protot
 ### 3. Filter and Search Enhancements
 - **Description**: Enhance the existing full-text search to include advanced filtering options (e.g., by category, venue, organizer, date range, or custom fields).
 - **Importance**: High (Rank: 3)
-- **Why It’s Important**: Advanced filtering improves user experience by helping users quickly find relevant events, especially in calendars with many events.
+- **Why It's Important**: Advanced filtering improves user experience by helping users quickly find relevant events, especially in calendars with many events.
 - **Implementation Considerations**:
   - **Database**:
     - Add a `category` field to the `Event` model or create a `Category` model with a many-to-many relationship.
@@ -307,7 +308,7 @@ This document outlines a plan to enhance your Flask-based events calendar protot
 ### 4. Map View
 - **Description**: Add a map view to display events on a geographical map, showing their locations based on venue coordinates.
 - **Importance**: Medium to High (Rank: 4)
-- **Why It’s Important**: For events with physical locations, a map view helps users visualize event locations, improving accessibility and engagement.
+- **Why It's Important**: For events with physical locations, a map view helps users visualize event locations, improving accessibility and engagement.
 - **Implementation Considerations**:
   - **Frontend**:
     - Use Leaflet.js ([Leaflet](https://leafletjs.com/)) for a lightweight, open-source mapping library.
@@ -341,12 +342,12 @@ This document outlines a plan to enhance your Flask-based events calendar protot
 ### 6. Duplicate Events Feature
 - **Description**: Allow users to duplicate existing events, creating a new event with the same details but editable fields (e.g., date).
 - **Importance**: Medium (Rank: 6)
-- **Why It’s Important**: Duplicating events saves time for users creating similar events, improving efficiency.
+- **Why It's Important**: Duplicating events saves time for users creating similar events, improving efficiency.
 - **Implementation Considerations**:
   - **Backend**:
-    - Create a route like `/event/<id>/duplicate` that copies an event’s details to a new event.
+    - Create a route like `/event/<id>/duplicate` that copies an event's details to a new event.
   - **UI**:
-    - Add a “Duplicate” button on the event details page or in the event list.
+    - Add a "Duplicate" button on the event details page or in the event list.
   - **API**:
     - Optionally, add an endpoint like `/events/<id>/duplicate`.
   - **Example Code**:
@@ -367,7 +368,7 @@ This document outlines a plan to enhance your Flask-based events calendar protot
 ### 7. API for Embedding
 - **Description**: Provide robust API endpoints to embed the calendar or event lists into other parts of the site or external applications.
 - **Importance**: High (Rank: 7)
-- **Why It’s Important**: Flexible embedding options allow the calendar to be integrated into various contexts, similar to WordPress shortcodes.
+- **Why It's Important**: Flexible embedding options allow the calendar to be integrated into various contexts, similar to WordPress shortcodes.
 - **Implementation Considerations**:
   - **API**:
     - Enhance the `/events` endpoint to support flexible queries (e.g., by date range, category, venue).
@@ -390,13 +391,13 @@ This document outlines a plan to enhance your Flask-based events calendar protot
 ### 8. Integrations with Video Conferencing Tools
 - **Description**: Support automatic generation or embedding of video conferencing links (e.g., Zoom, Google Meet) for virtual events.
 - **Importance**: Medium to High (Rank: 8)
-- **Why It’s Important**: Simplifies the management of virtual events by integrating with popular platforms.
+- **Why It's Important**: Simplifies the management of virtual events by integrating with popular platforms.
 - **Implementation Considerations**:
   - **Database**:
     - Store video conferencing details in the `Event` model (e.g., `meeting_platform`, `meeting_id`, `join_url`).
   - **UI**:
     - Add fields for video conferencing details in `event_form.html`.
-    - Display a “Join Meeting” button on event pages.
+    - Display a "Join Meeting" button on event pages.
   - **API**:
     - Include video conferencing details in the `/events` endpoint.
   - **Example Code**:
@@ -409,7 +410,7 @@ This document outlines a plan to enhance your Flask-based events calendar protot
 ### 9. Live-stream Embed
 - **Description**: Allow embedding of live streams from platforms like YouTube or Facebook on event pages.
 - **Importance**: Medium (Rank: 9)
-- **Why It’s Important**: Enhances virtual event pages by allowing attendees to watch streams without leaving the site.
+- **Why It's Important**: Enhances virtual event pages by allowing attendees to watch streams without leaving the site.
 - **Implementation Considerations**:
   - **Database**:
     - Use the `live_stream_url` field in the `Event` model.
@@ -426,10 +427,10 @@ This document outlines a plan to enhance your Flask-based events calendar protot
 ### 10. Alternative Calendar Views
 - **Description**: Add additional calendar views, such as week view, photo view, or summary view.
 - **Importance**: Low to Medium (Rank: 10)
-- **Why It’s Important**: Different views cater to varied user preferences, enhancing the calendar’s versatility.
+- **Why It's Important**: Different views cater to varied user preferences, enhancing the calendar's versatility.
 - **Implementation Considerations**:
   - **Week View**:
-    - Use FullCalendar’s week view (`timeGridWeek`) in `month.html`.
+    - Use FullCalendar's week view (`timeGridWeek`) in `month.html`.
   - **Photo View**:
     - Add a `featured_image` field to the `Event` model.
     - Create a `/photo` route and `photo.html` template to display events as a gallery.
