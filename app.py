@@ -4,18 +4,37 @@ from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 from sqlalchemy.types import PickleType
 from datetime import datetime
 from dateutil.rrule import rrule, DAILY, WEEKLY, MONTHLY
+from cacheout import Cache
 import os
+import time
 
 # Get the directory where app.py is located
 basedir = os.path.abspath(os.path.dirname(__file__))
 db_path = os.path.join(basedir, 'events.db')
+
+# Global cache configuration - can be adjusted
+CACHE_TTL_HOURS = 1
+CACHE_TTL_SECONDS = CACHE_TTL_HOURS * 3600
+
+# Initialize cache for expanded recurring events (day-based)
+# Key format: f"{date_str}" (e.g., "2025-01-15")
+# Value: list of expanded event objects for that day
+expanded_events_cache = Cache(maxsize=1000, ttl=CACHE_TTL_SECONDS)
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 Base = declarative_base()
-engine = create_engine(f'sqlite:///{db_path}', connect_args={"check_same_thread": False})
+# Add connection pooling for better performance
+engine = create_engine(
+    f'sqlite:///{db_path}', 
+    connect_args={"check_same_thread": False},
+    pool_size=10,  # Number of connections to maintain
+    max_overflow=20,  # Additional connections that can be created
+    pool_pre_ping=True,  # Verify connections before use
+    pool_recycle=3600  # Recycle connections after 1 hour
+)
 SessionLocal = sessionmaker(bind=engine)
 
 def configure_database():
@@ -65,14 +84,18 @@ def check_database_stats():
 
 def verify_fts_setup():
     """Verify that FTS table and triggers are properly set up"""
-    with engine.connect() as conn:
-        try:
+    try:
+        with engine.connect() as conn:
             # Check if FTS table exists
             fts_exists = conn.execute(text("""
                 SELECT name FROM sqlite_master 
                 WHERE type='table' AND name='event_fts'
             """)).scalar()
             print(f"FTS table exists: {fts_exists is not None}")
+            
+            if not fts_exists:
+                print("FTS table does not exist")
+                return
             
             # Check trigger count
             trigger_count = conn.execute(text("""
@@ -111,95 +134,109 @@ def verify_fts_setup():
             """), {"query": test_query}).fetchall()
             print(f"Test search returned {len(test_results)} results")
             
-        except Exception as e:
-            print(f"Error verifying FTS setup: {e}")
-            raise
+    except Exception as e:
+        print(f"Error verifying FTS setup: {e}")
+        print("FTS verification failed, but continuing...")
 
 def setup_fts_triggers():
     """Set up triggers to keep FTS table in sync with main table"""
-    with engine.begin() as conn:  # Use begin() for transaction
+    import time
+    max_retries = 3
+    retry_delay = 1
+    
+    for attempt in range(max_retries):
         try:
-            # First, check if we can access the event table
-            event_count = conn.execute(text("SELECT COUNT(*) FROM event")).scalar()
-            print(f"Found {event_count} events in main table")
-            
-            # Drop existing FTS table and triggers if they exist
-            conn.execute(text('DROP TABLE IF EXISTS event_fts'))
-            conn.execute(text('DROP TRIGGER IF EXISTS event_ai'))
-            conn.execute(text('DROP TRIGGER IF EXISTS event_au'))
-            conn.execute(text('DROP TRIGGER IF EXISTS event_ad'))
-            
-            # Create FTS5 table with default tokenizer
-            conn.execute(text('''
-                CREATE VIRTUAL TABLE event_fts USING fts5(
-                    id, title, description,
-                    content='event',
-                    content_rowid='id'
-                )
-            '''))
-            
-            # Create triggers for insert
-            conn.execute(text('''
-                CREATE TRIGGER event_ai AFTER INSERT ON event BEGIN
-                    INSERT INTO event_fts(id, title, description)
-                    VALUES (new.id, new.title, new.description);
-                END
-            '''))
-            
-            # Create triggers for update
-            conn.execute(text('''
-                CREATE TRIGGER event_au AFTER UPDATE ON event BEGIN
-                    UPDATE event_fts SET
-                        title = new.title,
-                        description = new.description
-                    WHERE id = old.id;
-                END
-            '''))
-            
-            # Create triggers for delete
-            conn.execute(text('''
-                CREATE TRIGGER event_ad AFTER DELETE ON event BEGIN
-                    DELETE FROM event_fts WHERE id = old.id;
-                END
-            '''))
-            
-            # Populate FTS table with existing data in batches
-            batch_size = 1000
-            offset = 0
-            while True:
-                # Get a batch of events
-                events = conn.execute(text("""
-                    SELECT id, title, description 
-                    FROM event 
-                    LIMIT :limit OFFSET :offset
-                """), {"limit": batch_size, "offset": offset}).fetchall()
+            with engine.begin() as conn:  # Use begin() for transaction
+                # First, check if we can access the event table
+                event_count = conn.execute(text("SELECT COUNT(*) FROM event")).scalar()
+                print(f"Found {event_count} events in main table")
                 
-                if not events:
-                    break
+                # Drop existing FTS table and triggers if they exist
+                conn.execute(text('DROP TABLE IF EXISTS event_fts'))
+                conn.execute(text('DROP TRIGGER IF EXISTS event_ai'))
+                conn.execute(text('DROP TRIGGER IF EXISTS event_au'))
+                conn.execute(text('DROP TRIGGER IF EXISTS event_ad'))
                 
-                # Insert batch into FTS
-                for event in events:
-                    conn.execute(text("""
+                # Create FTS5 table with default tokenizer
+                conn.execute(text('''
+                    CREATE VIRTUAL TABLE event_fts USING fts5(
+                        id, title, description,
+                        content='event',
+                        content_rowid='id'
+                    )
+                '''))
+                
+                # Create triggers for insert
+                conn.execute(text('''
+                    CREATE TRIGGER event_ai AFTER INSERT ON event BEGIN
                         INSERT INTO event_fts(id, title, description)
-                        VALUES (:id, :title, :description)
-                    """), {
-                        "id": event[0],
-                        "title": event[1] or "",
-                        "description": event[2] or ""
-                    })
+                        VALUES (new.id, new.title, new.description);
+                    END
+                '''))
                 
-                offset += batch_size
-                print(f"Processed {offset} events for FTS")
-            
-            # Verify setup
-            verify_fts_setup()
-            
-            # Optimize FTS table
-            conn.execute(text('INSERT INTO event_fts(event_fts) VALUES("optimize")'))
-            
+                # Create triggers for update
+                conn.execute(text('''
+                    CREATE TRIGGER event_au AFTER UPDATE ON event BEGIN
+                        UPDATE event_fts SET
+                            title = new.title,
+                            description = new.description
+                        WHERE id = old.id;
+                    END
+                '''))
+                
+                # Create triggers for delete
+                conn.execute(text('''
+                    CREATE TRIGGER event_ad AFTER DELETE ON event BEGIN
+                        DELETE FROM event_fts WHERE id = old.id;
+                    END
+                '''))
+                
+                # Populate FTS table with existing data in batches
+                batch_size = 1000
+                offset = 0
+                while True:
+                    # Get a batch of events
+                    events = conn.execute(text("""
+                        SELECT id, title, description 
+                        FROM event 
+                        LIMIT :limit OFFSET :offset
+                    """), {"limit": batch_size, "offset": offset}).fetchall()
+                    
+                    if not events:
+                        break
+                    
+                    # Insert batch into FTS
+                    for event in events:
+                        conn.execute(text("""
+                            INSERT INTO event_fts(id, title, description)
+                            VALUES (:id, :title, :description)
+                        """), {
+                            "id": event[0],
+                            "title": event[1] or "",
+                            "description": event[2] or ""
+                        })
+                    
+                    offset += batch_size
+                    print(f"Processed {offset} events for FTS")
+                
+                # Verify setup
+                verify_fts_setup()
+                
+                # Optimize FTS table
+                conn.execute(text('INSERT INTO event_fts(event_fts) VALUES("optimize")'))
+                
+                print("FTS setup completed successfully")
+                return  # Success, exit the retry loop
+                
         except Exception as e:
-            print(f"Error setting up FTS: {e}")
-            raise
+            print(f"Error setting up FTS (attempt {attempt + 1}/{max_retries}): {e}")
+            if attempt < max_retries - 1:
+                print(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
+            else:
+                print("FTS setup failed after all retries. Continuing without FTS...")
+                return
 
 # Configure and initialize database
 configure_database()
@@ -360,6 +397,8 @@ def day_view(date):
 # JSON feed for events
 @app.route('/events')
 def get_events():
+    start_time = time.time()
+    
     print("="*50)
     print("EVENTS ENDPOINT CALLED")
     print("="*50)
@@ -372,29 +411,40 @@ def get_events():
         try:
             target_date = datetime.strptime(date, '%Y-%m-%d').date()
             
+            # Check cache first for expanded events
+            cached_expanded = get_cached_expanded_events(date)
+            
             # Get non-recurring events for this specific day
             day_events = session.query(Event).filter(
                 Event.is_recurring == False,
                 Event.start_date == target_date
             ).order_by(Event.start).all()
             
-            # Get recurring events that might occur on this day
-            recurring_events = session.query(Event).filter(
-                Event.is_recurring == True,
-                Event.start_date <= target_date,  # Started before or on this day
-                (Event.recurring_until == None) | (Event.recurring_until >= target_date)  # Ends after or on this day
-            ).all()
-            
-            # Expand recurring events for this specific day
-            expanded_events = []
-            for event in recurring_events:
-                instances = expand_recurring_events(event, 
-                                                  datetime.combine(target_date, datetime.min.time()),
-                                                  datetime.combine(target_date, datetime.max.time()))
-                # Filter to only include instances that fall on the target date
-                for instance in instances:
-                    if instance.start.date() == target_date:
-                        expanded_events.append(instance)
+            if cached_expanded is not None:
+                # Use cached expanded events
+                print(f"Using cached expanded events for {date}")
+                expanded_events = cached_expanded
+            else:
+                # Get recurring events that might occur on this day
+                recurring_events = session.query(Event).filter(
+                    Event.is_recurring == True,
+                    Event.start_date <= target_date,  # Started before or on this day
+                    (Event.recurring_until == None) | (Event.recurring_until >= target_date)  # Ends after or on this day
+                ).all()
+                
+                # Expand recurring events for this specific day
+                expanded_events = []
+                for event in recurring_events:
+                    instances = expand_recurring_events(event, 
+                                                      datetime.combine(target_date, datetime.min.time()),
+                                                      datetime.combine(target_date, datetime.max.time()))
+                    # Filter to only include instances that fall on the target date
+                    for instance in instances:
+                        if instance.start.date() == target_date:
+                            expanded_events.append(instance)
+                
+                # Cache the expanded events
+                set_cached_expanded_events(date, expanded_events)
             
             # Combine and sort all events
             all_events = day_events + expanded_events
@@ -414,6 +464,9 @@ def get_events():
                 }
                 event_list.append(event_data)
             
+            elapsed_time = time.time() - start_time
+            print(f"Single day request completed in {elapsed_time:.3f}s")
+            
             return jsonify(event_list)
         finally:
             session.close()
@@ -430,50 +483,65 @@ def get_events():
     
     print(f"Converted dates - start: {start_date.date()}, end: {end_date.date()}")
     
+    # Check cache first for calendar range
+    start_str = start_date.date().isoformat()
+    end_str = end_date.date().isoformat()
+    cached_calendar = get_cached_calendar_events(start_str, end_str)
+    
     session = SessionLocal()
     try:
-        # Get non-recurring events in range
-        non_recurring = session.query(Event).filter(
-            Event.is_recurring == False,
-            Event.start_date >= start_date.date(),
-            Event.start_date <= end_date.date()
-        ).all()
+        if cached_calendar is not None:
+            # Use cached calendar events
+            print(f"Using cached calendar events for {start_str} to {end_str}")
+            event_list = cached_calendar
+        else:
+            # Get non-recurring events in range
+            non_recurring = session.query(Event).filter(
+                Event.is_recurring == False,
+                Event.start_date >= start_date.date(),
+                Event.start_date <= end_date.date()
+            ).all()
 
-        # Get recurring events that might affect this range
-        recurring = session.query(Event).filter(
-            Event.is_recurring == True,
-            Event.start_date <= end_date.date(),  # Started before or during range
-            (Event.recurring_until == None) | (Event.recurring_until >= start_date.date())  # Ends after or during range
-        ).all()
+            # Get recurring events that might affect this range
+            recurring = session.query(Event).filter(
+                Event.is_recurring == True,
+                Event.start_date <= end_date.date(),  # Started before or during range
+                (Event.recurring_until == None) | (Event.recurring_until >= start_date.date())  # Ends after or during range
+            ).all()
+            
+            print(f"Found {len(non_recurring)} non-recurring events and {len(recurring)} recurring events")
+            
+            # Expand recurring events for the date range
+            expanded_events = []
+            for event in recurring:
+                instances = expand_recurring_events(event, start_date, end_date)
+                expanded_events.extend(instances)
+            
+            # Combine all events
+            all_events = non_recurring + expanded_events
+            all_events.sort(key=lambda x: x.start)
+            
+            event_list = []
+            for event in all_events:
+                event_data = {
+                    'id': event.id,
+                    'title': event.title,
+                    'start': event.start.isoformat(),
+                    'end': event.end.isoformat(),
+                    'rrule': event.rrule,
+                    'color': event.color,
+                    'backgroundColor': event.bg,
+                    'description': event.description,
+                    'venue': event.venue.name if event.venue else None
+                }
+                event_list.append(event_data)
+            
+            # Cache the calendar events
+            set_cached_calendar_events(start_str, end_str, event_list)
         
-        print(f"Found {len(non_recurring)} non-recurring events and {len(recurring)} recurring events")
-        
-        # Expand recurring events for the date range
-        expanded_events = []
-        for event in recurring:
-            instances = expand_recurring_events(event, start_date, end_date)
-            expanded_events.extend(instances)
-        
-        # Combine all events
-        all_events = non_recurring + expanded_events
-        all_events.sort(key=lambda x: x.start)
-        
-        event_list = []
-        for event in all_events:
-            event_data = {
-                'id': event.id,
-                'title': event.title,
-                'start': event.start.isoformat(),
-                'end': event.end.isoformat(),
-                'rrule': event.rrule,
-                'color': event.color,
-                'backgroundColor': event.bg,
-                'description': event.description,
-                'venue': event.venue.name if event.venue else None
-            }
-            event_list.append(event_data)
-        
-        print(f"Returning {len(event_list)} events (including {len(expanded_events)} expanded recurring instances)")
+        elapsed_time = time.time() - start_time
+        print(f"Calendar request completed in {elapsed_time:.3f}s")
+        print(f"Returning {len(event_list)} events")
         return jsonify(event_list)
     finally:
         session.close()
@@ -550,6 +618,9 @@ def add_event():
         ).first()
         print(f"Stored event: {stored_event.title if stored_event else 'Not found'}")
         
+        # Clear cache since we added a new event
+        clear_expanded_events_cache()
+        
         session.close()
         return redirect(url_for('python_view'))
     venues = session.query(Venue).all()
@@ -607,6 +678,10 @@ def edit_event(id):
         event.recurring_until = recurring_until
         
         session.commit()
+        
+        # Clear cache since we modified an event
+        clear_expanded_events_cache()
+        
         session.close()
         return redirect(url_for('home'))
     venues = session.query(Venue).all()
@@ -620,6 +695,10 @@ def delete_event(id):
     event = session.query(Event).get_or_404(id)
     session.delete(event)
     session.commit()
+    
+    # Clear cache since we deleted an event
+    clear_expanded_events_cache()
+    
     session.close()
     return redirect(url_for('python_view'))
 
@@ -680,12 +759,24 @@ def search():
 
 def initialize_fts():
     """Initialize FTS after tables are created"""
-    setup_fts_triggers()
-    check_database_stats()
+    try:
+        print("Initializing FTS...")
+        setup_fts_triggers()
+        check_database_stats()
+        print("FTS initialization completed")
+    except Exception as e:
+        print(f"FTS initialization failed: {e}")
+        print("Continuing without FTS functionality...")
 
 # Only initialize FTS if this file is run directly
 if __name__ == '__main__':
-    initialize_fts()
+    # Initialize FTS in a non-blocking way
+    try:
+        initialize_fts()
+    except Exception as e:
+        print(f"FTS setup failed: {e}")
+        print("Starting app without FTS...")
+    
     app.run(debug=True)
 
 # WSGI application
@@ -718,22 +809,58 @@ def expand_recurring_events(event, start_date, end_date):
         )
         expanded_events.append(instance_event)
     
-    return expanded_events 
+    return expanded_events
 
-def get_events_with_recurring():
-    # Get all events (including old ones that might recur)
-    all_events = session.query(Event).all()
-    
-    # Expand recurring events for the requested date range
-    expanded_events = []
-    for event in all_events:
-        if event.rrule:
-            # Expand this recurring event
-            instances = expand_recurring_events(event, start_date, end_date)
-            expanded_events.extend(instances)
-        else:
-            # Non-recurring event - only include if in range
-            if start_date.date() <= event.start_date <= end_date.date():
-                expanded_events.append(event)
-    
-    return expanded_events 
+def clear_expanded_events_cache():
+    """Clear the expanded events cache - call this when events are modified"""
+    expanded_events_cache.clear()
+    print("Cleared expanded events cache")
+
+def get_cached_expanded_events(date_str):
+    """Get expanded events for a specific date from cache"""
+    return expanded_events_cache.get(date_str)
+
+def set_cached_expanded_events(date_str, events):
+    """Cache expanded events for a specific date"""
+    expanded_events_cache.set(date_str, events)
+    print(f"Cached {len(events)} expanded events for {date_str}")
+
+def get_cached_calendar_events(start_str, end_str):
+    """Get calendar events for a date range from cache"""
+    cache_key = f"calendar_{start_str}_{end_str}"
+    return expanded_events_cache.get(cache_key)
+
+def set_cached_calendar_events(start_str, end_str, events):
+    """Cache calendar events for a date range"""
+    cache_key = f"calendar_{start_str}_{end_str}"
+    expanded_events_cache.set(cache_key, events)
+    print(f"Cached {len(events)} calendar events for {start_str} to {end_str}")
+
+def search_events(query, session):
+    """Search for events using FTS"""
+    try:
+        # Use FTS for full-text search
+        with engine.connect() as conn:
+            # Search in FTS table
+            fts_results = conn.execute(text("""
+                SELECT id FROM event_fts 
+                WHERE event_fts MATCH :query 
+                ORDER BY rank
+                LIMIT 50
+            """), {"query": query}).fetchall()
+            
+            if not fts_results:
+                return []
+            
+            # Get the actual event objects
+            event_ids = [row[0] for row in fts_results]
+            events = session.query(Event).filter(Event.id.in_(event_ids)).all()
+            
+            return events
+    except Exception as e:
+        print(f"Error in search_events: {e}")
+        # Fallback to simple LIKE search
+        return session.query(Event).filter(
+            Event.title.ilike(f'%{query}%') | 
+            Event.description.ilike(f'%{query}%')
+        ).limit(50).all() 
