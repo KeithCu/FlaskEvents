@@ -2,8 +2,7 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, f
 from flask_compress import Compress
 from sqlalchemy import text
 from datetime import datetime
-from dateutil.rrule import rrule
-from cacheout import Cache
+
 import os
 import sys
 import time
@@ -13,14 +12,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from fts import setup_fts_triggers, ensure_fts_setup, search_events
 from database import engine, db_path, Base, SessionLocal, Event, Venue, EventFTS, migrate_database, get_next_event_id
 
-# Global cache configuration - can be adjusted
-CACHE_TTL_HOURS = 1
-CACHE_TTL_SECONDS = CACHE_TTL_HOURS * 3600
-
-# Initialize cache for expanded recurring events (day-based)
-# Key format: f"{date_str}" (e.g., "2025-01-15")
-# Value: list of expanded event objects for that day
-expanded_events_cache = Cache(maxsize=1000, ttl=CACHE_TTL_SECONDS)
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'

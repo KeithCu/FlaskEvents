@@ -1,10 +1,23 @@
+from flask import render_template, request, jsonify, redirect, url_for, flash
+from sqlalchemy import text
+from datetime import datetime
+import time
+from cacheout import Cache
+from dateutil.rrule import rrule
+
+from database import SessionLocal, Event, Venue, get_next_event_id
+from fts import ensure_fts_setup
+
+# Global cache configuration - can be adjusted
+CACHE_TTL_HOURS = 1
+CACHE_TTL_SECONDS = CACHE_TTL_HOURS * 3600
+
+# Initialize cache for expanded recurring events (day-based)
+# Key format: f"{date_str}" (e.g., "2025-01-15")
+# Value: list of expanded event objects for that day
+expanded_events_cache = Cache(maxsize=1000, ttl=CACHE_TTL_SECONDS)
+
 def register_events(app):
-    from flask import render_template, request, jsonify, redirect, url_for, flash
-    from sqlalchemy import text
-    from datetime import datetime
-    import time
-    from database import SessionLocal, Event, Venue, get_next_event_id
-    from fts import ensure_fts_setup
 
     def get_events_in_batches(session, start_date, end_date, batch_size=1000):
         events = []
