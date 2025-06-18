@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
+from flask_compress import Compress
 from sqlalchemy import PrimaryKeyConstraint, create_engine, Column, String, Float, DateTime, Integer, Float, Date, ForeignKey, Text, Index, Sequence, text, Boolean
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 from sqlalchemy.types import PickleType
@@ -24,6 +25,9 @@ expanded_events_cache = Cache(maxsize=1000, ttl=CACHE_TTL_SECONDS)
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Enable response compression
+Compress(app)
 
 Base = declarative_base()
 # Add connection pooling for better performance
@@ -52,6 +56,35 @@ def configure_database():
     with engine.connect() as conn:
         conn.execute(text('PRAGMA page_size = 16384'))
         print("Database page size set to 16KB")
+
+def optimize_database():
+    """Set SQLite optimizations for read-heavy workloads with large database but recent event access"""
+    with engine.connect() as conn:
+        # For read-heavy workloads, DELETE mode is often faster than WAL
+        # WAL adds overhead for infrequent writes and small databases
+        conn.execute(text('PRAGMA journal_mode = DELETE'))
+        
+        # Smaller cache size appropriate for 300MB database
+        # 8MB cache (8192 pages) is sufficient for this size
+        conn.execute(text('PRAGMA cache_size = -8192'))  # 8MB in pages
+        
+        # Enable memory-mapped I/O for better performance
+        # Even with 300MB database, most queries are for recent events
+        conn.execute(text('PRAGMA mmap_size = 67108864'))  # 64MB
+        
+        # Use memory for temp store (faster for small operations)
+        conn.execute(text('PRAGMA temp_store = 2'))
+        
+        # Enable foreign key constraints
+        conn.execute(text('PRAGMA foreign_keys = ON'))
+        
+        # Optimize for read performance
+        conn.execute(text('PRAGMA synchronous = NORMAL'))  # Faster than FULL, still safe
+        
+        # Disable WAL mode features that add overhead for small DBs
+        conn.execute(text('PRAGMA wal_autocheckpoint = 0'))
+        
+        print("Database optimized for read-heavy workload with large database but recent event access")
 
 def check_database_stats():
     with engine.connect() as conn:
@@ -240,6 +273,7 @@ def setup_fts_triggers():
 
 # Configure and initialize database
 configure_database()
+optimize_database()
 Base.metadata.create_all(engine)  # Create all tables first
 
 # Event model
@@ -394,6 +428,29 @@ def day_view(date):
         # If date parsing fails, redirect to home
         return redirect(url_for('home'))
 
+def get_events_in_batches(session, start_date, end_date, batch_size=1000):
+    """Get events in batches to avoid memory issues with large datasets"""
+    events = []
+    offset = 0
+    
+    while True:
+        batch = session.query(Event).filter(
+            Event.start_date >= start_date,
+            Event.start_date <= end_date
+        ).order_by(Event.start_date, Event.start).offset(offset).limit(batch_size).all()
+        
+        if not batch:
+            break
+            
+        events.extend(batch)
+        offset += batch_size
+        
+        # Safety check to prevent infinite loops
+        if len(batch) < batch_size:
+            break
+    
+    return events
+
 # JSON feed for events
 @app.route('/events')
 def get_events():
@@ -467,7 +524,8 @@ def get_events():
             elapsed_time = time.time() - start_time
             print(f"Single day request completed in {elapsed_time:.3f}s")
             
-            return jsonify(event_list)
+            response = jsonify(event_list)
+            return set_cache_headers(response, max_age=300)  # Cache for 5 minutes
         finally:
             session.close()
     
@@ -542,7 +600,8 @@ def get_events():
         elapsed_time = time.time() - start_time
         print(f"Calendar request completed in {elapsed_time:.3f}s")
         print(f"Returning {len(event_list)} events")
-        return jsonify(event_list)
+        response = jsonify(event_list)
+        return set_cache_headers(response, max_age=300)  # Cache for 5 minutes
     finally:
         session.close()
 
@@ -863,4 +922,32 @@ def search_events(query, session):
         return session.query(Event).filter(
             Event.title.ilike(f'%{query}%') | 
             Event.description.ilike(f'%{query}%')
-        ).limit(50).all() 
+        ).limit(50).all()
+
+def set_cache_headers(response, max_age=3600):
+    """Set cache headers for better performance"""
+    response.headers['Cache-Control'] = f'public, max-age={max_age}'
+    response.headers['Vary'] = 'Accept-Encoding'
+    return response 
+
+def monitor_connection_pool():
+    """Monitor connection pool usage"""
+    pool = engine.pool
+    print(f"Connection pool stats:")
+    print(f"  Size: {pool.size()}")
+    print(f"  Checked out: {pool.checkedout()}")
+    print(f"  Overflow: {pool.overflow()}")
+    print(f"  Checked in: {pool.checkedin()}")
+
+@app.errorhandler(500)
+def internal_error(error):
+    """Handle internal server errors gracefully"""
+    print(f"Internal server error: {error}")
+    return jsonify({'error': 'Internal server error'}), 500
+
+@app.errorhandler(404)
+def not_found_error(error):
+    """Handle 404 errors"""
+    return jsonify({'error': 'Not found'}), 404
+
+# Only initialize FTS if this file is run directly 
