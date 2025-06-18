@@ -20,12 +20,12 @@ def setup_fts_triggers():
                 conn.execute(text('DROP TRIGGER IF EXISTS event_au'))
                 conn.execute(text('DROP TRIGGER IF EXISTS event_ad'))
                 
-                # Create FTS5 table with default tokenizer
+                # Create FTS5 table with proper structure
                 conn.execute(text('''
                     CREATE VIRTUAL TABLE event_fts USING fts5(
-                        id, title, description,
-                        content='event',
-                        content_rowid='id'
+                        id UNINDEXED,
+                        title,
+                        description
                     )
                 '''))
                 
@@ -144,7 +144,7 @@ def verify_fts_setup():
                 print(f"Event title: {sample[1]}")
                 print(f"FTS title: {sample[2]}")
             
-            # Test FTS search
+            # Test FTS search with proper syntax
             test_query = "test"
             test_results = conn.execute(text("""
                 SELECT * FROM event_fts 
