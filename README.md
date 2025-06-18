@@ -1,6 +1,6 @@
 # Flask Event Calendar
 
-A simple event calendar application built with Flask and FullCalendar.
+A simple event calendar application built with [Flask](https://flask.palletsprojects.com/) and [FullCalendar](https://fullcalendar.io/).
 
 ## Performance Advantage
 
