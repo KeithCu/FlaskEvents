@@ -4,6 +4,7 @@ from datetime import datetime
 import time
 from cacheout import Cache
 from dateutil.rrule import rrule
+from contextlib import contextmanager
 
 from database import SessionLocal, Event, Venue, get_next_event_id
 from fts import ensure_fts_setup
@@ -21,6 +22,15 @@ day_events_cache = Cache(maxsize=1000, ttl=CACHE_TTL_SECONDS)
 # Key format: f"calendar_{start_str}_{end_str}"
 # Value: list of events for the calendar range
 calendar_events_cache = Cache(maxsize=100, ttl=CACHE_TTL_SECONDS)
+
+@contextmanager
+def get_db_session():
+    """Context manager for database sessions"""
+    session = SessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
 
 def register_events(app):
 
@@ -52,18 +62,18 @@ def register_events(app):
         date = request.args.get('date')
         if date:
             print(f"Single day request for date: {date}")
-            session = SessionLocal()
-            try:
-                target_date = datetime.strptime(date, '%Y-%m-%d').date()
-                
-                # Check cache first for complete day events
-                cached_day_events = get_cached_day_events(date)
-                
-                if cached_day_events is not None:
-                    # Use cached complete day events
-                    print(f"Using cached complete day events for {date}")
-                    event_list = cached_day_events
-                else:
+            
+            target_date = datetime.strptime(date, '%Y-%m-%d').date()
+            
+            # Check cache first for complete day events
+            cached_day_events = get_cached_day_events(date)
+            
+            if cached_day_events is not None:
+                # Use cached complete day events
+                print(f"Using cached complete day events for {date}")
+                event_list = cached_day_events
+            else:
+                with get_db_session() as session:
                     # Get non-recurring events for this specific day
                     day_events = session.query(Event).filter(
                         Event.is_recurring == False,
@@ -111,14 +121,12 @@ def register_events(app):
                 
                 # Cache the complete day events
                 set_cached_day_events(date, event_list)
-                
-                elapsed_time = time.time() - start_time
-                print(f"Single day request completed in {elapsed_time:.3f}s")
-                
-                response = jsonify(event_list)
-                return set_cache_headers(response, max_age=300)  # Cache for 5 minutes
-            finally:
-                session.close()
+            
+            elapsed_time = time.time() - start_time
+            print(f"Single day request completed in {elapsed_time:.3f}s")
+            
+            response = jsonify(event_list)
+            return set_cache_headers(response, max_age=300)  # Cache for 5 minutes
         
         # Calendar widget request (date range)
         start = request.args.get('start')
@@ -137,13 +145,12 @@ def register_events(app):
         end_str = end_date.date().isoformat()
         cached_calendar = get_cached_calendar_events(start_str, end_str)
         
-        session = SessionLocal()
-        try:
-            if cached_calendar is not None:
-                # Use cached calendar events
-                print(f"Using cached calendar events for {start_str} to {end_str}")
-                event_list = cached_calendar
-            else:
+        if cached_calendar is not None:
+            # Use cached calendar events
+            print(f"Using cached calendar events for {start_str} to {end_str}")
+            event_list = cached_calendar
+        else:
+            with get_db_session() as session:
                 # Get non-recurring events in range
                 non_recurring = session.query(Event).filter(
                     Event.is_recurring == False,
@@ -190,14 +197,12 @@ def register_events(app):
                 
                 # Cache the calendar events
                 set_cached_calendar_events(start_str, end_str, event_list)
-            
-            elapsed_time = time.time() - start_time
-            print(f"Calendar request completed in {elapsed_time:.3f}s")
-            print(f"Returning {len(event_list)} events")
-            response = jsonify(event_list)
-            return set_cache_headers(response, max_age=300)  # Cache for 5 minutes
-        finally:
-            session.close()
+        
+        elapsed_time = time.time() - start_time
+        print(f"Calendar request completed in {elapsed_time:.3f}s")
+        print(f"Returning {len(event_list)} events")
+        response = jsonify(event_list)
+        return set_cache_headers(response, max_age=300)  # Cache for 5 minutes
 
     @app.route('/event/new', methods=['GET', 'POST'])
     def add_event():
@@ -205,7 +210,6 @@ def register_events(app):
         print("ADD EVENT ENDPOINT CALLED")
         print("="*50)
         
-        session = SessionLocal()
         if request.method == 'POST':
             print("Processing POST request")
             title = request.form['title']
@@ -222,64 +226,64 @@ def register_events(app):
             is_hybrid = request.form.get('is_hybrid') == 'on'
             url = request.form.get('url', '').strip()
             
-            # Validate venue_id
-            if not venue_id:
-                flash('Please select a venue', 'error')
-                venues = session.query(Venue).all()
-                session.close()
-                return render_template('event_form.html', 
-                                    venues=venues,
-                                    title=title,
-                                    description=description,
-                                    start=start,
-                                    end=end,
-                                    rrule=rrule_str,
-                                    color=color,
-                                    bg=bg,
-                                    is_virtual=is_virtual,
-                                    is_hybrid=is_hybrid,
-                                    url=url)
-            
-            print(f"Creating event: {title} on {start.date()}")
-            
-            # Determine if this is a recurring event
-            is_recurring = bool(rrule_str and rrule_str.strip())
-            recurring_until = None
-            
-            # If recurring, calculate when the series should end (default: 2 years from start)
-            if is_recurring:
-                recurring_until = start.date().replace(year=start.date().year + 2)
-            
-            event = Event(
-                title=title, 
-                description=description, 
-                start=start, 
-                end=end,
-                rrule=rrule_str, 
-                venue_id=venue_id, 
-                color=color, 
-                bg=bg,
-                is_recurring=is_recurring,
-                recurring_until=recurring_until,
-                is_virtual=is_virtual,
-                is_hybrid=is_hybrid,
-                url=url if url else None
-            )
-            
-            # Generate ID for the new event based on its date
-            event.id = get_next_event_id(session, event.start_date)
-            print(f"Generated ID {event.id} for event on {event.start_date}")
-            print(f"Event is recurring: {is_recurring}, until: {recurring_until}")
-            
-            session.add(event)
-            session.commit()
-            
-            # Verify the event was stored
-            stored_event = session.query(Event).filter(
-                Event.start_date == event.start_date,
-                Event.id == event.id
-            ).first()
-            print(f"Stored event: {stored_event.title if stored_event else 'Not found'}")
+            with get_db_session() as session:
+                # Validate venue_id
+                if not venue_id:
+                    flash('Please select a venue', 'error')
+                    venues = session.query(Venue).all()
+                    return render_template('event_form.html', 
+                                        venues=venues,
+                                        title=title,
+                                        description=description,
+                                        start=start,
+                                        end=end,
+                                        rrule=rrule_str,
+                                        color=color,
+                                        bg=bg,
+                                        is_virtual=is_virtual,
+                                        is_hybrid=is_hybrid,
+                                        url=url)
+                
+                print(f"Creating event: {title} on {start.date()}")
+                
+                # Determine if this is a recurring event
+                is_recurring = bool(rrule_str and rrule_str.strip())
+                recurring_until = None
+                
+                # If recurring, calculate when the series should end (default: 2 years from start)
+                if is_recurring:
+                    recurring_until = start.date().replace(year=start.date().year + 2)
+                
+                event = Event(
+                    title=title, 
+                    description=description, 
+                    start=start, 
+                    end=end,
+                    rrule=rrule_str, 
+                    venue_id=venue_id, 
+                    color=color, 
+                    bg=bg,
+                    is_recurring=is_recurring,
+                    recurring_until=recurring_until,
+                    is_virtual=is_virtual,
+                    is_hybrid=is_hybrid,
+                    url=url if url else None
+                )
+                
+                # Generate ID for the new event based on its date
+                event.id = get_next_event_id(session, event.start_date)
+                print(f"Generated ID {event.id} for event on {event.start_date}")
+                print(f"Event is recurring: {is_recurring}, until: {recurring_until}")
+                
+                session.add(event)
+                session.commit()
+                
+                # Verify the event was stored
+                stored_event = session.query(Event).filter(
+                    Event.start_date == event.start_date,
+                    Event.id == event.id
+                ).first()
+                print(f"Stored event: {stored_event.title if stored_event else 'Not found'}")
             
             # Clear cache since we added a new event
             clear_day_events_cache()
@@ -288,16 +292,14 @@ def register_events(app):
             # Ensure FTS is set up and updated
             ensure_fts_setup()
             
-            session.close()
             return redirect(url_for('main.python_view'))
-        venues = session.query(Venue).all()
-        session.close()
-        return render_template('event_form.html', venues=venues)
+        
+        with get_db_session() as session:
+            venues = session.query(Venue).all()
+            return render_template('event_form.html', venues=venues)
 
     @app.route('/event/<int:id>/edit', methods=['GET', 'POST'])
     def edit_event(id):
-        session = SessionLocal()
-        event = session.query(Event).get_or_404(id)
         if request.method == 'POST':
             title = request.form['title']
             description = request.form['description']
@@ -313,48 +315,50 @@ def register_events(app):
             is_hybrid = request.form.get('is_hybrid') == 'on'
             url = request.form.get('url', '').strip()
             
-            # Validate venue_id
-            if not venue_id:
-                flash('Please select a venue', 'error')
-                venues = session.query(Venue).all()
-                session.close()
-                return render_template('event_form.html', 
-                                    event=event,
-                                    venues=venues,
-                                    title=title,
-                                    description=description,
-                                    start=start,
-                                    end=end,
-                                    rrule=rrule_str,
-                                    color=color,
-                                    bg=bg,
-                                    is_virtual=is_virtual,
-                                    is_hybrid=is_hybrid,
-                                    url=url)
-            
-            # Determine if this is a recurring event
-            is_recurring = bool(rrule_str and rrule_str.strip())
-            recurring_until = None
-            
-            # If recurring, calculate when the series should end (default: 2 years from start)
-            if is_recurring:
-                recurring_until = start.date().replace(year=start.date().year + 2)
-            
-            event.title = title
-            event.description = description
-            event.start = start
-            event.end = end
-            event.rrule = rrule_str
-            event.venue_id = venue_id
-            event.color = color
-            event.bg = bg
-            event.is_recurring = is_recurring
-            event.recurring_until = recurring_until
-            event.is_virtual = is_virtual
-            event.is_hybrid = is_hybrid
-            event.url = url if url else None
-            
-            session.commit()
+            with get_db_session() as session:
+                event = session.query(Event).get_or_404(id)
+                
+                # Validate venue_id
+                if not venue_id:
+                    flash('Please select a venue', 'error')
+                    venues = session.query(Venue).all()
+                    return render_template('event_form.html', 
+                                        event=event,
+                                        venues=venues,
+                                        title=title,
+                                        description=description,
+                                        start=start,
+                                        end=end,
+                                        rrule=rrule_str,
+                                        color=color,
+                                        bg=bg,
+                                        is_virtual=is_virtual,
+                                        is_hybrid=is_hybrid,
+                                        url=url)
+                
+                # Determine if this is a recurring event
+                is_recurring = bool(rrule_str and rrule_str.strip())
+                recurring_until = None
+                
+                # If recurring, calculate when the series should end (default: 2 years from start)
+                if is_recurring:
+                    recurring_until = start.date().replace(year=start.date().year + 2)
+                
+                event.title = title
+                event.description = description
+                event.start = start
+                event.end = end
+                event.rrule = rrule_str
+                event.venue_id = venue_id
+                event.color = color
+                event.bg = bg
+                event.is_recurring = is_recurring
+                event.recurring_until = recurring_until
+                event.is_virtual = is_virtual
+                event.is_hybrid = is_hybrid
+                event.url = url if url else None
+                
+                session.commit()
             
             # Clear cache since we modified an event
             clear_day_events_cache()
@@ -363,18 +367,19 @@ def register_events(app):
             # Ensure FTS is set up and updated
             ensure_fts_setup()
             
-            session.close()
             return redirect(url_for('main.home'))
-        venues = session.query(Venue).all()
-        session.close()
-        return render_template('event_form.html', event=event, venues=venues)
+        
+        with get_db_session() as session:
+            event = session.query(Event).get_or_404(id)
+            venues = session.query(Venue).all()
+            return render_template('event_form.html', event=event, venues=venues)
 
     @app.route('/event/<int:id>/delete', methods=['POST'])
     def delete_event(id):
-        session = SessionLocal()
-        event = session.query(Event).get_or_404(id)
-        session.delete(event)
-        session.commit()
+        with get_db_session() as session:
+            event = session.query(Event).get_or_404(id)
+            session.delete(event)
+            session.commit()
         
         # Clear cache since we deleted an event
         clear_day_events_cache()
@@ -383,7 +388,6 @@ def register_events(app):
         # Ensure FTS is set up and updated
         ensure_fts_setup()
         
-        session.close()
         return redirect(url_for('main.python_view'))
 
     def expand_recurring_events(event, start_date, end_date):
