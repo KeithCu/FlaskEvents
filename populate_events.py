@@ -27,7 +27,7 @@ def generate_event_colors():
     color = random.choice(colors)
     return color, color
 
-def populate_events(total_events=100000):
+def populate_events(total_events=50000):
     # Create tables
     Base.metadata.create_all(engine)
     
@@ -135,7 +135,7 @@ def populate_events(total_events=100000):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Populate events in the database')
-    parser.add_argument('--total-events', type=int, default=100000,
-                      help='Total number of events to create (default: 100000)')
+    parser.add_argument('--total-events', type=int, default=50000,
+                      help='Total number of events to create (default: 50000)')
     args = parser.parse_args()
     populate_events(args.total_events) 

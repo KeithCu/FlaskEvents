@@ -63,10 +63,147 @@ def check_database_stats():
         else:
             print("Database is well-optimized, skipping VACUUM")
 
+def verify_fts_setup():
+    """Verify that FTS table and triggers are properly set up"""
+    with engine.connect() as conn:
+        try:
+            # Check if FTS table exists
+            fts_exists = conn.execute(text("""
+                SELECT name FROM sqlite_master 
+                WHERE type='table' AND name='event_fts'
+            """)).scalar()
+            print(f"FTS table exists: {fts_exists is not None}")
+            
+            # Check trigger count
+            trigger_count = conn.execute(text("""
+                SELECT COUNT(*) FROM sqlite_master 
+                WHERE type='trigger' AND name LIKE 'event_a%'
+            """)).scalar()
+            print(f"Number of triggers: {trigger_count}")
+            
+            # Check FTS table content
+            fts_count = conn.execute(text("SELECT COUNT(*) FROM event_fts")).scalar()
+            event_count = conn.execute(text("SELECT COUNT(*) FROM event")).scalar()
+            print(f"FTS table rows: {fts_count}")
+            print(f"Event table rows: {event_count}")
+            
+            if fts_count != event_count:
+                print("WARNING: FTS table count doesn't match event table count!")
+            
+            # Check sample content
+            sample = conn.execute(text("""
+                SELECT e.id, e.title, f.title as fts_title 
+                FROM event e 
+                LEFT JOIN event_fts f ON e.id = f.id 
+                LIMIT 1
+            """)).fetchone()
+            if sample:
+                print(f"Sample content - Event ID: {sample[0]}")
+                print(f"Event title: {sample[1]}")
+                print(f"FTS title: {sample[2]}")
+            
+            # Test FTS search
+            test_query = "test"
+            test_results = conn.execute(text("""
+                SELECT * FROM event_fts 
+                WHERE event_fts MATCH :query 
+                LIMIT 1
+            """), {"query": test_query}).fetchall()
+            print(f"Test search returned {len(test_results)} results")
+            
+        except Exception as e:
+            print(f"Error verifying FTS setup: {e}")
+            raise
+
+def setup_fts_triggers():
+    """Set up triggers to keep FTS table in sync with main table"""
+    with engine.begin() as conn:  # Use begin() for transaction
+        try:
+            # First, check if we can access the event table
+            event_count = conn.execute(text("SELECT COUNT(*) FROM event")).scalar()
+            print(f"Found {event_count} events in main table")
+            
+            # Drop existing FTS table and triggers if they exist
+            conn.execute(text('DROP TABLE IF EXISTS event_fts'))
+            conn.execute(text('DROP TRIGGER IF EXISTS event_ai'))
+            conn.execute(text('DROP TRIGGER IF EXISTS event_au'))
+            conn.execute(text('DROP TRIGGER IF EXISTS event_ad'))
+            
+            # Create FTS5 table with default tokenizer
+            conn.execute(text('''
+                CREATE VIRTUAL TABLE event_fts USING fts5(
+                    id, title, description,
+                    content='event',
+                    content_rowid='id'
+                )
+            '''))
+            
+            # Create triggers for insert
+            conn.execute(text('''
+                CREATE TRIGGER event_ai AFTER INSERT ON event BEGIN
+                    INSERT INTO event_fts(id, title, description)
+                    VALUES (new.id, new.title, new.description);
+                END
+            '''))
+            
+            # Create triggers for update
+            conn.execute(text('''
+                CREATE TRIGGER event_au AFTER UPDATE ON event BEGIN
+                    UPDATE event_fts SET
+                        title = new.title,
+                        description = new.description
+                    WHERE id = old.id;
+                END
+            '''))
+            
+            # Create triggers for delete
+            conn.execute(text('''
+                CREATE TRIGGER event_ad AFTER DELETE ON event BEGIN
+                    DELETE FROM event_fts WHERE id = old.id;
+                END
+            '''))
+            
+            # Populate FTS table with existing data in batches
+            batch_size = 1000
+            offset = 0
+            while True:
+                # Get a batch of events
+                events = conn.execute(text("""
+                    SELECT id, title, description 
+                    FROM event 
+                    LIMIT :limit OFFSET :offset
+                """), {"limit": batch_size, "offset": offset}).fetchall()
+                
+                if not events:
+                    break
+                
+                # Insert batch into FTS
+                for event in events:
+                    conn.execute(text("""
+                        INSERT INTO event_fts(id, title, description)
+                        VALUES (:id, :title, :description)
+                    """), {
+                        "id": event[0],
+                        "title": event[1] or "",
+                        "description": event[2] or ""
+                    })
+                
+                offset += batch_size
+                print(f"Processed {offset} events for FTS")
+            
+            # Verify setup
+            verify_fts_setup()
+            
+            # Optimize FTS table
+            conn.execute(text('INSERT INTO event_fts(event_fts) VALUES("optimize")'))
+            
+        except Exception as e:
+            print(f"Error setting up FTS: {e}")
+            raise
+
 # Configure and initialize database
 configure_database()
-Base.metadata.create_all(engine)
-check_database_stats()
+Base.metadata.create_all(engine)  # Create all tables first
 
 # Event model
 class Event(Base):
@@ -75,6 +212,7 @@ class Event(Base):
     # Composite primary key for clustering by date
     start_date = Column(Date, nullable=False)
     id = Column(Integer, nullable=True)  # Nullable to allow ID generation after object creation
+    
     title = Column(String(100), nullable=False)
     description = Column(Text)
     start = Column(DateTime, nullable=False)
@@ -89,7 +227,7 @@ class Event(Base):
     # Define composite primary key and indexes
     __table_args__ = (
         PrimaryKeyConstraint('start_date', 'id'),
-        Index('idx_start_end', 'start', 'end'),
+        Index('idx_title', 'title'),
     )
     
     def __init__(self, **kwargs):
@@ -97,6 +235,18 @@ class Event(Base):
         # Automatically set start_date from start
         if self.start:
             self.start_date = self.start.date()
+
+# FTS5 virtual table for full-text search
+class EventFTS(Base):
+    __tablename__ = 'event_fts'
+    
+    id = Column(Integer, primary_key=True)
+    title = Column(String)
+    description = Column(Text)
+    
+    __table_args__ = (
+        {'sqlite_autoincrement': True},
+    )
 
 # Venue model
 class Venue(Base):
@@ -407,8 +557,66 @@ def delete_event(id):
 def widget_test():
     return render_template('widget_test.html')
 
+@app.route('/search')
+def search():
+    query = request.args.get('q', '')
+    print(f"Search query received: {query}")
+    
+    if not query:
+        return jsonify([])
+    
+    session = SessionLocal()
+    try:
+        # Debug: Check FTS table contents
+        with engine.connect() as conn:
+            try:
+                fts_count = conn.execute(text("SELECT COUNT(*) FROM event_fts")).scalar()
+                print(f"Total rows in FTS table: {fts_count}")
+                
+                # Debug: Check if the search query works directly
+                test_results = conn.execute(
+                    text("SELECT * FROM event_fts WHERE event_fts MATCH :query"), 
+                    {"query": query}
+                ).fetchall()
+                print(f"Direct FTS query results count: {len(test_results)}")
+                if test_results:
+                    print("Sample result:", test_results[0])
+            except Exception as e:
+                print(f"Error querying FTS table: {e}")
+                return jsonify([])
+        
+        results = search_events(query, session)
+        print(f"Search results count: {len(results)}")
+        
+        event_list = []
+        for event in results:
+            event_data = {
+                'id': event.id,
+                'title': event.title,
+                'start': event.start.isoformat(),
+                'end': event.end.isoformat(),
+                'description': event.description,
+                'venue': event.venue.name if event.venue else None,
+                'color': event.color,
+                'backgroundColor': event.bg
+            }
+            event_list.append(event_data)
+        return jsonify(event_list)
+    except Exception as e:
+        print(f"Error in search: {e}")
+        return jsonify([])
+    finally:
+        session.close()
+
+def initialize_fts():
+    """Initialize FTS after tables are created"""
+    setup_fts_triggers()
+    check_database_stats()
+
+# Only initialize FTS if this file is run directly
 if __name__ == '__main__':
-    app.run(debug=True) 
+    initialize_fts()
+    app.run(debug=True)
 
 # WSGI application
 application = app 

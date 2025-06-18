@@ -12,6 +12,10 @@
             </div>
             <div class="card-body">
                 <div class="events-list-widget">
+                    <!-- Add search box -->
+                    <div class="search-box mb-3">
+                        <input type="text" id="search-input" class="form-control" placeholder="Search events...">
+                    </div>
                     <div class="navigation-buttons">
                         <div id="prev-day">« Previous Day</div>
                         <div id="next-day">Next Day »</div>
@@ -87,6 +91,20 @@
         font-weight: bold;
         color: #333;
     }
+    .search-box {
+        position: relative;
+    }
+    .search-box input {
+        padding-right: 30px;
+    }
+    .search-box::after {
+        content: '🔍';
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+    }
 </style>
 {% endblock %}
 
@@ -157,10 +175,50 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize events list if the element exists
     const eventsListEl = document.getElementById('events-list');
     const selectedDateDisplayEl = document.getElementById('selected-date-display');
+    const searchInput = document.getElementById('search-input');
     if (eventsListEl) {
         const prevDayBtn = document.getElementById('prev-day');
         const nextDayBtn = document.getElementById('next-day');
         let currentDate = initialDate;
+        let searchTimeout;
+
+        // Add search functionality
+        searchInput.addEventListener('input', function(e) {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.trim();
+            
+            if (query.length < 2) {
+                loadEvents(currentDate);
+                return;
+            }
+
+            searchTimeout = setTimeout(() => {
+                // Show loading state
+                eventsListEl.innerHTML = '<div class="loading">Searching...</div>';
+                
+                fetch('/search?q=' + encodeURIComponent(query))
+                .then(response => response.json())
+                .then(events => {
+                    if (events.length === 0) {
+                        eventsListEl.innerHTML = '<p>No events found matching your search.</p>';
+                    } else {
+                        const eventsHtml = events.map(event => `
+                            <div class="event-item">
+                                <div class="event-time">${formatTime(event.start)}</div>
+                                <div class="event-title">${event.title}</div>
+                                ${event.description ? `<div class="event-description">${event.description}</div>` : ''}
+                                ${event.venue ? `<div class="event-venue">at ${event.venue}</div>` : ''}
+                            </div>
+                        `).join('');
+                        eventsListEl.innerHTML = eventsHtml;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error searching events:', error);
+                    eventsListEl.innerHTML = '<p>Error searching events. Please try again.</p>';
+                });
+            }, 300); // Debounce search for 300ms
+        });
 
         function loadEvents(date) {
             const dateStr = date.toISOString().split('T')[0];
