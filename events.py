@@ -12,10 +12,15 @@ from fts import ensure_fts_setup
 CACHE_TTL_HOURS = 1
 CACHE_TTL_SECONDS = CACHE_TTL_HOURS * 3600
 
-# Initialize cache for expanded recurring events (day-based)
+# Initialize cache for complete day events
 # Key format: f"{date_str}" (e.g., "2025-01-15")
-# Value: list of expanded event objects for that day
-expanded_events_cache = Cache(maxsize=1000, ttl=CACHE_TTL_SECONDS)
+# Value: complete list of events (non-recurring + expanded recurring) for that day
+day_events_cache = Cache(maxsize=1000, ttl=CACHE_TTL_SECONDS)
+
+# Initialize cache for calendar range events
+# Key format: f"calendar_{start_str}_{end_str}"
+# Value: list of events for the calendar range
+calendar_events_cache = Cache(maxsize=100, ttl=CACHE_TTL_SECONDS)
 
 def register_events(app):
 
@@ -51,20 +56,20 @@ def register_events(app):
             try:
                 target_date = datetime.strptime(date, '%Y-%m-%d').date()
                 
-                # Check cache first for expanded events
-                cached_expanded = get_cached_expanded_events(date)
+                # Check cache first for complete day events
+                cached_day_events = get_cached_day_events(date)
                 
-                # Get non-recurring events for this specific day
-                day_events = session.query(Event).filter(
-                    Event.is_recurring == False,
-                    Event.start_date == target_date
-                ).order_by(Event.start).all()
-                
-                if cached_expanded is not None:
-                    # Use cached expanded events
-                    print(f"Using cached expanded events for {date}")
-                    expanded_events = cached_expanded
+                if cached_day_events is not None:
+                    # Use cached complete day events
+                    print(f"Using cached complete day events for {date}")
+                    event_list = cached_day_events
                 else:
+                    # Get non-recurring events for this specific day
+                    day_events = session.query(Event).filter(
+                        Event.is_recurring == False,
+                        Event.start_date == target_date
+                    ).order_by(Event.start).all()
+                    
                     # Get recurring events that might occur on this day
                     recurring_events = session.query(Event).filter(
                         Event.is_recurring == True,
@@ -103,6 +108,9 @@ def register_events(app):
                         'url': event.url,
                     }
                     event_list.append(event_data)
+                
+                # Cache the complete day events
+                set_cached_day_events(date, event_list)
                 
                 elapsed_time = time.time() - start_time
                 print(f"Single day request completed in {elapsed_time:.3f}s")
@@ -274,7 +282,8 @@ def register_events(app):
             print(f"Stored event: {stored_event.title if stored_event else 'Not found'}")
             
             # Clear cache since we added a new event
-            clear_expanded_events_cache()
+            clear_day_events_cache()
+            clear_calendar_events_cache()
             
             # Ensure FTS is set up and updated
             ensure_fts_setup()
@@ -348,7 +357,8 @@ def register_events(app):
             session.commit()
             
             # Clear cache since we modified an event
-            clear_expanded_events_cache()
+            clear_day_events_cache()
+            clear_calendar_events_cache()
             
             # Ensure FTS is set up and updated
             ensure_fts_setup()
@@ -367,7 +377,8 @@ def register_events(app):
         session.commit()
         
         # Clear cache since we deleted an event
-        clear_expanded_events_cache()
+        clear_day_events_cache()
+        clear_calendar_events_cache()
         
         # Ensure FTS is set up and updated
         ensure_fts_setup()
@@ -407,36 +418,42 @@ def register_events(app):
         
         return expanded_events
 
-    def clear_expanded_events_cache():
-        """Clear the expanded events cache - call this when events are modified"""
-        if expanded_events_cache:
-            expanded_events_cache.clear()
-            print("Cleared expanded events cache")
+    def clear_day_events_cache():
+        """Clear the complete day events cache - call this when events are modified"""
+        if day_events_cache:
+            day_events_cache.clear()
+            print("Cleared complete day events cache")
 
-    def get_cached_expanded_events(date_str):
-        """Get expanded events for a specific date from cache"""
-        if expanded_events_cache:
-            return expanded_events_cache.get(date_str)
+    def clear_calendar_events_cache():
+        """Clear the calendar events cache - call this when events are modified"""
+        if calendar_events_cache:
+            calendar_events_cache.clear()
+            print("Cleared calendar events cache")
+
+    def get_cached_day_events(date_str):
+        """Get complete day events for a specific date from cache"""
+        if day_events_cache:
+            return day_events_cache.get(date_str)
         return None
 
-    def set_cached_expanded_events(date_str, events):
-        """Cache expanded events for a specific date"""
-        if expanded_events_cache:
-            expanded_events_cache.set(date_str, events)
-            print(f"Cached {len(events)} expanded events for {date_str}")
+    def set_cached_day_events(date_str, events):
+        """Cache complete day events for a specific date"""
+        if day_events_cache:
+            day_events_cache.set(date_str, events)
+            print(f"Cached {len(events)} complete day events for {date_str}")
 
     def get_cached_calendar_events(start_str, end_str):
         """Get calendar events for a date range from cache"""
-        if expanded_events_cache:
+        if calendar_events_cache:
             cache_key = f"calendar_{start_str}_{end_str}"
-            return expanded_events_cache.get(cache_key)
+            return calendar_events_cache.get(cache_key)
         return None
 
     def set_cached_calendar_events(start_str, end_str, events):
         """Cache calendar events for a date range"""
-        if expanded_events_cache:
+        if calendar_events_cache:
             cache_key = f"calendar_{start_str}_{end_str}"
-            expanded_events_cache.set(cache_key, events)
+            calendar_events_cache.set(cache_key, events)
             print(f"Cached {len(events)} calendar events for {start_str} to {end_str}")
 
     def set_cache_headers(response, max_age=3600):
