@@ -125,6 +125,19 @@
     .event-item .btn i {
         margin-right: 0.25rem;
     }
+    
+    /* Calendar selected date highlighting */
+    .fc-day.selected-date {
+        background-color: rgba(0, 123, 255, 0.3) !important;
+        color: inherit !important;
+    }
+    .fc-day.selected-date .fc-day-number {
+        color: inherit !important;
+        font-weight: bold !important;
+    }
+    .fc-day.selected-date:hover {
+        background-color: rgba(0, 86, 179, 0.4) !important;
+    }
 </style>
 {% endblock %}
 
@@ -169,8 +182,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize calendar if the element exists
     const calendarEl = document.getElementById('events-calendar');
+    let calendar; // Declare calendar variable in broader scope
     if (calendarEl) {
-        const calendar = new FullCalendar.Calendar(calendarEl, {
+        calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             initialDate: initialDate,
             headerToolbar: {
@@ -180,7 +194,8 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             dateClick: function(info) {
                 // Update the events list for the clicked date
-                loadEvents(new Date(info.dateStr));
+                currentDate = new Date(info.dateStr);
+                loadEvents(currentDate);
             },
             height: 'auto',
             dayMaxEvents: false,
@@ -257,6 +272,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Update the date display
             selectedDateDisplayEl.textContent = formatDateForDisplay(dateStr);
             
+            // Highlight the selected date in calendar
+            highlightSelectedDate(date);
+            
             // Create a placeholder with the same height as current content
             const placeholder = document.createElement('div');
             placeholder.style.height = eventsListEl.offsetHeight + 'px';
@@ -317,14 +335,41 @@ document.addEventListener('DOMContentLoaded', function() {
             return `${dayOfWeek} (${month}-${day}-${year})`;
         }
 
+        function highlightSelectedDate(date) {
+            // Remove previous selection
+            const prevSelected = document.querySelector('.fc-day.selected-date');
+            if (prevSelected) {
+                prevSelected.classList.remove('selected-date');
+            }
+            
+            // Add selection to current date
+            const dateStr = date.toISOString().split('T')[0];
+            const dayElement = document.querySelector(`[data-date="${dateStr}"]`);
+            if (dayElement) {
+                dayElement.classList.add('selected-date');
+            }
+        }
+
         function goToPreviousDay() {
             currentDate.setDate(currentDate.getDate() - 1);
             loadEvents(currentDate);
+            // Update calendar to show the new date
+            if (calendar) {
+                calendar.gotoDate(currentDate);
+                // Highlight the selected date after a short delay to ensure calendar is rendered
+                setTimeout(() => highlightSelectedDate(currentDate), 100);
+            }
         }
 
         function goToNextDay() {
             currentDate.setDate(currentDate.getDate() + 1);
             loadEvents(currentDate);
+            // Update calendar to show the new date
+            if (calendar) {
+                calendar.gotoDate(currentDate);
+                // Highlight the selected date after a short delay to ensure calendar is rendered
+                setTimeout(() => highlightSelectedDate(currentDate), 100);
+            }
         }
 
         // Add event listeners
