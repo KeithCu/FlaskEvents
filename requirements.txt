@@ -6,3 +6,5 @@ Flask-Compress
 pytz
 PyYAML
 Flask-CORS
+Flask-Assets
+cssmin

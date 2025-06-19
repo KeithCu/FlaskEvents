@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 from flask_compress import Compress
 from flask_cors import CORS
+from flask_assets import Environment, Bundle
 from sqlalchemy import text
 from datetime import datetime
 from sqlalchemy.orm import joinedload
@@ -66,6 +67,29 @@ def get_local_now():
 
 # Enable response compression
 Compress(app)
+
+# Initialize Flask-Assets
+assets = Environment(app)
+
+# Configure asset bundles
+css_bundle = Bundle(
+    'css/base.css',
+    'css/calendar.css',
+    'css/forms.css',
+    'css/widgets.css',
+    filters='cssmin',
+    output='gen/packed.css'
+)
+assets.register('css_all', css_bundle)
+
+# Future JavaScript bundle (for when you add JS files)
+# js_bundle = Bundle(
+#     'js/calendar.js',
+#     'js/forms.js',
+#     filters='jsmin',
+#     output='gen/packed.js'
+# )
+# assets.register('js_all', js_bundle)
 
 # Home route (widget test page)
 @app.route('/')
