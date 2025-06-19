@@ -55,6 +55,52 @@ python app.py
 
 4. Open your browser and navigate to `http://localhost:5000`
 
+## HTML Templates
+
+The application uses several HTML templates to provide different views and functionality:
+
+### Core Templates
+
+- **`base.html`** - The main layout template that all other templates extend. It includes:
+  - Bootstrap CSS and JavaScript for styling
+  - FullCalendar library for calendar functionality
+  - Navigation bar with links to New Event, Venues, and Cache Management
+  - Flash message display system
+  - Responsive container layout
+
+- **`home.html`** - The original home page template (available at `/python`) that displays:
+  - Today's events in a simple list format
+  - Basic navigation buttons to move between days
+  - A mini calendar widget for date selection
+  - Responsive layout with events list on the left and calendar on the right
+
+- **`widget_test.html`** - The main application interface used for both home page (`/`) and day view (`/day/<date>`). This template provides:
+  - Events list widget with search functionality
+  - Calendar widget with date selection
+  - Real-time event loading and filtering
+  - Virtual and hybrid event badges
+  - Interactive navigation between dates
+  - Card-based layout with clear sections
+  - Advanced features like search across all events
+
+### Form Templates
+
+- **`event_form.html`** - Form for creating and editing events
+- **`venue_form.html`** - Form for creating and editing venues
+
+### Management Templates
+
+- **`venues.html`** - Displays a list of all venues
+- **`cache_management.html`** - Interface for managing the application's cache system
+
+### Month View Template
+
+- **`month.html`** - Monthly calendar view (referenced in the project but not shown in the attached files)
+
+Each template extends `base.html` and provides specific functionality while maintaining consistent styling and navigation throughout the application.
+
+**Note**: The main application now uses `widget_test.html` for both the home page and day views, providing a consistent, feature-rich experience. The original `home.html` template is still available at `/python` for reference, and `day.html` is no longer needed.
+
 ## Usage
 
 - Click on any date to view the daily view
