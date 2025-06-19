@@ -1,9 +1,10 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 from flask_compress import Compress
+from flask_cors import CORS
 from sqlalchemy import text
 from datetime import datetime
 from sqlalchemy.orm import joinedload
-
+import yaml
 import os
 import sys
 import time
@@ -15,14 +16,42 @@ from fts import setup_fts_triggers, ensure_fts_setup, search_events
 from database import engine, db_path, Base, SessionLocal, Event, Venue, EventFTS, migrate_database, get_next_event_id
 
 
+def load_config():
+    """Load configuration from config.yaml file"""
+    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.yaml')
+    try:
+        with open(config_path, 'r') as file:
+            return yaml.safe_load(file)
+    except FileNotFoundError:
+        print(f"Warning: config.yaml not found at {config_path}, using default configuration")
+        return {
+            'database': {'path': 'events.db'},
+            'timezone': {'local': 'America/New_York'},
+            'cors': {'enabled': True, 'origins': ['https://thedetroitilove.com']}
+        }
+    except yaml.YAMLError as e:
+        print(f"Error parsing config.yaml: {e}")
+        sys.exit(1)
+
+
+# Load configuration
+config = load_config()
+
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{config["database"]["path"]}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Enable CORS for WordPress integration using config
+if config['cors']['enabled']:
+    CORS(app, 
+         origins=config['cors']['origins'],
+         methods=config['cors'].get('methods', ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']),
+         allow_headers=config['cors'].get('allow_headers', ['Content-Type', 'Authorization']))
 
 # Set timezone to local timezone instead of UTC
 # You can change this to your specific timezone if needed
 # Common options: 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles'
-LOCAL_TIMEZONE = pytz.timezone('America/New_York')  # Adjust this to your timezone
+LOCAL_TIMEZONE = pytz.timezone(config['timezone']['local'])  # Adjust this to your timezone
 
 def get_local_now():
     """Get current datetime in local timezone"""

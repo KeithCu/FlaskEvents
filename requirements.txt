@@ -4,3 +4,5 @@ python-dateutil
 cacheout
 Flask-Compress
 pytz
+PyYAML
+Flask-CORS

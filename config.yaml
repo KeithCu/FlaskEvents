@@ -1,0 +1,19 @@
+# Flask Events Calendar Configuration
+
+# Database Settings
+database:
+  path: "events.db"
+  echo: false
+
+# Timezone Settings
+timezone:
+  local: "America/New_York"
+
+# CORS Settings for WordPress Integration
+cors:
+  enabled: true
+  origins:
+    - "https://thedetroitilove.com"
+    - "http://localhost:5000"  # For local development
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+  allow_headers: ["Content-Type", "Authorization"]
