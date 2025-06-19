@@ -7,6 +7,7 @@ from dateutil.rrule import rrule
 from contextlib import contextmanager
 from sqlalchemy.orm import joinedload
 import os
+import pytz
 
 from database import SessionLocal, Event, Venue, get_next_event_id
 from fts import ensure_fts_setup
@@ -25,6 +26,9 @@ day_events_cache = Cache(maxsize=1000, ttl=CACHE_TTL_SECONDS)
 # Value: list of events for the calendar range
 calendar_events_cache = Cache(maxsize=100, ttl=CACHE_TTL_SECONDS)
 
+# Set timezone to local timezone instead of UTC
+LOCAL_TIMEZONE = pytz.timezone('America/New_York')  # Adjust this to your timezone
+
 @contextmanager
 def get_db_session():
     """Context manager for database sessions"""
@@ -37,7 +41,7 @@ def get_db_session():
 def get_cached_day_events(date_str):
     """Get complete day events for a specific date from cache"""
     print(f"get_cached_day_events: day_events_cache id = {id(day_events_cache)}")
-    if day_events_cache:
+    if day_events_cache is not None:
         cached = day_events_cache.get(date_str)
         print(f"Cache lookup for {date_str}: {'HIT' if cached is not None else 'MISS'}")
         return cached
@@ -48,7 +52,7 @@ def set_cached_day_events(date_str, events):
     """Cache complete day events for a specific date"""
     print(f"set_cached_day_events: day_events_cache id = {id(day_events_cache)}")
     print(f"set_cached_day_events called with date_str={date_str}, events_count={len(events)}")
-    if day_events_cache:
+    if day_events_cache is not None:
         day_events_cache.set(date_str, events)
         print(f"Cached {len(events)} complete day events for {date_str}")
     else:
@@ -56,21 +60,21 @@ def set_cached_day_events(date_str, events):
 
 def get_cached_calendar_events(start_str, end_str):
     """Get calendar events for a date range from cache"""
-    if calendar_events_cache:
+    if calendar_events_cache is not None:
         cache_key = f"calendar_{start_str}_{end_str}"
         return calendar_events_cache.get(cache_key)
     return None
 
 def set_cached_calendar_events(start_str, end_str, events):
     """Cache calendar events for a date range"""
-    if calendar_events_cache:
+    if calendar_events_cache is not None:
         cache_key = f"calendar_{start_str}_{end_str}"
         calendar_events_cache.set(cache_key, events)
         print(f"Cached {len(events)} calendar events for {start_str} to {end_str}")
 
 def clear_day_events_cache():
     """Clear the complete day events cache - call this when events are modified"""
-    if day_events_cache:
+    if day_events_cache is not None:
         day_events_cache.clear()
         print("Cleared complete day events cache")
     else:
@@ -78,7 +82,7 @@ def clear_day_events_cache():
 
 def clear_calendar_events_cache():
     """Clear the calendar events cache - call this when events are modified"""
-    if calendar_events_cache:
+    if calendar_events_cache is not None:
         calendar_events_cache.clear()
         print("Cleared calendar events cache")
     else:
@@ -106,17 +110,10 @@ def register_events(app):
     def get_events():
         start_time = time.time()
         
-        print("="*50)
-        print("EVENTS ENDPOINT CALLED")
-        print("="*50)
-        print(f"Day events cache initialized: {day_events_cache is not None}")
-        print(f"Calendar events cache initialized: {calendar_events_cache is not None}")
-        print(f"Main function: day_events_cache id = {id(day_events_cache)}")
-        
         # Check if this is a single-day request (from events list widget)
         date = request.args.get('date')
         if date:
-            print(f"Single day request for date: {date}")
+            print(f"Events request for date: {date}")
             
             target_date = datetime.strptime(date, '%Y-%m-%d').date()
             
@@ -125,7 +122,7 @@ def register_events(app):
             
             if cached_day_events is not None:
                 # Use cached complete day events
-                print(f"Using cached complete day events for {date}")
+                print(f"Cache HIT for {date}: {len(cached_day_events)} events")
                 event_list = cached_day_events
             else:
                 with get_db_session() as session:
@@ -157,7 +154,7 @@ def register_events(app):
                 all_events = day_events + expanded_events
                 all_events.sort(key=lambda x: x.start)
                 
-                print(f"Found {len(day_events)} non-recurring events and {len(expanded_events)} recurring instances for {date}")
+                print(f"Cache MISS for {date}: found {len(day_events)} non-recurring + {len(expanded_events)} recurring = {len(all_events)} total events")
                 
                 event_list = []
                 for event in all_events:
@@ -174,13 +171,8 @@ def register_events(app):
                     }
                     event_list.append(event_data)
                 
-                print(f"About to cache {len(event_list)} events for date {date}")
-                try:
-                    # Cache the complete day events
-                    set_cached_day_events(date, event_list)
-                    print(f"Successfully cached events for {date}")
-                except Exception as e:
-                    print(f"Error caching events for {date}: {e}")
+                # Cache the complete day events
+                set_cached_day_events(date, event_list)
             
             elapsed_time = time.time() - start_time
             print(f"Single day request completed in {elapsed_time:.3f}s")
@@ -192,13 +184,11 @@ def register_events(app):
         start = request.args.get('start')
         end = request.args.get('end')
         
-        print(f"Calendar request for events between {start} and {end}")
+        print(f"Calendar request: {start} to {end}")
         
         # Convert string dates to datetime objects
         start_date = datetime.fromisoformat(start.replace('Z', '+00:00'))
         end_date = datetime.fromisoformat(end.replace('Z', '+00:00'))
-        
-        print(f"Converted dates - start: {start_date.date()}, end: {end_date.date()}")
         
         # Check cache first for calendar range
         start_str = start_date.date().isoformat()
@@ -207,7 +197,7 @@ def register_events(app):
         
         if cached_calendar is not None:
             # Use cached calendar events
-            print(f"Using cached calendar events for {start_str} to {end_str}")
+            print(f"Calendar cache HIT: {len(cached_calendar)} events")
             event_list = cached_calendar
         else:
             with get_db_session() as session:
@@ -225,8 +215,6 @@ def register_events(app):
                     (Event.recurring_until == None) | (Event.recurring_until >= start_date.date())  # Ends after or during range
                 ).options(joinedload(Event.venue)).all()
                 
-                print(f"Found {len(non_recurring)} non-recurring events and {len(recurring)} recurring events")
-                
                 # Expand recurring events for the date range
                 expanded_events = []
                 for event in recurring:
@@ -236,6 +224,8 @@ def register_events(app):
                 # Combine all events
                 all_events = non_recurring + expanded_events
                 all_events.sort(key=lambda x: x.start)
+                
+                print(f"Calendar cache MISS: {len(non_recurring)} non-recurring + {len(expanded_events)} recurring = {len(all_events)} total events")
                 
                 event_list = []
                 for event in all_events:
@@ -260,7 +250,7 @@ def register_events(app):
         
         elapsed_time = time.time() - start_time
         print(f"Calendar request completed in {elapsed_time:.3f}s")
-        print(f"Returning {len(event_list)} events")
+        
         response = jsonify(event_list)
         return set_cache_headers(response, max_age=300)  # Cache for 5 minutes
 
@@ -507,4 +497,9 @@ def register_events(app):
         response.headers['Cache-Control'] = f'public, max-age={max_age}'
         response.headers['Vary'] = 'Accept-Encoding'
         return response
+
+    def get_local_now():
+        """Get current datetime in local timezone"""
+        utc_now = datetime.now(pytz.UTC)
+        return utc_now.astimezone(LOCAL_TIMEZONE)
 

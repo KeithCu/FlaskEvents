@@ -201,6 +201,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     miniCalendar.select(currentDate); // Visually select the current date on the mini-calendar
 
+    // Initialize the page display
+    updateCurrentPageDisplay(currentDate);
+
     function navigateToDate(dateStr) {
         // Update URL and reload page for the new date.
         // This uses the existing Flask route '/day/<date>'
@@ -215,6 +218,32 @@ document.addEventListener('DOMContentLoaded', function() {
         // but ensure it's selected if the page was navigated to by other means.
         miniCalendar.gotoDate(currentDate); // Ensure the calendar view shifts if month changes
         miniCalendar.select(currentDate);
+    }
+
+    function fetchEventsForDay(dateStr) {
+        fetch('/events?date=' + dateStr)
+        .then(response => response.json())
+        .then(events => {
+            if (events.length === 0) {
+                eventListEl.innerHTML = '<p>No events scheduled for this day.</p>';
+                return;
+            }
+
+            const eventsHtml = events.map(event => `
+                <div class="event-item">
+                    <div class="event-time">${formatTime(event.start)}</div>
+                    <div class="event-title">${event.title}</div>
+                    ${event.description ? `<div class="event-description">${event.description}</div>` : ''}
+                    ${event.venue ? `<div class="event-venue">at ${event.venue}</div>` : ''}
+                </div>
+            `).join('');
+
+            eventListEl.innerHTML = eventsHtml;
+        })
+        .catch(error => {
+            console.error('Error loading events:', error);
+            eventListEl.innerHTML = '<p>Error loading events. Please try again.</p>';
+        });
     }
 
     document.getElementById('prev-day').addEventListener('click', function() {
@@ -238,32 +267,12 @@ document.addEventListener('DOMContentLoaded', function() {
         return `${dayOfWeek} (${month}-${day}-${year})`;
     }
 
-    function loadEvents(date) {
-        const dateStr = date.toISOString().split('T')[0];
-        eventsListEl.innerHTML = '';  // Remove loading message
-
-        fetch('/events?date=' + dateStr)
-        .then(response => response.json())
-        .then(events => {
-            if (events.length === 0) {
-                eventsListEl.innerHTML = '<p>No events scheduled for this day.</p>';
-                return;
-            }
-
-            const eventsHtml = events.map(event => `
-                <div class="event-item">
-                    <div class="event-time">${formatTime(event.start)}</div>
-                    <div class="event-title">${event.title}</div>
-                    ${event.description ? `<div class="event-description">${event.description}</div>` : ''}
-                    ${event.venue ? `<div class="event-venue">at ${event.venue}</div>` : ''}
-                </div>
-            `).join('');
-
-            eventsListEl.innerHTML = eventsHtml;
-        })
-        .catch(error => {
-            console.error('Error loading events:', error);
-            eventsListEl.innerHTML = '<p>Error loading events. Please try again.</p>';
+    function formatTime(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit',
+            hour12: true 
         });
     }
 });

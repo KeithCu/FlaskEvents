@@ -7,6 +7,7 @@ from sqlalchemy.orm import joinedload
 import os
 import sys
 import time
+import pytz
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -18,18 +19,30 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# Set timezone to local timezone instead of UTC
+# You can change this to your specific timezone if needed
+# Common options: 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles'
+LOCAL_TIMEZONE = pytz.timezone('America/New_York')  # Adjust this to your timezone
+
+def get_local_now():
+    """Get current datetime in local timezone"""
+    utc_now = datetime.now(pytz.UTC)
+    return utc_now.astimezone(LOCAL_TIMEZONE)
+
 # Enable response compression
 Compress(app)
 
 # Home route (widget test page)
 @app.route('/')
 def home():
-    return render_template('widget_test.html')
+    now = get_local_now()
+    today_str = now.strftime('%Y-%m-%d')
+    return render_template('widget_test.html', date=today_str)
 
 # Python route (original home page)
 @app.route('/python')
 def python_view():
-    now = datetime.now()
+    now = get_local_now()
     session = SessionLocal()
     try:
         # Get today's events using start_date for better performance
@@ -76,6 +89,7 @@ def day_view(date):
                                  year=date_obj.year, 
                                  month=date_obj.month, 
                                  day=date_obj.day,
+                                 date=date,  # Pass the original date string
                                  events=day_events)
         finally:
             session.close()
