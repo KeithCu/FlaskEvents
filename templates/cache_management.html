@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+
+{% block title %}Cache Management{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Cache Management & Testing</h1>
+    
+    <!-- Cache Statistics Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Cache Statistics</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Day Events Cache</h6>
+                    <div id="day-cache-stats">
+                        <p>Loading...</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h6>Calendar Events Cache</h6>
+                    <div id="calendar-cache-stats">
+                        <p>Loading...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-3">
+                <button class="btn btn-primary" onclick="refreshStats()">Refresh Statistics</button>
+                <button class="btn btn-danger" onclick="clearAllCaches()">Clear All Caches</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cache Testing Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Cache Testing</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Test Cache Functionality</h6>
+                    <div class="mb-3">
+                        <label for="testKey" class="form-label">Test Key:</label>
+                        <input type="text" class="form-control" id="testKey" value="test_key_123">
+                    </div>
+                    <div class="mb-3">
+                        <label for="testValue" class="form-label">Test Value (JSON):</label>
+                        <textarea class="form-control" id="testValue" rows="3">["test_value_1", "test_value_2"]</textarea>
+                    </div>
+                    <button class="btn btn-success" onclick="testCache()">Test Cache</button>
+                    <div id="testResult" class="mt-3"></div>
+                </div>
+                
+                <div class="col-md-6">
+                    <h6>Set Cache Value</h6>
+                    <div class="mb-3">
+                        <label for="setKey" class="form-label">Key:</label>
+                        <input type="text" class="form-control" id="setKey" placeholder="Enter cache key">
+                    </div>
+                    <div class="mb-3">
+                        <label for="setValue" class="form-label">Value (JSON):</label>
+                        <textarea class="form-control" id="setValue" rows="3" placeholder='{"example": "data"}'></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cacheType" class="form-label">Cache Type:</label>
+                        <select class="form-control" id="cacheType">
+                            <option value="day">Day Events Cache</option>
+                            <option value="calendar">Calendar Events Cache</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-warning" onclick="setCacheValue()">Set Cache Value</button>
+                    <div id="setResult" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cache Lookup Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Cache Lookup</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="lookupKey" class="form-label">Lookup Key:</label>
+                        <input type="text" class="form-control" id="lookupKey" placeholder="Enter key to lookup">
+                    </div>
+                    <button class="btn btn-info" onclick="lookupCache()">Lookup Cache</button>
+                </div>
+                <div class="col-md-6">
+                    <div id="lookupResult"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cache Keys Display -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Recent Cache Keys</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Day Events Cache Keys</h6>
+                    <div id="day-cache-keys">
+                        <p>Loading...</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h6>Calendar Events Cache Keys</h6>
+                    <div id="calendar-cache-keys">
+                        <p>Loading...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Load cache statistics on page load
+document.addEventListener('DOMContentLoaded', function() {
+    refreshStats();
+});
+
+function refreshStats() {
+    fetch('/api/cache/stats')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showError('day-cache-stats', data.error);
+                showError('calendar-cache-stats', data.error);
+                return;
+            }
+            
+            // Update day cache stats
+            const dayStats = data.day_events_cache;
+            document.getElementById('day-cache-stats').innerHTML = `
+                <p><strong>Max Size:</strong> ${dayStats.maxsize}</p>
+                <p><strong>TTL:</strong> ${dayStats.ttl} seconds</p>
+                <p><strong>Current Size:</strong> ${dayStats.size}</p>
+                <p><strong>Usage:</strong> ${((dayStats.size / dayStats.maxsize) * 100).toFixed(1)}%</p>
+            `;
+            
+            // Update calendar cache stats
+            const calendarStats = data.calendar_events_cache;
+            document.getElementById('calendar-cache-stats').innerHTML = `
+                <p><strong>Max Size:</strong> ${calendarStats.maxsize}</p>
+                <p><strong>TTL:</strong> ${calendarStats.ttl} seconds</p>
+                <p><strong>Current Size:</strong> ${calendarStats.size}</p>
+                <p><strong>Usage:</strong> ${((calendarStats.size / calendarStats.maxsize) * 100).toFixed(1)}%</p>
+            `;
+            
+            // Update cache keys
+            updateCacheKeys('day-cache-keys', dayStats.keys);
+            updateCacheKeys('calendar-cache-keys', calendarStats.keys);
+        })
+        .catch(error => {
+            showError('day-cache-stats', 'Failed to load cache statistics');
+            showError('calendar-cache-stats', 'Failed to load cache statistics');
+            console.error('Error:', error);
+        });
+}
+
+function updateCacheKeys(elementId, keys) {
+    const element = document.getElementById(elementId);
+    if (keys && keys.length > 0) {
+        const keysList = keys.map(key => `<li class="list-group-item">${key}</li>`).join('');
+        element.innerHTML = `<ul class="list-group">${keysList}</ul>`;
+    } else {
+        element.innerHTML = '<p class="text-muted">No keys found</p>';
+    }
+}
+
+function clearAllCaches() {
+    if (!confirm('Are you sure you want to clear all caches? This will remove all cached data.')) {
+        return;
+    }
+    
+    fetch('/api/cache/clear', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('All caches cleared successfully!');
+            refreshStats();
+        } else {
+            alert('Error clearing caches: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error clearing caches: ' + error);
+        console.error('Error:', error);
+    });
+}
+
+function testCache() {
+    const key = document.getElementById('testKey').value;
+    const value = document.getElementById('testValue').value;
+    
+    try {
+        const parsedValue = JSON.parse(value);
+        
+        fetch('/api/cache/test', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                key: key,
+                value: parsedValue
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const resultDiv = document.getElementById('testResult');
+            if (data.success) {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-success">
+                        <strong>Test Successful!</strong><br>
+                        Key: ${data.test_key}<br>
+                        Value: ${JSON.stringify(data.test_value)}<br>
+                        Retrieved: ${JSON.stringify(data.retrieved_value)}<br>
+                        Cache Hit: ${data.cache_hit ? 'Yes' : 'No'}
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+            }
+        })
+        .catch(error => {
+            document.getElementById('testResult').innerHTML = `<div class="alert alert-danger">Error: ${error}</div>`;
+            console.error('Error:', error);
+        });
+    } catch (e) {
+        document.getElementById('testResult').innerHTML = `<div class="alert alert-danger">Invalid JSON in value field</div>`;
+    }
+}
+
+function setCacheValue() {
+    const key = document.getElementById('setKey').value;
+    const value = document.getElementById('setValue').value;
+    const cacheType = document.getElementById('cacheType').value;
+    
+    if (!key || !value) {
+        alert('Please enter both key and value');
+        return;
+    }
+    
+    try {
+        const parsedValue = JSON.parse(value);
+        
+        fetch('/api/cache/set', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                key: key,
+                value: parsedValue,
+                cache_type: cacheType
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const resultDiv = document.getElementById('setResult');
+            if (data.success) {
+                resultDiv.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+                refreshStats();
+            } else {
+                resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+            }
+        })
+        .catch(error => {
+            document.getElementById('setResult').innerHTML = `<div class="alert alert-danger">Error: ${error}</div>`;
+            console.error('Error:', error);
+        });
+    } catch (e) {
+        document.getElementById('setResult').innerHTML = `<div class="alert alert-danger">Invalid JSON in value field</div>`;
+    }
+}
+
+function lookupCache() {
+    const key = document.getElementById('lookupKey').value;
+    
+    if (!key) {
+        alert('Please enter a key to lookup');
+        return;
+    }
+    
+    fetch(`/api/cache/get/${encodeURIComponent(key)}`)
+        .then(response => response.json())
+        .then(data => {
+            const resultDiv = document.getElementById('lookupResult');
+            if (data.error) {
+                resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+                return;
+            }
+            
+            let resultHtml = '<div class="alert alert-info">';
+            resultHtml += `<strong>Key:</strong> ${data.key}<br>`;
+            resultHtml += `<strong>Found in Day Cache:</strong> ${data.found_in_day ? 'Yes' : 'No'}<br>`;
+            resultHtml += `<strong>Found in Calendar Cache:</strong> ${data.found_in_calendar ? 'Yes' : 'No'}<br>`;
+            
+            if (data.day_events_cache) {
+                resultHtml += `<strong>Day Cache Value:</strong><br><pre>${JSON.stringify(data.day_events_cache, null, 2)}</pre>`;
+            }
+            
+            if (data.calendar_events_cache) {
+                resultHtml += `<strong>Calendar Cache Value:</strong><br><pre>${JSON.stringify(data.calendar_events_cache, null, 2)}</pre>`;
+            }
+            
+            if (!data.found_in_day && !data.found_in_calendar) {
+                resultHtml += '<strong>Key not found in any cache</strong>';
+            }
+            
+            resultHtml += '</div>';
+            resultDiv.innerHTML = resultHtml;
+        })
+        .catch(error => {
+            document.getElementById('lookupResult').innerHTML = `<div class="alert alert-danger">Error: ${error}</div>`;
+            console.error('Error:', error);
+        });
+}
+
+function showError(elementId, message) {
+    document.getElementById(elementId).innerHTML = `<p class="text-danger">${message}</p>`;
+}
+</script>
+{% endblock %} 
