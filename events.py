@@ -34,6 +34,54 @@ def get_db_session():
     finally:
         session.close()
 
+def get_cached_day_events(date_str):
+    """Get complete day events for a specific date from cache"""
+    if day_events_cache:
+        cached = day_events_cache.get(date_str)
+        print(f"Cache lookup for {date_str}: {'HIT' if cached is not None else 'MISS'}")
+        return cached
+    print(f"Cache lookup for {date_str}: NO CACHE (cache not initialized)")
+    return None
+
+def set_cached_day_events(date_str, events):
+    """Cache complete day events for a specific date"""
+    print(f"set_cached_day_events called with date_str={date_str}, events_count={len(events)}")
+    if day_events_cache:
+        day_events_cache.set(date_str, events)
+        print(f"Cached {len(events)} complete day events for {date_str}")
+    else:
+        print(f"Failed to cache events for {date_str}: cache not initialized")
+
+def get_cached_calendar_events(start_str, end_str):
+    """Get calendar events for a date range from cache"""
+    if calendar_events_cache:
+        cache_key = f"calendar_{start_str}_{end_str}"
+        return calendar_events_cache.get(cache_key)
+    return None
+
+def set_cached_calendar_events(start_str, end_str, events):
+    """Cache calendar events for a date range"""
+    if calendar_events_cache:
+        cache_key = f"calendar_{start_str}_{end_str}"
+        calendar_events_cache.set(cache_key, events)
+        print(f"Cached {len(events)} calendar events for {start_str} to {end_str}")
+
+def clear_day_events_cache():
+    """Clear the complete day events cache - call this when events are modified"""
+    if day_events_cache:
+        day_events_cache.clear()
+        print("Cleared complete day events cache")
+    else:
+        print("Attempted to clear cache but cache not initialized")
+
+def clear_calendar_events_cache():
+    """Clear the calendar events cache - call this when events are modified"""
+    if calendar_events_cache:
+        calendar_events_cache.clear()
+        print("Cleared calendar events cache")
+    else:
+        print("Attempted to clear calendar cache but cache not initialized")
+
 def register_events(app):
 
     def get_events_in_batches(session, start_date, end_date, batch_size=1000):
@@ -450,54 +498,6 @@ def register_events(app):
             expanded_events.append(instance_event)
         
         return expanded_events
-
-    def clear_day_events_cache():
-        """Clear the complete day events cache - call this when events are modified"""
-        if day_events_cache:
-            day_events_cache.clear()
-            print("Cleared complete day events cache")
-        else:
-            print("Attempted to clear cache but cache not initialized")
-
-    def clear_calendar_events_cache():
-        """Clear the calendar events cache - call this when events are modified"""
-        if calendar_events_cache:
-            calendar_events_cache.clear()
-            print("Cleared calendar events cache")
-        else:
-            print("Attempted to clear calendar cache but cache not initialized")
-
-    def get_cached_day_events(date_str):
-        """Get complete day events for a specific date from cache"""
-        if day_events_cache:
-            cached = day_events_cache.get(date_str)
-            print(f"Cache lookup for {date_str}: {'HIT' if cached is not None else 'MISS'}")
-            return cached
-        print(f"Cache lookup for {date_str}: NO CACHE (cache not initialized)")
-        return None
-
-    def set_cached_day_events(date_str, events):
-        """Cache complete day events for a specific date"""
-        print(f"set_cached_day_events called with date_str={date_str}, events_count={len(events)}")
-        if day_events_cache:
-            day_events_cache.set(date_str, events)
-            print(f"Cached {len(events)} complete day events for {date_str}")
-        else:
-            print(f"Failed to cache events for {date_str}: cache not initialized")
-
-    def get_cached_calendar_events(start_str, end_str):
-        """Get calendar events for a date range from cache"""
-        if calendar_events_cache:
-            cache_key = f"calendar_{start_str}_{end_str}"
-            return calendar_events_cache.get(cache_key)
-        return None
-
-    def set_cached_calendar_events(start_str, end_str, events):
-        """Cache calendar events for a date range"""
-        if calendar_events_cache:
-            cache_key = f"calendar_{start_str}_{end_str}"
-            calendar_events_cache.set(cache_key, events)
-            print(f"Cached {len(events)} calendar events for {start_str} to {end_str}")
 
     def set_cache_headers(response, max_age=3600):
         """Set cache headers for better performance"""
