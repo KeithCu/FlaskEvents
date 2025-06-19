@@ -31,12 +31,13 @@ The application implements a multi-level caching system that dramatically improv
 
 - Monthly, weekly, and daily calendar views
 - Create, edit, and delete events
-- Recurring events support
+- Recurring events support using iCalendar RRULE format
 - Venue management
 - Custom event colors
 - Virtual and hybrid events support
 - Full-text search functionality
 - WordPress integration via widgets
+- Advanced caching system with management interface
 
 ## Setup
 
@@ -57,6 +58,340 @@ python app.py
 ```
 
 4. Open your browser and navigate to `http://localhost:5000`
+
+## HTML Templates
+
+The application uses **7 HTML templates** that work together to create a complete event management system. All templates extend `base.html` and provide specific functionality for different parts of the application.
+
+### Template Hierarchy and Relationships
+
+```
+base.html (foundation)
+├── widget_test.html (main interface - home & day views)
+├── month.html (monthly calendar view)
+├── event_form.html (event creation/editing)
+├── venue_form.html (venue creation/editing)
+├── venues.html (venue management list)
+└── cache_management.html (cache administration)
+```
+
+### 1. **base.html** - The Foundation Template
+
+**Purpose**: The main layout template that all other templates extend. It provides the common structure, navigation, and styling for the entire application.
+
+**Key Features**:
+- **Bootstrap 5.3.6** CSS and JavaScript for responsive design
+- **FullCalendar 6.1.17** library for calendar functionality
+- **Navigation bar** with links to:
+  - Home page (`/`)
+  - New Event (`/event/new`)
+  - Venues (`/venues`)
+  - Cache Management (`/cache-management`)
+- **Flash message system** for displaying success/error messages
+- **Responsive container layout** with proper spacing
+- **Template blocks** for custom CSS and JavaScript
+
+**Usage**: Every other template extends this base template using `{% extends "base.html" %}`
+
+### 2. **widget_test.html** - The Main Application Interface
+
+**Purpose**: The primary user interface that serves as both the home page and day view. This is the most feature-rich template in your application.
+
+**Key Features**:
+- **Two-panel layout**:
+  - **Left panel (8 columns)**: Events list widget with search functionality
+  - **Right panel (4 columns)**: Calendar widget for date selection
+- **Advanced search functionality** with real-time filtering
+- **Day navigation** with Previous/Next buttons
+- **Event display** with:
+  - Time, title, description, venue
+  - Virtual/Hybrid event badges
+  - Direct links to event URLs
+- **Interactive calendar** that highlights selected dates
+- **Responsive design** that works on all devices
+
+**Routes that use this template**:
+- `/` (home route) - displays today's events
+- `/day/<date>` (day view) - displays events for a specific date
+- `/widget-test` (test route) - same as home page
+
+**Code Usage**:
+```python
+# In app.py
+@app.route('/')
+def home():
+    return render_template('widget_test.html', date=today_str)
+
+@app.route('/day/<date>')
+def day_view(date):
+    return render_template('widget_test.html', 
+                         year=date_obj.year, 
+                         month=date_obj.month, 
+                         day=date_obj.day,
+                         date=date,
+                         events=day_events)
+
+@app.route('/widget-test')
+def widget_test():
+    return render_template('widget_test.html')
+```
+
+### 3. **month.html** - Monthly Calendar View
+
+**Purpose**: Provides a dedicated monthly calendar view with compact styling optimized for performance.
+
+**Key Features**:
+- **Compact monthly calendar** with forced small styling
+- **Custom CSS** that overrides FullCalendar defaults for smaller display
+- **Debug styling** with colored borders to verify CSS application
+- **Responsive design** with aspect ratio control
+- **Navigation** between months
+- **Date clicking** to navigate to day view
+
+**Routes that use this template**:
+- `/month/<int:year>/<int:month>` - displays a specific month
+
+**Code Usage**:
+```python
+# In app.py
+@app.route('/month/<int:year>/<int:month>')
+def month_view(year, month):
+    return render_template('month.html', year=year, month=month)
+```
+
+**Special Features**:
+- Uses aggressive CSS overrides to force small calendar display
+- Includes debug styling (red/blue/green borders) to verify CSS application
+- Optimized for sidebar or compact display scenarios
+
+### 4. **event_form.html** - Event Creation and Editing
+
+**Purpose**: Comprehensive form for creating new events and editing existing ones.
+
+**Key Features**:
+- **Quick date selector** with buttons for Today, Tomorrow, +2 days, +3 days, Next Week
+- **Complete event fields**:
+  - Title, description, start/end times
+  - Venue selection with "Add Venue" link
+  - Color customization (text and background)
+  - Virtual/Hybrid event options
+  - URL field for event links
+  - Recurring event support with RRULE format
+- **Advanced form validation** with visual feedback
+- **Recurring event options** that appear when RRULE is entered
+- **Virtual event options** that show/hide URL field
+- **Auto-population** of recurring end date (2 years from start)
+
+**Routes that use this template**:
+- `/event/new` (GET) - displays empty form for new event
+- `/event/new` (POST) - displays form with validation errors
+- `/event/<int:id>/edit` (GET) - displays form with existing event data
+- `/event/<int:id>/edit` (POST) - displays form with validation errors
+
+**Code Usage**:
+```python
+# In events.py
+@app.route('/event/new', methods=['GET', 'POST'])
+def add_event():
+    if request.method == 'POST':
+        # Process form data
+        return render_template('event_form.html', venues=venues, ...)
+    return render_template('event_form.html', venues=venues)
+
+@app.route('/event/<int:id>/edit', methods=['GET', 'POST'])
+def edit_event(id):
+    # Similar pattern for editing
+```
+
+### 5. **venue_form.html** - Venue Creation and Editing
+
+**Purpose**: Form for creating new venues and editing existing ones.
+
+**Key Features**:
+- **Simple form** with venue name (required) and address (optional)
+- **Form validation** with visual feedback
+- **Help text** explaining venue usage
+- **Delete functionality** for existing venues
+- **Responsive design** with card layout
+
+**Routes that use this template**:
+- `/venue/new` (GET) - displays empty form
+- `/venue/new` (POST) - displays form with validation errors
+- `/venue/<int:id>/edit` (GET) - displays form with existing venue data
+- `/venue/<int:id>/edit` (POST) - displays form with validation errors
+
+**Code Usage**:
+```python
+# In venue.py
+@app.route('/venue/new', methods=['GET', 'POST'])
+def add_venue():
+    if request.method == 'POST':
+        # Process form data
+        return render_template('venue_form.html', name=name, address=address)
+    return render_template('venue_form.html')
+
+@app.route('/venue/<int:id>/edit', methods=['GET', 'POST'])
+def edit_venue(id):
+    # Similar pattern for editing
+```
+
+### 6. **venues.html** - Venue Management List
+
+**Purpose**: Displays a list of all venues with management options.
+
+**Key Features**:
+- **Table layout** showing all venues
+- **Venue information**:
+  - Name, address, event count
+  - Edit and delete buttons
+- **Empty state** when no venues exist
+- **Responsive table** design
+- **Action buttons** for each venue
+
+**Routes that use this template**:
+- `/venues` (GET) - displays list of all venues
+
+**Code Usage**:
+```python
+# In venue.py
+@app.route('/venues')
+def list_venues():
+    venues = session.query(Venue).all()
+    return render_template('venues.html', venues=venues)
+```
+
+### 7. **cache_management.html** - Cache Administration Interface
+
+**Purpose**: Advanced interface for monitoring and managing the application's caching system.
+
+**Key Features**:
+- **Cache statistics** display:
+  - Day events cache stats (size, TTL, usage percentage)
+  - Calendar events cache stats
+  - Real-time updates
+- **Cache testing functionality**:
+  - Test cache operations
+  - Set custom cache values
+  - Lookup cache entries
+- **Cache management**:
+  - Clear all caches
+  - View recent cache keys
+  - Monitor cache performance
+- **Interactive JavaScript** for real-time cache operations
+
+**Routes that use this template**:
+- `/cache-management` (GET) - displays cache management interface
+
+**Code Usage**:
+```python
+# In cache.py
+@app.route('/cache-management')
+def cache_management():
+    return render_template('cache_management.html')
+```
+
+**API Endpoints** (used by the template's JavaScript):
+- `/api/cache/stats` - get cache statistics
+- `/api/cache/clear` - clear all caches
+- `/api/cache/test` - test cache functionality
+- `/api/cache/get/<key>` - lookup specific cache entry
+- `/api/cache/set` - set cache value
+
+### Key Design Patterns
+
+1. **Template Inheritance**: All templates extend `base.html` for consistent styling and navigation
+2. **Block System**: Uses Jinja2 blocks (`{% block content %}`, `{% block extra_css %}`, `{% block extra_js %}`) for customization
+3. **Responsive Design**: Bootstrap-based responsive layouts that work on all devices
+4. **JavaScript Integration**: Each template includes custom JavaScript for interactive functionality
+5. **Form Validation**: Client-side and server-side validation with visual feedback
+6. **Flash Messages**: Consistent error/success message display across all templates
+
+### Performance Considerations
+
+- **widget_test.html** is the most complex template, handling both home and day views
+- **month.html** uses aggressive CSS optimization for compact display
+- **cache_management.html** provides real-time monitoring of the caching system
+- All templates use Bootstrap for consistent, responsive design
+- JavaScript is loaded at the end of the page for optimal loading performance
+
+## Usage
+
+- Click on any date to view the daily view
+- Click the "New Event" button to create an event
+- Click on an existing event to edit it
+- Use the navigation buttons to move between months
+- Switch between month, week, and day views using the view buttons
+- Use the search functionality to find specific events
+- Manage venues through the Venues section
+- Monitor and manage cache performance through Cache Management
+
+## Recurring Events
+
+The application supports recurring events using the iCalendar RRULE format. Examples:
+
+- Weekly on Monday, Wednesday, Friday: `FREQ=WEEKLY;BYDAY=MO,WE,FR`
+- Daily: `FREQ=DAILY`
+- Monthly on the 15th: `FREQ=MONTHLY;BYMONTHDAY=15`
+- Every other week: `FREQ=WEEKLY;INTERVAL=2`
+- First Monday of every month: `FREQ=MONTHLY;BYDAY=1MO`
+
+## Recurring Events Implementation
+
+This application supports recurring events using the iCalendar RRULE format. Here's how recurring events are handled:
+
+- **Storage**: Each recurring event is stored as a single row in the database, with its recurrence rule (RRULE) saved in the `rrule` column. The event also has `is_recurring` and `recurring_until` fields to indicate recurrence and the end of the series.
+- **Expansion**: When the calendar or a day view is requested, the backend dynamically expands recurring events into their individual instances for the requested date range. This is done using the `dateutil.rrule` library, which parses the RRULE and generates all occurrences within the range.
+- **Query Logic**: For each request, the backend:
+  - Fetches all non-recurring events in the date range directly (using the clustered index for speed).
+  - Fetches all recurring events that could possibly have instances in the date range (using an index on `is_recurring` and `recurring_until`).
+  - Expands only those recurring events that are relevant to the requested range, minimizing unnecessary computation.
+- **Editing**: The event form allows users to specify or edit the recurrence rule and the end date for the series. The backend updates the relevant fields and ensures the event is treated as recurring or non-recurring as appropriate.
+
+### Performance Optimizations for Recurring Events
+
+To ensure the application remains fast even with a large number of events and recurring series, several optimizations are used:
+
+- **Clustered Indexing**: The database uses a composite primary key `(start_date, id)` so that events for the same date are stored together on disk. This makes range and day queries extremely efficient for non-recurring events.
+- **Targeted Recurring Queries**: Instead of expanding all recurring events, the backend only considers those whose recurrence could affect the requested date range. This is achieved by filtering on `start_date`, `is_recurring`, and `recurring_until` with proper indexes.
+- **On-the-fly Expansion**: Recurring events are expanded in memory only for the relevant date range, avoiding the need to store every instance in the database and keeping storage requirements low.
+- **Efficient Algorithms**: The use of the `dateutil.rrule` library allows for fast, reliable expansion of recurrence rules without custom logic.
+
+  The `dateutil.rrule` library is a robust, well-tested implementation of the iCalendar recurrence rule (RRULE) standard. Instead of writing and maintaining custom code to interpret and expand recurrence rules—which is error-prone and can be very complex for edge cases like leap years, daylight saving time, or complex BYDAY/BYMONTH rules—`dateutil.rrule` handles all of this efficiently. It is written in C and Python, optimized for performance, and used in many production systems. By leveraging this library, the application can quickly generate all event instances for any recurrence pattern, ensuring both correctness and speed, and freeing developers from having to debug or optimize custom recurrence logic.
+- **Indexing**: An additional index on `(is_recurring, recurring_until)` ensures that queries for recurring events are fast, even as the number of events grows.
+
+These strategies ensure that the calendar remains highly performant, even with thousands of events and complex recurrence patterns.
+
+### Caching Layer for All Events
+
+To further optimize performance, the application implements a sophisticated caching layer that eliminates the need to re-query and re-expand events for frequently accessed dates:
+
+- **Day-Based Caching**: When a user views a specific day, the complete day events (both non-recurring and expanded recurring events) for that date are cached for 1 hour. Subsequent requests for the same date return the cached results instantly, avoiding the computational overhead of database queries and recurrence rule expansion.
+
+- **Calendar Range Caching**: For calendar widget requests (typically week or month views), the complete events for the entire date range are cached. This is particularly effective since users often navigate between adjacent weeks/months.
+
+- **Cache Invalidation**: The cache is automatically cleared when events are created, modified, or deleted, ensuring data consistency while maintaining performance benefits.
+
+- **Memory Efficiency**: The cache uses a TTL (Time To Live) of 1 hour and a maximum size of 1,000 entries, preventing memory bloat while covering the most commonly accessed date ranges.
+
+**Real-world Impact**: In typical usage patterns, 80-90% of all event requests are served from cache, reducing the computational load by an order of magnitude. This means that the complex database queries and recurrence expansion work described above is only performed for the first request to a date, with subsequent requests being nearly instantaneous.
+
+## Development Roadmap
+
+For information about planned features and enhancements, see the **[ROADMAP.md](ROADMAP.md)** file. This document outlines:
+
+- **Upcoming Features**: Planned enhancements ranked by importance
+- **Implementation Details**: Technical specifications and code examples
+- **Feature Priorities**: What's most important to implement next
+- **Development Guidance**: Step-by-step implementation instructions
+
+The roadmap includes features like:
+- Enhanced venue and organizer management
+- Custom event fields
+- Advanced filtering and search
+- Map view for event locations
+- Event duplication functionality
+- API improvements for embedding
+- Video conferencing integrations
 
 ## WordPress Integration
 
@@ -498,104 +833,6 @@ function flask_events_health_check() {
 
 This comprehensive WordPress integration documentation provides everything needed to successfully deploy and maintain the Flask Events Calendar with WordPress, ensuring optimal performance and user experience.
 
-## HTML Templates
-
-The application uses several HTML templates to provide different views and functionality:
-
-### Core Templates
-
-- **`base.html`** - The main layout template that all other templates extend. It includes:
-  - Bootstrap CSS and JavaScript for styling
-  - FullCalendar library for calendar functionality
-  - Navigation bar with links to New Event, Venues, and Cache Management
-  - Flash message display system
-  - Responsive container layout
-
-- **`widget_test.html`** - The main application interface used for both home page (`/`) and day view (`/day/<date>`). This template provides:
-  - Events list widget with search functionality
-  - Calendar widget with date selection
-  - Real-time event loading and filtering
-  - Virtual and hybrid event badges
-  - Interactive navigation between dates
-  - Card-based layout with clear sections
-  - Advanced features like search across all events
-
-### Form Templates
-
-- **`event_form.html`** - Form for creating and editing events
-- **`venue_form.html`** - Form for creating and editing venues
-
-### Management Templates
-
-- **`venues.html`** - Displays a list of all venues
-- **`cache_management.html`** - Interface for managing the application's cache system
-
-### Month View Template
-
-- **`month.html`** - Monthly calendar view (referenced in the project but not shown in the attached files)
-
-Each template extends `base.html` and provides specific functionality while maintaining consistent styling and navigation throughout the application.
-
-**Note**: The main application now uses `widget_test.html` for both the home page and day views, providing a consistent, feature-rich experience. The original `home.html` template is still available at `/python` for reference, and `day.html` is no longer needed.
-
-## Usage
-
-- Click on any date to view the daily view
-- Click the "New Event" button to create an event
-- Click on an existing event to edit it
-- Use the navigation buttons to move between months
-- Switch between month, week, and day views using the view buttons
-
-## Recurring Events
-
-The application supports recurring events using the iCalendar RRULE format. Examples:
-
-- Weekly on Monday, Wednesday, Friday: `FREQ=WEEKLY;BYDAY=MO,WE,FR`
-- Daily: `FREQ=DAILY`
-- Monthly on the 15th: `FREQ=MONTHLY;BYMONTHDAY=15`
-
-## Recurring Events Implementation
-
-This application supports recurring events using the iCalendar RRULE format. Here's how recurring events are handled:
-
-- **Storage**: Each recurring event is stored as a single row in the database, with its recurrence rule (RRULE) saved in the `rrule` column. The event also has `is_recurring` and `recurring_until` fields to indicate recurrence and the end of the series.
-- **Expansion**: When the calendar or a day view is requested, the backend dynamically expands recurring events into their individual instances for the requested date range. This is done using the `dateutil.rrule` library, which parses the RRULE and generates all occurrences within the range.
-- **Query Logic**: For each request, the backend:
-  - Fetches all non-recurring events in the date range directly (using the clustered index for speed).
-  - Fetches all recurring events that could possibly have instances in the date range (using an index on `is_recurring` and `recurring_until`).
-  - Expands only those recurring events that are relevant to the requested range, minimizing unnecessary computation.
-- **Editing**: The event form allows users to specify or edit the recurrence rule and the end date for the series. The backend updates the relevant fields and ensures the event is treated as recurring or non-recurring as appropriate.
-
-### Performance Optimizations for Recurring Events
-
-To ensure the application remains fast even with a large number of events and recurring series, several optimizations are used:
-
-- **Clustered Indexing**: The database uses a composite primary key `(start_date, id)` so that events for the same date are stored together on disk. This makes range and day queries extremely efficient for non-recurring events.
-- **Targeted Recurring Queries**: Instead of expanding all recurring events, the backend only considers those whose recurrence could affect the requested date range. This is achieved by filtering on `start_date`, `is_recurring`, and `recurring_until` with proper indexes.
-- **On-the-fly Expansion**: Recurring events are expanded in memory only for the relevant date range, avoiding the need to store every instance in the database and keeping storage requirements low.
-- **Efficient Algorithms**: The use of the `dateutil.rrule` library allows for fast, reliable expansion of recurrence rules without custom logic.
-
-  The `dateutil.rrule` library is a robust, well-tested implementation of the iCalendar recurrence rule (RRULE) standard. Instead of writing and maintaining custom code to interpret and expand recurrence rules—which is error-prone and can be very complex for edge cases like leap years, daylight saving time, or complex BYDAY/BYMONTH rules—`dateutil.rrule` handles all of this efficiently. It is written in C and Python, optimized for performance, and used in many production systems. By leveraging this library, the application can quickly generate all event instances for any recurrence pattern, ensuring both correctness and speed, and freeing developers from having to debug or optimize custom recurrence logic.
-- **Indexing**: An additional index on `(is_recurring, recurring_until)` ensures that queries for recurring events are fast, even as the number of events grows.
-
-These strategies ensure that the calendar remains highly performant, even with thousands of events and complex recurrence patterns.
-
-### Caching Layer for All Events
-
-To further optimize performance, the application implements a sophisticated caching layer that eliminates the need to re-query and re-expand events for frequently accessed dates:
-
-- **Day-Based Caching**: When a user views a specific day, the complete day events (both non-recurring and expanded recurring events) for that date are cached for 1 hour. Subsequent requests for the same date return the cached results instantly, avoiding the computational overhead of database queries and recurrence rule expansion.
-
-- **Calendar Range Caching**: For calendar widget requests (typically week or month views), the complete events for the entire date range are cached. This is particularly effective since users often navigate between adjacent weeks/months.
-
-- **Cache Invalidation**: The cache is automatically cleared when events are created, modified, or deleted, ensuring data consistency while maintaining performance benefits.
-
-- **Memory Efficiency**: The cache uses a TTL (Time To Live) of 1 hour and a maximum size of 1,000 entries, preventing memory bloat while covering the most commonly accessed date ranges.
-
-**Real-world Impact**: In typical usage patterns, 80-90% of all event requests are served from cache, reducing the computational load by an order of magnitude. This means that the complex database queries and recurrence expansion work described above is only performed for the first request to a date, with subsequent requests being nearly instantaneous.
-
-# Flask Events Calendar - Performance Optimized
-
 ## Database Design and Performance Optimization
 
 ### Clustered Index Approach
@@ -707,260 +944,5 @@ Single Day Queries:
 4. **Real-world Benefits**
    - Faster calendar loading
    - Better user experience
-   - More efficient resource usage 
+   - More efficient resource usage
 
-
-# Events Calendar Enhancement Plan
-
-This document outlines a plan to enhance your Flask-based events calendar prototype, designed as a fast replacement for The Events Calendar Pro plugin. Your prototype already supports one-time and recurring events, daily and monthly views, event management (add/edit/delete), full-text search, and API endpoints with caching for performance. To make it a comprehensive alternative, this plan incorporates key features inspired by The Events Calendar Pro, adapted for your Flask application. Each feature is ranked by importance, with detailed descriptions and implementation guidance for offline development.
-
-## Features to Add
-
-### 1. Venue and Organizer Management
-- **Description**: Enable users to create and manage venues (event locations) and organizers (individuals or organizations hosting events). Associate events with venues and organizers, and display their details on dedicated pages or sections.
-- **Importance**: High (Rank: 1)
-- **Why It's Important**: Complete event information includes where and who is hosting the event, enhancing professionalism and usability. This is critical for users seeking detailed event context.
-- **Implementation Considerations**:
-  - **Database**:
-    - Create `Venue` model: `id` (primary key), `name`, `address`, `city`, `state`, `zip`, `country`, `latitude`, `longitude`.
-    - Create `Organizer` model: `id` (primary key), `name`, `email`, `phone`, `website`.
-    - Update `Event` model to include `venue_id` and `organizer_id` as foreign keys.
-    - Use SQLAlchemy to define relationships (e.g., `Event.venue = relationship('Venue')`).
-  - **UI**:
-    - Add routes and templates for creating/editing venues (`/venues/new`, `/venues/<id>/edit`) and organizers (`/organizers/new`, `/organizers/<id>/edit`).
-    - Include dropdowns or search fields in the event creation form (`event_form.html`) to select venues and organizers.
-    - Create templates for venue and organizer pages (`/venues/<id>`, `/organizers/<id>`) to display details and associated events.
-  - **API**:
-    - Extend the `/events` endpoint to include venue and organizer details (e.g., `{"id": 1, "title": "Event", "venue": {"name": "Venue Name", "address": "123 Main St"}}`).
-  - **Example Code**:
-    ```python
-    from flask_sqlalchemy import SQLAlchemy
-    db = SQLAlchemy()
-
-    class Venue(db.Model):
-        id = db.Column(db.Integer, primary_key=True)
-        name = db.Column(db.String(100), nullable=False)
-        address = db.Column(db.String(200))
-        latitude = db.Column(db.Float)
-        longitude = db.Column(db.Float)
-
-    class Event(db.Model):
-        id = db.Column(db.Integer, primary_key=True)
-        title = db.Column(db.String(100), nullable=False)
-        venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'))
-        venue = db.relationship('Venue', backref='events')
-    ```
-
-### 2. Custom Event Fields
-- **Description**: Allow users to add custom fields to events (e.g., event type, category, ticket price) to accommodate diverse event requirements.
-- **Importance**: High (Rank: 2)
-- **Why It's Important**: Custom fields provide flexibility, enabling users to tailor event information to their needs, such as adding dress codes or special instructions.
-- **Implementation Considerations**:
-  - **Database**:
-    - Create a `CustomField` model: `id`, `event_id` (foreign key), `field_name`, `field_value`, `field_type` (e.g., text, number, dropdown).
-    - Use a flexible schema to store multiple fields per event.
-  - **UI**:
-    - Add a dynamic section in `event_form.html` for users to add/edit custom fields (e.g., a button to add a new field with name and value).
-    - Display custom fields on event details pages.
-  - **API**:
-    - Include custom fields in the `/events` endpoint response (e.g., `{"id": 1, "title": "Event", "custom_fields": [{"name": "Type", "value": "Workshop"}]}`).
-  - **Example Code**:
-    ```python
-    class CustomField(db.Model):
-        id = db.Column(db.Integer, primary_key=True)
-        event_id = db.Column(db.Integer, db.ForeignKey('event.id'))
-        field_name = db.Column(db.String(50), nullable=False)
-        field_value = db.Column(db.Text, nullable=False)
-        event = db.relationship('Event', backref='custom_fields')
-    ```
-
-### 3. Filter and Search Enhancements
-- **Description**: Enhance the existing full-text search to include advanced filtering options (e.g., by category, venue, organizer, date range, or custom fields).
-- **Importance**: High (Rank: 3)
-- **Why It's Important**: Advanced filtering improves user experience by helping users quickly find relevant events, especially in calendars with many events.
-- **Implementation Considerations**:
-  - **Database**:
-    - Add a `category` field to the `Event` model or create a `Category` model with a many-to-many relationship.
-    - Ensure indexes on `venue_id`, `organizer_id`, `category`, and `start_date` for efficient querying.
-  - **UI**:
-    - Add a filter bar above calendar views (e.g., in `day.html`, `month.html`) with dropdowns for categories, venues, organizers, and a date range picker.
-    - Update the `/search` route to handle filter parameters.
-  - **API**:
-    - Modify the `/events` endpoint to accept query parameters (e.g., `?category=workshop&venue_id=1&start=2025-06-01&end=2025-06-30`).
-  - **Example Code**:
-    ```python
-    @app.route('/events')
-    def get_events():
-        category = request.args.get('category')
-        venue_id = request.args.get('venue_id')
-        query = Event.query
-        if category:
-            query = query.filter(Event.category == category)
-        if venue_id:
-            query = query.filter(Event.venue_id == venue_id)
-        events = query.all()
-        return jsonify([event.to_dict() for event in events])
-    ```
-
-### 4. Map View
-- **Description**: Add a map view to display events on a geographical map, showing their locations based on venue coordinates.
-- **Importance**: Medium to High (Rank: 4)
-- **Why It's Important**: For events with physical locations, a map view helps users visualize event locations, improving accessibility and engagement.
-- **Implementation Considerations**:
-  - **Frontend**:
-    - Use Leaflet.js ([Leaflet](https://leafletjs.com/)) for a lightweight, open-source mapping library.
-    - Add a `/map` route and `map.html` template to render the map view.
-  - **Database**:
-    - Ensure the `Venue` model includes `latitude` and `longitude` fields.
-  - **API**:
-    - Create an endpoint like `/events/map` to return events with venue coordinates (e.g., `{"id": 1, "title": "Event", "venue": {"latitude": 40.7128, "longitude": -74.0060}}`).
-  - **Example Code**:
-    ```html
-    <!-- map.html -->
-    <div id="map" style="height: 500px;"></div>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        var map = L.map('map').setView([40.7128, -74.0060], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        fetch('/events/map')
-            .then(response => response.json())
-            .then(events => {
-                events.forEach(event => {
-                    L.marker([event.venue.latitude, event.venue.longitude])
-                        .addTo(map)
-                        .bindPopup(event.title);
-                });
-            });
-    </script>
-    ```
-
-### 5. Virtual and Hybrid Events Support - DONE!
-
-### 6. Duplicate Events Feature
-- **Description**: Allow users to duplicate existing events, creating a new event with the same details but editable fields (e.g., date).
-- **Importance**: Medium (Rank: 6)
-- **Why It's Important**: Duplicating events saves time for users creating similar events, improving efficiency.
-- **Implementation Considerations**:
-  - **Backend**:
-    - Create a route like `/event/<id>/duplicate` that copies an event's details to a new event.
-  - **UI**:
-    - Add a "Duplicate" button on the event details page or in the event list.
-  - **API**:
-    - Optionally, add an endpoint like `/events/<id>/duplicate`.
-  - **Example Code**:
-    ```python
-    @app.route('/event/<int:id>/duplicate', methods=['POST'])
-    def duplicate_event(id):
-        event = Event.query.get_or_404(id)
-        new_event = Event(
-            title=event.title,
-            description=event.description,
-            venue_id=event.venue_id
-        )
-        db.session.add(new_event)
-        db.session.commit()
-        return redirect(url_for('edit_event', id=new_event.id))
-    ```
-
-### 7. API for Embedding
-- **Description**: Provide robust API endpoints to embed the calendar or event lists into other parts of the site or external applications.
-- **Importance**: High (Rank: 7)
-- **Why It's Important**: Flexible embedding options allow the calendar to be integrated into various contexts, similar to WordPress shortcodes.
-- **Implementation Considerations**:
-  - **API**:
-    - Enhance the `/events` endpoint to support flexible queries (e.g., by date range, category, venue).
-    - Provide a JavaScript widget for embedding (e.g., a script that fetches events and renders them with FullCalendar).
-  - **Frontend**:
-    - Create a sample embeddable widget in `static/js/calendar_widget.js`.
-  - **Example Code**:
-    ```javascript
-    // static/js/calendar_widget.js
-    fetch('/events?start=2025-06-01&end=2025-06-30')
-        .then(response => response.json())
-        .then(events => {
-            var calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-                events: events
-            });
-            calendar.render();
-        });
-    ```
-
-### 8. Integrations with Video Conferencing Tools
-- **Description**: Support automatic generation or embedding of video conferencing links (e.g., Zoom, Google Meet) for virtual events.
-- **Importance**: Medium to High (Rank: 8)
-- **Why It's Important**: Simplifies the management of virtual events by integrating with popular platforms.
-- **Implementation Considerations**:
-  - **Database**:
-    - Store video conferencing details in the `Event` model (e.g., `meeting_platform`, `meeting_id`, `join_url`).
-  - **UI**:
-    - Add fields for video conferencing details in `event_form.html`.
-    - Display a "Join Meeting" button on event pages.
-  - **API**:
-    - Include video conferencing details in the `/events` endpoint.
-  - **Example Code**:
-    ```python
-    class Event(db.Model):
-        meeting_platform = db.Column(db.String(50))  # e.g., Zoom, Google Meet
-        join_url = db.Column(db.String(200))
-    ```
-
-### 9. Live-stream Embed
-- **Description**: Allow embedding of live streams from platforms like YouTube or Facebook on event pages.
-- **Importance**: Medium (Rank: 9)
-- **Why It's Important**: Enhances virtual event pages by allowing attendees to watch streams without leaving the site.
-- **Implementation Considerations**:
-  - **Database**:
-    - Use the `live_stream_url` field in the `Event` model.
-  - **UI**:
-    - Embed the stream in the event details page using an iframe.
-  - **Example Code**:
-    ```html
-    <!-- event_details.html -->
-    {% if event.live_stream_url %}
-        <iframe src="{{ event.live_stream_url }}" width="560" height="315"></iframe>
-    {% endif %}
-    ```
-
-### 10. Alternative Calendar Views
-- **Description**: Add additional calendar views, such as week view, photo view, or summary view.
-- **Importance**: Low to Medium (Rank: 10)
-- **Why It's Important**: Different views cater to varied user preferences, enhancing the calendar's versatility.
-- **Implementation Considerations**:
-  - **Week View**:
-    - Use FullCalendar's week view (`timeGridWeek`) in `month.html`.
-  - **Photo View**:
-    - Add a `featured_image` field to the `Event` model.
-    - Create a `/photo` route and `photo.html` template to display events as a gallery.
-  - **Summary View**:
-    - Create a `/summary` route to display a condensed event list.
-  - **Example Code**:
-    ```javascript
-    // month.html (for week view)
-    var calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-        initialView: 'timeGridWeek',
-        events: '/events'
-    });
-    ```
-
-## Development Roadmap
-1. **Phase 1: Core Enhancements**
-   - Implement Venue and Organizer Management.
-   - Add Custom Event Fields.
-   - Enhance Filter and Search functionality.
-2. **Phase 2: Visual and Modern Features**
-   - Add Map View.
-   - Implement Virtual and Hybrid Events Support.
-3. **Phase 3: Usability and Integration**
-   - Add Duplicate Events Feature.
-   - Enhance API for Embedding.
-   - Integrate Video Conferencing Tools and Live-stream Embed.
-4. **Phase 4: Additional Views**
-   - Implement Alternative Calendar Views (week, photo, summary).
-
-## Performance Considerations
-- **Caching**: Extend your existing caching (using `cacheout`) to include venue, organizer, and map data to maintain performance.
-- **Database**: Add indexes for new fields (e.g., `venue_id`, `category`) to ensure fast queries.
-- **Frontend**: Use lazy loading for map and photo views to reduce initial load times.
-
-## Conclusion
-This plan prioritizes features that enhance functionality and user experience while aligning with your goal of a fast, efficient events calendar. Start with high-priority features (Venue and Organizer Management, Custom Event Fields, Filter Enhancements) to build a robust foundation, then add modern features like Map View and Virtual Events Support. The provided code snippets and implementation details should guide development without requiring external resources.
