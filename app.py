@@ -12,8 +12,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from fts import setup_fts_triggers, ensure_fts_setup, search_events
 from database import engine, db_path, Base, SessionLocal, Event, Venue, EventFTS, migrate_database, get_next_event_id
-# Import cache objects from events module
-from events import day_events_cache, calendar_events_cache
 
 
 app = Flask(__name__)
@@ -199,6 +197,8 @@ def cache_management():
 def cache_stats():
     """Get cache statistics"""
     try:
+        from events import day_events_cache, calendar_events_cache
+        
         day_stats = {
             'maxsize': day_events_cache.maxsize,
             'ttl': day_events_cache.ttl,
@@ -225,6 +225,8 @@ def cache_stats():
 def test_cache():
     """Test cache functionality"""
     try:
+        from events import day_events_cache, calendar_events_cache
+        
         data = request.get_json()
         test_key = data.get('key', 'test_key')
         test_value = data.get('value', ['test_value'])
@@ -247,6 +249,8 @@ def test_cache():
 def clear_cache():
     """Clear all caches"""
     try:
+        from events import day_events_cache, calendar_events_cache
+        
         # Clear both caches directly
         day_events_cache.clear()
         calendar_events_cache.clear()
@@ -262,6 +266,8 @@ def clear_cache():
 def get_cache_value(key):
     """Get a specific cache value"""
     try:
+        from events import day_events_cache, calendar_events_cache
+        
         # Try both caches
         day_value = day_events_cache.get(key)
         calendar_value = calendar_events_cache.get(key)
@@ -280,6 +286,8 @@ def get_cache_value(key):
 def set_cache_value():
     """Set a cache value"""
     try:
+        from events import day_events_cache, calendar_events_cache
+        
         data = request.get_json()
         key = data.get('key')
         value = data.get('value')
