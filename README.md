@@ -34,6 +34,9 @@ The application implements a multi-level caching system that dramatically improv
 - Recurring events support
 - Venue management
 - Custom event colors
+- Virtual and hybrid events support
+- Full-text search functionality
+- WordPress integration via widgets
 
 ## Setup
 
@@ -55,6 +58,446 @@ python app.py
 
 4. Open your browser and navigate to `http://localhost:5000`
 
+## WordPress Integration
+
+This Flask Events Calendar can be seamlessly integrated with WordPress using the included WordPress plugin. This allows you to display your high-performance events calendar on any WordPress site while maintaining the speed and functionality of the Flask backend.
+
+### WordPress Plugin Installation
+
+1. **Copy the WordPress Plugin Files**
+   ```bash
+   # Copy the wp-events-calendar directory to your WordPress plugins folder
+   cp -r wp-events-calendar/ /path/to/wordpress/wp-content/plugins/
+   ```
+
+2. **Activate the Plugin**
+   - Log into your WordPress admin dashboard
+   - Go to **Plugins** → **Installed Plugins**
+   - Find "Events Calendar" and click **Activate**
+
+3. **Configure the Flask App URL**
+   - Edit `wp-events-calendar/wp-events-calendar.php`
+   - Update the `FLASK_EVENTS_URL` constant to point to your Flask application:
+   ```php
+   define('FLASK_EVENTS_URL', 'http://your-flask-app-domain.com');
+   ```
+
+### Available WordPress Widgets
+
+The plugin provides two widgets that can be added to any WordPress sidebar or widget area:
+
+#### 1. Events Calendar Widget
+- **Purpose**: Displays a monthly calendar for event navigation
+- **Features**: 
+  - Compact monthly view
+  - Click on any date to view events for that day
+  - Navigation between months
+  - Responsive design optimized for sidebars
+
+#### 2. Events List Widget
+- **Purpose**: Displays events for the selected day
+- **Features**:
+  - Shows all events for the current day
+  - Navigation buttons to move between days
+  - Displays event time, title, description, and venue
+  - Virtual/hybrid event badges
+  - Direct links to event URLs
+
+### Adding Widgets to Your WordPress Site
+
+1. **Access Widget Management**
+   - Go to **Appearance** → **Widgets** in your WordPress admin
+   - Or go to **Appearance** → **Customize** → **Widgets**
+
+2. **Add the Events Calendar Widget**
+   - Find "Events Calendar" in the available widgets
+   - Drag it to your desired widget area (sidebar, footer, etc.)
+   - Set a custom title (optional)
+   - Click **Save**
+
+3. **Add the Events List Widget**
+   - Find "Events List" in the available widgets
+   - Drag it to your desired widget area
+   - Set a custom title (optional)
+   - Click **Save**
+
+### WordPress Integration Architecture
+
+The WordPress integration uses a client-side approach that maintains the performance benefits of the Flask backend:
+
+```
+WordPress Site                    Flask Events Calendar
+┌─────────────────┐              ┌─────────────────────┐
+│                 │              │                     │
+│  WordPress      │              │  Flask App          │
+│  Frontend       │              │  (Python)           │
+│                 │              │                     │
+│  ┌─────────────┐│              │  ┌─────────────────┐│
+│  │   Widget    ││              │  │   Database      ││
+│  │   (HTML)    ││              │  │   (SQLite)      ││
+│  └─────────────┘│              │  └─────────────────┘│
+│                 │              │                     │
+│  ┌─────────────┐│              │  ┌─────────────────┐│
+│  │ JavaScript  ││◄─────────────┤  │   API Endpoints ││
+│  │   (Widget)  ││              │  │   (/events,     ││
+│  └─────────────┘│              │  │    /search)     ││
+│                 │              │  └─────────────────┘│
+└─────────────────┘              └─────────────────────┘
+```
+
+### Configuration Options
+
+#### Flask App Configuration
+- **URL**: Set the Flask app URL in the WordPress plugin
+- **CORS**: Ensure your Flask app allows requests from your WordPress domain
+- **SSL**: Use HTTPS for production deployments
+
+#### Widget Customization
+The widgets can be customized by modifying the CSS files:
+- `wp-events-calendar/css/events-calendar.css` - Main widget styles
+- Widget colors, sizes, and layout can be adjusted
+- Responsive breakpoints can be modified
+
+### Security Considerations
+
+1. **CORS Configuration**
+   Add CORS headers to your Flask app to allow WordPress requests:
+   ```python
+   from flask_cors import CORS
+   
+   app = Flask(__name__)
+   CORS(app, origins=['https://your-wordpress-site.com'])
+   ```
+
+2. **API Rate Limiting**
+   Consider implementing rate limiting for the `/events` and `/search` endpoints:
+   ```python
+   from flask_limiter import Limiter
+   from flask_limiter.util import get_remote_address
+   
+   limiter = Limiter(
+       app,
+       key_func=get_remote_address,
+       default_limits=["200 per day", "50 per hour"]
+   )
+   ```
+
+3. **Input Validation**
+   The Flask app already includes input validation, but ensure your WordPress site validates any user inputs before sending to the Flask API.
+
+### Performance Benefits in WordPress Context
+
+When integrated with WordPress, this solution provides several advantages:
+
+1. **Decoupled Architecture**: WordPress handles content management while Flask handles event data
+2. **Scalability**: Event data doesn't impact WordPress performance
+3. **Caching**: Flask's caching layer works independently of WordPress caching
+4. **Database Efficiency**: SQLite with clustered indexing vs WordPress's MySQL queries
+5. **Resource Isolation**: Event processing doesn't compete with WordPress resources
+
+### Troubleshooting WordPress Integration
+
+#### Common Issues and Solutions
+
+1. **Widgets Not Loading**
+   - Check that the Flask app URL is correct in the plugin configuration
+   - Verify the Flask app is running and accessible
+   - Check browser console for JavaScript errors
+
+2. **CORS Errors**
+   - Ensure Flask app has CORS properly configured
+   - Check that the WordPress domain is in the allowed origins
+
+3. **Events Not Displaying**
+   - Verify the `/events` endpoint is working in the Flask app
+   - Check that events exist in the database
+   - Review browser network tab for API request failures
+
+4. **Styling Issues**
+   - WordPress theme CSS may conflict with widget styles
+   - Add `!important` declarations to widget CSS if needed
+   - Test with a default WordPress theme
+
+#### Debug Mode
+Enable debug mode in the WordPress plugin by adding:
+```php
+define('FLASK_EVENTS_DEBUG', true);
+```
+
+This will output additional information to help troubleshoot integration issues.
+
+### Advanced WordPress Integration
+
+#### Custom Shortcodes
+You can create custom shortcodes to embed the calendar anywhere in your WordPress content:
+
+```php
+// Add to wp-events-calendar.php
+add_shortcode('flask_events_calendar', 'flask_events_calendar_shortcode');
+
+function flask_events_calendar_shortcode($atts) {
+    $atts = shortcode_atts(array(
+        'view' => 'month',
+        'height' => '400px'
+    ), $atts);
+    
+    return '<div id="flask-events-calendar" style="height: ' . $atts['height'] . ';"></div>';
+}
+```
+
+Usage: `[flask_events_calendar view="month" height="500px"]`
+
+#### REST API Integration
+For more advanced integrations, you can use WordPress's REST API to proxy requests to the Flask app:
+
+```php
+add_action('rest_api_init', function () {
+    register_rest_route('flask-events/v1', '/events', array(
+        'methods' => 'GET',
+        'callback' => 'proxy_flask_events',
+        'permission_callback' => '__return_true'
+    ));
+});
+
+function proxy_flask_events($request) {
+    $flask_url = FLASK_EVENTS_URL . '/events';
+    $response = wp_remote_get($flask_url);
+    
+    if (is_wp_error($response)) {
+        return new WP_Error('flask_error', 'Failed to fetch events');
+    }
+    
+    return json_decode(wp_remote_retrieve_body($response));
+}
+```
+
+This approach provides better integration with WordPress's authentication and caching systems.
+
+### WordPress Plugin Structure
+
+The WordPress plugin is organized as follows:
+
+```
+wp-events-calendar/
+├── wp-events-calendar.php          # Main plugin file
+├── includes/
+│   ├── class-events-calendar-widget.php    # Calendar widget class
+│   └── class-events-list-widget.php        # Events list widget class
+├── css/
+│   └── events-calendar.css         # Widget styles
+└── js/
+    └── events-calendar.js          # Widget JavaScript
+```
+
+#### Plugin Components
+
+1. **Main Plugin File** (`wp-events-calendar.php`)
+   - Plugin header and metadata
+   - Widget registration
+   - Script and style enqueuing
+   - Configuration constants
+
+2. **Widget Classes** (`includes/`)
+   - `Events_Calendar_Widget`: Monthly calendar navigation
+   - `Events_List_Widget`: Daily events display
+   - Both extend WordPress's `WP_Widget` class
+   - Include form handling for widget configuration
+
+3. **Frontend Assets** (`css/` and `js/`)
+   - `events-calendar.css`: Responsive widget styling
+   - `events-calendar.js`: Client-side functionality
+   - Uses FullCalendar library for calendar display
+   - Handles API communication with Flask backend
+
+#### Widget Development
+
+To create custom widgets or modify existing ones:
+
+1. **Extend the Base Widget Class**
+   ```php
+   class Custom_Events_Widget extends WP_Widget {
+       public function __construct() {
+           parent::__construct(
+               'custom_events_widget',
+               'Custom Events Widget',
+               array('description' => 'Custom events display')
+           );
+       }
+       
+       public function widget($args, $instance) {
+           // Widget display logic
+       }
+       
+       public function form($instance) {
+           // Widget configuration form
+       }
+       
+       public function update($new_instance, $old_instance) {
+           // Widget settings update
+       }
+   }
+   ```
+
+2. **Register Custom Widgets**
+   ```php
+   add_action('widgets_init', function() {
+       register_widget('Custom_Events_Widget');
+   });
+   ```
+
+3. **Add Custom JavaScript**
+   ```javascript
+   // Add to events-calendar.js or create new file
+   document.addEventListener('DOMContentLoaded', function() {
+       // Custom widget functionality
+   });
+   ```
+
+#### Plugin Configuration
+
+The plugin supports several configuration options:
+
+```php
+// In wp-events-calendar.php
+define('FLASK_EVENTS_URL', 'http://localhost:5000');
+define('FLASK_EVENTS_DEBUG', false);
+define('FLASK_EVENTS_CACHE_TTL', 3600);
+define('FLASK_EVENTS_MAX_EVENTS', 100);
+```
+
+#### Plugin Hooks and Filters
+
+The plugin provides hooks for customization:
+
+```php
+// Filter the Flask app URL
+add_filter('flask_events_url', function($url) {
+    return 'https://custom-flask-app.com';
+});
+
+// Filter widget CSS classes
+add_filter('flask_events_widget_classes', function($classes) {
+    $classes[] = 'custom-widget-class';
+    return $classes;
+});
+
+// Action when events are loaded
+add_action('flask_events_loaded', function($events) {
+    // Custom processing of events
+});
+```
+
+### Deployment Considerations
+
+#### Production Deployment
+
+1. **Flask App Deployment**
+   - Use a production WSGI server (Gunicorn, uWSGI)
+   - Set up reverse proxy (Nginx, Apache)
+   - Configure SSL certificates
+   - Set up process management (systemd, supervisor)
+
+2. **WordPress Integration**
+   - Ensure HTTPS for both WordPress and Flask
+   - Configure CORS properly for production domains
+   - Set up monitoring and logging
+   - Consider CDN for static assets
+
+3. **Database Considerations**
+   - SQLite works well for moderate loads
+   - For high traffic, consider PostgreSQL or MySQL
+   - Implement database backups
+   - Monitor database performance
+
+#### Performance Optimization
+
+1. **Flask App**
+   - Enable response compression
+   - Configure proper caching headers
+   - Use database connection pooling
+   - Implement request rate limiting
+
+2. **WordPress Plugin**
+   - Minimize JavaScript and CSS
+   - Use WordPress transients for caching
+   - Implement lazy loading for widgets
+   - Optimize API request frequency
+
+#### Security Best Practices
+
+1. **API Security**
+   - Implement API authentication if needed
+   - Validate all input parameters
+   - Use HTTPS for all communications
+   - Implement proper error handling
+
+2. **WordPress Security**
+   - Keep WordPress and plugins updated
+   - Use strong authentication
+   - Implement security headers
+   - Monitor for suspicious activity
+
+### Monitoring and Maintenance
+
+#### Health Checks
+
+Create endpoints to monitor the Flask app:
+
+```python
+@app.route('/health')
+def health_check():
+    return jsonify({
+        'status': 'healthy',
+        'database': check_database_connection(),
+        'cache': check_cache_status(),
+        'timestamp': datetime.now().isoformat()
+    })
+```
+
+#### Logging
+
+Implement comprehensive logging:
+
+```python
+import logging
+from logging.handlers import RotatingFileHandler
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s: %(message)s',
+    handlers=[
+        RotatingFileHandler('flask_events.log', maxBytes=10240000, backupCount=10),
+        logging.StreamHandler()
+    ]
+)
+```
+
+#### WordPress Plugin Monitoring
+
+Add monitoring to the WordPress plugin:
+
+```php
+// Add to wp-events-calendar.php
+add_action('wp_ajax_flask_events_health_check', 'flask_events_health_check');
+
+function flask_events_health_check() {
+    $flask_url = FLASK_EVENTS_URL . '/health';
+    $response = wp_remote_get($flask_url);
+    
+    if (is_wp_error($response)) {
+        wp_send_json_error('Flask app unavailable');
+    }
+    
+    $body = wp_remote_retrieve_body($response);
+    $data = json_decode($body, true);
+    
+    wp_send_json_success($data);
+}
+```
+
+This comprehensive WordPress integration documentation provides everything needed to successfully deploy and maintain the Flask Events Calendar with WordPress, ensuring optimal performance and user experience.
+
 ## HTML Templates
 
 The application uses several HTML templates to provide different views and functionality:
@@ -67,12 +510,6 @@ The application uses several HTML templates to provide different views and funct
   - Navigation bar with links to New Event, Venues, and Cache Management
   - Flash message display system
   - Responsive container layout
-
-- **`home.html`** - The original home page template (available at `/python`) that displays:
-  - Today's events in a simple list format
-  - Basic navigation buttons to move between days
-  - A mini calendar widget for date selection
-  - Responsive layout with events list on the left and calendar on the right
 
 - **`widget_test.html`** - The main application interface used for both home page (`/`) and day view (`/day/<date>`). This template provides:
   - Events list widget with search functionality
