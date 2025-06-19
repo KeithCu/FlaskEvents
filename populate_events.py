@@ -1,9 +1,12 @@
-from app import Base, engine, SessionLocal, Event, Venue, get_next_event_ids
+
 from datetime import datetime, timedelta
 import random
 from faker import Faker
 import argparse
+
 from fts import setup_fts_triggers
+from app import Base, engine, SessionLocal, Event, Venue
+from database import get_next_event_ids
 
 fake = Faker()
 
