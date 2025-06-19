@@ -142,11 +142,23 @@
             </div>
             
             <div class="mb-3" id="recurring-options" style="display: none;">
-                <label for="recurring_until" class="form-label">Recurring Until</label>
-                <input type="date" class="form-control" id="recurring_until" name="recurring_until"
-                       value="{{ event.recurring_until.strftime('%Y-%m-%d') if event and event.recurring_until else '' }}">
-                <div class="form-text">
-                    When should this recurring event series end? Leave empty for no end date.
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Recurring Event Settings</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="recurring_until" class="form-label">End Date for Recurring Series</label>
+                            <input type="date" class="form-control" id="recurring_until" name="recurring_until"
+                                   value="{{ event.recurring_until.strftime('%Y-%m-%d') if event and event.recurring_until else '' }}">
+                            <div class="form-text">
+                                <strong>When should this recurring event series end?</strong><br>
+                                • Leave empty for no end date (series continues indefinitely)<br>
+                                • Set a specific date to end the series on that date<br>
+                                • If no date is set, the series will default to 2 years from the start date
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -184,17 +196,53 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle recurring event options visibility
     const rruleInput = document.getElementById('rrule');
     const recurringOptions = document.getElementById('recurring-options');
+    const recurringUntilInput = document.getElementById('recurring_until');
     
     function toggleRecurringOptions() {
         if (rruleInput.value.trim()) {
             recurringOptions.style.display = 'block';
+            
+            // Set a default end date if none is set (2 years from start date)
+            if (!recurringUntilInput.value) {
+                const startInput = document.getElementById('start');
+                if (startInput.value) {
+                    const startDate = new Date(startInput.value);
+                    const endDate = new Date(startDate);
+                    endDate.setFullYear(startDate.getFullYear() + 2);
+                    
+                    // Format as YYYY-MM-DD
+                    const year = endDate.getFullYear();
+                    const month = String(endDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(endDate.getDate()).padStart(2, '0');
+                    recurringUntilInput.value = `${year}-${month}-${day}`;
+                }
+            }
         } else {
             recurringOptions.style.display = 'none';
+            // Clear the recurring until date when RRULE is cleared
+            recurringUntilInput.value = '';
         }
     }
     
     rruleInput.addEventListener('input', toggleRecurringOptions);
     toggleRecurringOptions(); // Initial state
+    
+    // Update recurring until date when start date changes
+    const startInput = document.getElementById('start');
+    startInput.addEventListener('change', function() {
+        if (rruleInput.value.trim() && !recurringUntilInput.value) {
+            // Only update if there's an RRULE and no recurring until date set
+            const startDate = new Date(this.value);
+            const endDate = new Date(startDate);
+            endDate.setFullYear(startDate.getFullYear() + 2);
+            
+            // Format as YYYY-MM-DD
+            const year = endDate.getFullYear();
+            const month = String(endDate.getMonth() + 1).padStart(2, '0');
+            const day = String(endDate.getDate()).padStart(2, '0');
+            recurringUntilInput.value = `${year}-${month}-${day}`;
+        }
+    });
     
     // Handle virtual event options visibility
     const isVirtualCheckbox = document.getElementById('is_virtual');

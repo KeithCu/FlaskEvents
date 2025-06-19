@@ -227,6 +227,16 @@ def register_events(app):
             is_hybrid = request.form.get('is_hybrid') == 'on'
             url = request.form.get('url', '').strip()
             
+            # Get recurring event fields
+            recurring_until_str = request.form.get('recurring_until', '').strip()
+            recurring_until = None
+            if recurring_until_str:
+                try:
+                    recurring_until = datetime.strptime(recurring_until_str, '%Y-%m-%d').date()
+                except ValueError:
+                    # If invalid date, use default
+                    pass
+            
             with get_db_session() as session:
                 # Validate venue_id
                 if not venue_id:
@@ -243,16 +253,16 @@ def register_events(app):
                                         bg=bg,
                                         is_virtual=is_virtual,
                                         is_hybrid=is_hybrid,
-                                        url=url)
+                                        url=url,
+                                        recurring_until=recurring_until_str)
                 
                 print(f"Creating event: {title} on {start.date()}")
                 
                 # Determine if this is a recurring event
                 is_recurring = bool(rrule_str and rrule_str.strip())
-                recurring_until = None
                 
-                # If recurring, calculate when the series should end (default: 2 years from start)
-                if is_recurring:
+                # If recurring and no end date specified, use default (2 years from start)
+                if is_recurring and not recurring_until:
                     recurring_until = start.date().replace(year=start.date().year + 2)
                 
                 event = Event(
@@ -316,6 +326,16 @@ def register_events(app):
             is_hybrid = request.form.get('is_hybrid') == 'on'
             url = request.form.get('url', '').strip()
             
+            # Get recurring event fields
+            recurring_until_str = request.form.get('recurring_until', '').strip()
+            recurring_until = None
+            if recurring_until_str:
+                try:
+                    recurring_until = datetime.strptime(recurring_until_str, '%Y-%m-%d').date()
+                except ValueError:
+                    # If invalid date, use default
+                    pass
+            
             with get_db_session() as session:
                 event = session.query(Event).get_or_404(id)
                 
@@ -335,14 +355,14 @@ def register_events(app):
                                         bg=bg,
                                         is_virtual=is_virtual,
                                         is_hybrid=is_hybrid,
-                                        url=url)
+                                        url=url,
+                                        recurring_until=recurring_until_str)
                 
                 # Determine if this is a recurring event
                 is_recurring = bool(rrule_str and rrule_str.strip())
-                recurring_until = None
                 
-                # If recurring, calculate when the series should end (default: 2 years from start)
-                if is_recurring:
+                # If recurring and no end date specified, use default (2 years from start)
+                if is_recurring and not recurring_until:
                     recurring_until = start.date().replace(year=start.date().year + 2)
                 
                 event.title = title
