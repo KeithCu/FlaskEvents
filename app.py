@@ -67,9 +67,7 @@ def month_view(year, month):
 # Daily view
 @app.route('/day/<date>')
 def day_view(date):
-    print("="*50)
     print(f"DAY VIEW ENDPOINT CALLED for date: {date}")
-    print("="*50)
     
     try:
         # Parse the date string into a datetime object
@@ -82,8 +80,6 @@ def day_view(date):
             ).order_by(Event.start).all()
             
             print(f"Found {len(day_events)} events for {date}")
-            for event in day_events:
-                print(f"Event: {event.title} on {event.start_date} with ID {event.id}")
             
             return render_template('widget_test.html', 
                                  year=date_obj.year, 
