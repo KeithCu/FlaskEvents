@@ -21,16 +21,22 @@ def load_config():
     config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.yaml')
     try:
         with open(config_path, 'r') as file:
-            return yaml.safe_load(file)
+            config = yaml.safe_load(file)
+            if not config:
+                raise ValueError("config.yaml is empty")
+            return config
     except FileNotFoundError:
-        print(f"Warning: config.yaml not found at {config_path}, using default configuration")
-        return {
-            'database': {'path': 'events.db'},
-            'timezone': {'local': 'America/New_York'},
-            'cors': {'enabled': True, 'origins': ['https://thedetroitilove.com']}
-        }
+        print(f"ERROR: config.yaml not found at {config_path}")
+        print("Please create a config.yaml file with the required settings.")
+        print("See README.md for configuration details.")
+        sys.exit(1)
     except yaml.YAMLError as e:
-        print(f"Error parsing config.yaml: {e}")
+        print(f"ERROR: Invalid YAML in config.yaml: {e}")
+        print("Please fix the YAML syntax in your config.yaml file.")
+        sys.exit(1)
+    except ValueError as e:
+        print(f"ERROR: {e}")
+        print("Please ensure config.yaml contains valid configuration.")
         sys.exit(1)
 
 

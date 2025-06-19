@@ -59,6 +59,41 @@ python app.py
 
 4. Open your browser and navigate to `http://localhost:5000`
 
+## Configuration
+
+**⚠️ IMPORTANT: Before running the application, you must configure the `config.yaml` file!**
+
+The application requires a `config.yaml` file in the root directory with the following settings:
+
+```yaml
+# Flask Events Calendar Configuration
+
+# Database Settings
+database:
+  path: "events.db"
+
+# Timezone Settings
+timezone:
+  local: "America/New_York"
+
+# CORS Settings for WordPress Integration
+cors:
+  enabled: true
+  origins:
+    - "https://your-wordpress-domain.com"
+    - "http://localhost:3000"  # For local development
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+  allow_headers: ["Content-Type", "Authorization"]
+```
+
+### Critical Configuration Notes:
+
+- **CORS Origins**: Must include your WordPress domain for integration to work
+- **Timezone**: Set to your local timezone (e.g., "America/New_York", "America/Chicago")
+- **Database Path**: Default is "events.db" in the application root
+
+**Without proper CORS configuration, the WordPress integration will fail!** The application will exit with an error if the config.yaml file is missing or malformed.
+
 ## HTML Templates
 
 The application uses **7 HTML templates** that work together to create a complete event management system. All templates extend `base.html` and provide specific functionality for different parts of the application.
