@@ -3,64 +3,66 @@
 {% block title %}{% if venue %}Edit Venue{% else %}New Venue{% endif %}{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col">
-        <h2>{% if venue %}Edit Venue{% else %}New Venue{% endif %}</h2>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-body">
-                <form method="POST" id="venueForm" onsubmit="return validateForm()">
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Venue Name <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="name" name="name" required
-                               value="{{ venue.name if venue else (name or '') }}">
-                        <div class="invalid-feedback">
-                            Please provide a venue name
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="address" class="form-label">Address</label>
-                        <textarea class="form-control" id="address" name="address" rows="3" 
-                                  placeholder="Enter the venue address (optional)">{{ venue.address if venue else (address or '') }}</textarea>
-                        <div class="form-text">
-                            Providing an address helps attendees find the venue location.
-                        </div>
-                    </div>
-                    
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            {% if venue %}Update Venue{% else %}Create Venue{% endif %}
-                        </button>
-                        <a href="{{ url_for('list_venues') }}" class="btn btn-secondary">Cancel</a>
-                        
-                        {% if venue %}
-                        <form action="{{ url_for('delete_venue', id=venue.id) }}" method="POST" class="d-inline">
-                            <button type="submit" class="btn btn-danger" 
-                                    onclick="return confirm('Are you sure you want to delete this venue? This action cannot be undone.')">
-                                Delete Venue
-                            </button>
-                        </form>
-                        {% endif %}
-                    </div>
-                </form>
-            </div>
+<div class="form-container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>{% if venue %}Edit Venue{% else %}New Venue{% endif %}</h2>
         </div>
     </div>
-    
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Venue Information</h5>
-                <p class="card-text">
-                    <strong>Venue Name:</strong> Required field that will be displayed to users.<br><br>
-                    <strong>Address:</strong> Optional field for venue location details.<br><br>
-                    Venues are used when creating events to specify where the event will take place.
-                </p>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST" id="venueForm" onsubmit="return validateForm()">
+                        <div class="form-group">
+                            <label for="name" class="form-label required">Venue Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required
+                                   value="{{ venue.name if venue else (name or '') }}">
+                            <div class="invalid-feedback">
+                                Please provide a venue name
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="address" class="form-label">Address</label>
+                            <textarea class="form-control" id="address" name="address" rows="3" 
+                                      placeholder="Enter the venue address (optional)">{{ venue.address if venue else (address or '') }}</textarea>
+                            <div class="form-text">
+                                Providing an address helps attendees find the venue location.
+                            </div>
+                        </div>
+                        
+                        <div class="form-buttons">
+                            <button type="submit" class="btn btn-primary">
+                                {% if venue %}Update Venue{% else %}Create Venue{% endif %}
+                            </button>
+                            <a href="{{ url_for('list_venues') }}" class="btn btn-secondary">Cancel</a>
+                            
+                            {% if venue %}
+                            <form action="{{ url_for('delete_venue', id=venue.id) }}" method="POST" class="d-inline">
+                                <button type="submit" class="btn btn-danger" 
+                                        onclick="return confirm('Are you sure you want to delete this venue? This action cannot be undone.')">
+                                    Delete Venue
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Venue Information</h5>
+                    <p class="card-text">
+                        <strong>Venue Name:</strong> Required field that will be displayed to users.<br><br>
+                        <strong>Address:</strong> Optional field for venue location details.<br><br>
+                        Venues are used when creating events to specify where the event will take place.
+                    </p>
+                </div>
             </div>
         </div>
     </div>
