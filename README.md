@@ -417,6 +417,45 @@ This Flask Events Calendar can be seamlessly integrated with WordPress using the
    define('FLASK_EVENTS_URL', 'http://your-flask-app-domain.com');
    ```
 
+### Quick Setup Steps
+
+For a typical setup with Flask backend on a subdomain (e.g., `flaskevents.thedetroitilove.com`) and WordPress on the main domain (e.g., `thedetroitilove.com`):
+
+1. **Copy WordPress Plugin Files**
+   - Copy the `wp-events-calendar/` directory to your WordPress plugins folder
+   - Location: `/path/to/wordpress/wp-content/plugins/wp-events-calendar/`
+
+2. **Activate the Plugin**
+   - Go to WordPress admin → Plugins → Installed Plugins
+   - Find "Events Calendar" and click **Activate**
+
+3. **Configure Flask App URL**
+   - Edit `wp-events-calendar/wp-events-calendar.php`
+   - Update the `FLASK_EVENTS_URL` constant:
+   ```php
+   define('FLASK_EVENTS_URL', 'https://flaskevents.thedetroitilove.com');
+   ```
+
+4. **Add CORS Support to Flask App**
+   - Install Flask-CORS: `pip install flask-cors`
+   - Add to your Flask app:
+   ```python
+   from flask_cors import CORS
+   CORS(app, origins=['https://thedetroitilove.com'])
+   ```
+
+5. **Add Widgets to WordPress**
+   - Go to Appearance → Widgets
+   - Add "Events Calendar" widget to your sidebar
+   - Add "Events List" widget to your sidebar
+   - Set custom titles if desired
+
+**Key Points:**
+- **SSL Required**: Both sites need HTTPS for CORS to work properly
+- **CORS Configuration**: Flask app must allow requests from your WordPress domain
+- **Two Widgets Available**: Calendar widget (monthly view) and Events List widget (daily events)
+- **No Database Changes**: WordPress and Flask remain completely separate
+
 ### Available WordPress Widgets
 
 The plugin provides two widgets that can be added to any WordPress sidebar or widget area:
