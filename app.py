@@ -39,25 +39,6 @@ def home():
     today_str = now.strftime('%Y-%m-%d')
     return render_template('widget_test.html', date=today_str)
 
-# Python route (original home page)
-@app.route('/python')
-def python_view():
-    now = get_local_now()
-    session = SessionLocal()
-    try:
-        # Get today's events using start_date for better performance
-        today = now.date()
-        today_events = session.query(Event).options(joinedload(Event.venue)).filter(
-            Event.start_date == today
-        ).order_by(Event.start).all()
-        
-        return render_template('home.html', 
-                             year=now.year, 
-                             month=now.month, 
-                             day=now.day,
-                             events=today_events)
-    finally:
-        session.close()
 
 # Monthly view
 @app.route('/month/<int:year>/<int:month>')
