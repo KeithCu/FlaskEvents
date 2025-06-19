@@ -76,13 +76,13 @@ def register_events(app):
             else:
                 with get_db_session() as session:
                     # Get non-recurring events for this specific day
-                    day_events = session.query(Event).filter(
+                    day_events = session.query(Event).options(joinedload(Event.venue)).filter(
                         Event.is_recurring == False,
                         Event.start_date == target_date
                     ).order_by(Event.start).all()
                     
                     # Get recurring events that might occur on this day
-                    recurring_events = session.query(Event).filter(
+                    recurring_events = session.query(Event).options(joinedload(Event.venue)).filter(
                         Event.is_recurring == True,
                         Event.start_date <= target_date,  # Started before or on this day
                         (Event.recurring_until == None) | (Event.recurring_until >= target_date)  # Ends after or on this day

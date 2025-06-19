@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, f
 from flask_compress import Compress
 from sqlalchemy import text
 from datetime import datetime
+from sqlalchemy.orm import joinedload
 
 import os
 import sys
@@ -33,7 +34,7 @@ def python_view():
     try:
         # Get today's events using start_date for better performance
         today = now.date()
-        today_events = session.query(Event).filter(
+        today_events = session.query(Event).options(joinedload(Event.venue)).filter(
             Event.start_date == today
         ).order_by(Event.start).all()
         
