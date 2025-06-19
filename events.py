@@ -5,6 +5,7 @@ import time
 from cacheout import Cache
 from dateutil.rrule import rrule
 from contextlib import contextmanager
+from sqlalchemy.orm import joinedload
 
 from database import SessionLocal, Event, Venue, get_next_event_id
 from fts import ensure_fts_setup
@@ -156,14 +157,14 @@ def register_events(app):
                     Event.is_recurring == False,
                     Event.start_date >= start_date.date(),
                     Event.start_date <= end_date.date()
-                ).all()
+                ).options(joinedload(Event.venue)).all()
 
                 # Get recurring events that might affect this range
                 recurring = session.query(Event).filter(
                     Event.is_recurring == True,
                     Event.start_date <= end_date.date(),  # Started before or during range
                     (Event.recurring_until == None) | (Event.recurring_until >= start_date.date())  # Ends after or during range
-                ).all()
+                ).options(joinedload(Event.venue)).all()
                 
                 print(f"Found {len(non_recurring)} non-recurring events and {len(recurring)} recurring events")
                 
