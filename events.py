@@ -6,6 +6,7 @@ from cacheout import Cache
 from dateutil.rrule import rrule
 from contextlib import contextmanager
 from sqlalchemy.orm import joinedload
+import os
 
 from database import SessionLocal, Event, Venue, get_next_event_id
 from fts import ensure_fts_setup
@@ -58,6 +59,8 @@ def register_events(app):
         print("="*50)
         print("EVENTS ENDPOINT CALLED")
         print("="*50)
+        print(f"Day events cache initialized: {day_events_cache is not None}")
+        print(f"Calendar events cache initialized: {calendar_events_cache is not None}")
         
         # Check if this is a single-day request (from events list widget)
         date = request.args.get('date')
@@ -120,8 +123,13 @@ def register_events(app):
                     }
                     event_list.append(event_data)
                 
-                # Cache the complete day events
-                set_cached_day_events(date, event_list)
+                print(f"About to cache {len(event_list)} events for date {date}")
+                try:
+                    # Cache the complete day events
+                    set_cached_day_events(date, event_list)
+                    print(f"Successfully cached events for {date}")
+                except Exception as e:
+                    print(f"Error caching events for {date}: {e}")
             
             elapsed_time = time.time() - start_time
             print(f"Single day request completed in {elapsed_time:.3f}s")
@@ -448,24 +456,34 @@ def register_events(app):
         if day_events_cache:
             day_events_cache.clear()
             print("Cleared complete day events cache")
+        else:
+            print("Attempted to clear cache but cache not initialized")
 
     def clear_calendar_events_cache():
         """Clear the calendar events cache - call this when events are modified"""
         if calendar_events_cache:
             calendar_events_cache.clear()
             print("Cleared calendar events cache")
+        else:
+            print("Attempted to clear calendar cache but cache not initialized")
 
     def get_cached_day_events(date_str):
         """Get complete day events for a specific date from cache"""
         if day_events_cache:
-            return day_events_cache.get(date_str)
+            cached = day_events_cache.get(date_str)
+            print(f"Cache lookup for {date_str}: {'HIT' if cached is not None else 'MISS'}")
+            return cached
+        print(f"Cache lookup for {date_str}: NO CACHE (cache not initialized)")
         return None
 
     def set_cached_day_events(date_str, events):
         """Cache complete day events for a specific date"""
+        print(f"set_cached_day_events called with date_str={date_str}, events_count={len(events)}")
         if day_events_cache:
             day_events_cache.set(date_str, events)
             print(f"Cached {len(events)} complete day events for {date_str}")
+        else:
+            print(f"Failed to cache events for {date_str}: cache not initialized")
 
     def get_cached_calendar_events(start_str, end_str):
         """Get calendar events for a date range from cache"""
