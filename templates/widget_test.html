@@ -264,8 +264,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Update calendar to show the new date
             if (calendar) {
                 calendar.gotoDate(currentDate);
-                // Highlight the selected date after a short delay to ensure calendar is rendered
-                setTimeout(() => highlightSelectedDate(currentDate), 100);
+                // Highlight the selected date immediately
+                highlightSelectedDate(currentDate);
             }
         }
 
@@ -275,8 +275,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Update calendar to show the new date
             if (calendar) {
                 calendar.gotoDate(currentDate);
-                // Highlight the selected date after a short delay to ensure calendar is rendered
-                setTimeout(() => highlightSelectedDate(currentDate), 100);
+                // Highlight the selected date immediately
+                highlightSelectedDate(currentDate);
             }
         }
 
