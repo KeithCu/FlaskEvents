@@ -171,12 +171,10 @@
 /* Date display */
 #selected-date-display {
     font-weight: 600;
-    color: #495057;
+    color: #dc3545;
     font-size: 1.1rem;
     text-align: center;
     padding: 10px;
-    background-color: #e9ecef;
-    border-radius: 0.375rem;
     margin: 15px 0;
 }
 
