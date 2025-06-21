@@ -59,6 +59,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (eventsListEl) {
         const prevDayBtn = document.getElementById('prev-day');
         const nextDayBtn = document.getElementById('next-day');
+        const prevDayBottomBtn = document.getElementById('prev-day-bottom');
+        const nextDayBottomBtn = document.getElementById('next-day-bottom');
         let currentDate = initialDate;
         let searchTimeout;
 
@@ -400,6 +402,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add event listeners
         prevDayBtn.addEventListener('click', goToPreviousDay);
         nextDayBtn.addEventListener('click', goToNextDay);
+        prevDayBottomBtn.addEventListener('click', goToPreviousDay);
+        nextDayBottomBtn.addEventListener('click', goToNextDay);
 
         // Load initial events
         loadEvents(currentDate);
