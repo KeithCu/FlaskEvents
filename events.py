@@ -19,12 +19,12 @@ CACHE_TTL_SECONDS = CACHE_TTL_HOURS * 3600
 # Initialize cache for complete day events
 # Key format: f"{date_str}" (e.g., "2025-01-15")
 # Value: complete list of events (non-recurring + expanded recurring) for that day
-day_events_cache = Cache(maxsize=1000, ttl=CACHE_TTL_SECONDS)
+day_events_cache = Cache(maxsize=30, ttl=CACHE_TTL_SECONDS)
 
 # Initialize cache for calendar range events
 # Key format: f"calendar_{start_str}_{end_str}"
 # Value: list of events for the calendar range
-calendar_events_cache = Cache(maxsize=100, ttl=CACHE_TTL_SECONDS)
+calendar_events_cache = Cache(maxsize=10, ttl=CACHE_TTL_SECONDS)
 
 # Set timezone to local timezone instead of UTC
 LOCAL_TIMEZONE = pytz.timezone('America/New_York')  # Adjust this to your timezone
