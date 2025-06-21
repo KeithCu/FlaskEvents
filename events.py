@@ -1,9 +1,9 @@
 from flask import render_template, request, jsonify, redirect, url_for, flash
 from sqlalchemy import text
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
 from cacheout import Cache
-from dateutil.rrule import rrule
+from dateutil.rrule import rrulestr
 from contextlib import contextmanager
 from sqlalchemy.orm import joinedload
 import os
@@ -149,12 +149,39 @@ def register_events(app):
                         for instance in instances:
                             if instance.start.date() == target_date:
                                 expanded_events.append(instance)
+                    
+                    # Get ongoing events from previous day that are still running
+                    previous_date = target_date - timedelta(days=1)
+                    ongoing_events = session.query(Event).options(joinedload(Event.venue)).filter(
+                        Event.is_recurring == False,
+                        Event.start_date == previous_date,
+                        Event.end > datetime.combine(target_date, datetime.min.time())  # Event ends after start of current day
+                    ).order_by(Event.start).all()
+                    
+                    # Get ongoing recurring events from previous day
+                    ongoing_recurring = session.query(Event).options(joinedload(Event.venue)).filter(
+                        Event.is_recurring == True,
+                        Event.start_date <= previous_date,  # Started before or on previous day
+                        (Event.recurring_until == None) | (Event.recurring_until >= previous_date)  # Ends after or on previous day
+                    ).all()
+                    
+                    # Expand ongoing recurring events
+                    ongoing_expanded = []
+                    for event in ongoing_recurring:
+                        instances = expand_recurring_events(event, 
+                                                          datetime.combine(previous_date, datetime.min.time()),
+                                                          datetime.combine(previous_date, datetime.max.time()))
+                        # Filter to only include instances that started on previous day and end after start of current day
+                        for instance in instances:
+                            if (instance.start.date() == previous_date and 
+                                instance.end > datetime.combine(target_date, datetime.min.time())):
+                                ongoing_expanded.append(instance)
                 
                 # Combine and sort all events
-                all_events = day_events + expanded_events
+                all_events = day_events + expanded_events + ongoing_events + ongoing_expanded
                 all_events.sort(key=lambda x: x.start)
                 
-                print(f"Cache MISS for {date}: found {len(day_events)} non-recurring + {len(expanded_events)} recurring = {len(all_events)} total events")
+                print(f"Cache MISS for {date}: found {len(day_events)} non-recurring + {len(expanded_events)} recurring + {len(ongoing_events)} ongoing + {len(ongoing_expanded)} ongoing recurring = {len(all_events)} total events")
                 
                 event_list = []
                 for event in all_events:
@@ -465,7 +492,7 @@ def register_events(app):
             return [event]
         
         # Parse RRULE and generate all instances
-        rule = rrule.rrulestr(event.rrule, dtstart=event.start)
+        rule = rrulestr(event.rrule, dtstart=event.start)
         instances = rule.between(start_date, end_date)
         
         # Create event objects for each instance

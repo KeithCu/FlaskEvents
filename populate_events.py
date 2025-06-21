@@ -1,4 +1,3 @@
-
 from datetime import datetime, timedelta
 import random
 from faker import Faker
@@ -31,6 +30,37 @@ def generate_event_colors():
     color = random.choice(colors)
     return color, color
 
+def generate_recurring_pattern(indefinite_count, max_indefinite=10):
+    """Generate recurring pattern with various expiration dates"""
+    patterns = [
+        # Indefinite events (limited to max_indefinite total)
+        {"recurrence": "weekly", "expires": None, "weight": 1 if indefinite_count < max_indefinite else 0},
+        # Short-term recurring events (few days to few weeks)
+        {"recurrence": "daily", "expires": random.randint(3, 7), "weight": 2},
+        {"recurrence": "weekly", "expires": random.randint(1, 4), "weight": 2},
+        # Medium-term recurring events (few weeks to few months)
+        {"recurrence": "weekly", "expires": random.randint(4, 12), "weight": 2},
+        {"recurrence": "monthly", "expires": random.randint(1, 3), "weight": 1},
+        # Non-recurring events (90% of events)
+        {"recurrence": None, "expires": None, "weight": 90}
+    ]
+    
+    # Weighted selection
+    total_weight = sum(p["weight"] for p in patterns)
+    if total_weight == 0:
+        # If no patterns available (e.g., all indefinite slots filled), default to non-recurring
+        return {"recurrence": None, "expires": None, "weight": 90}
+    
+    rand = random.uniform(0, total_weight)
+    current_weight = 0
+    
+    for pattern in patterns:
+        current_weight += pattern["weight"]
+        if rand <= current_weight:
+            return pattern
+    
+    return patterns[-1]  # Default to non-recurring
+
 def populate_events(total_events=50000):
     # Create tables
     Base.metadata.create_all(engine)
@@ -59,34 +89,49 @@ def populate_events(total_events=50000):
         # Generate events
         events = []
         venue_counts = {venue.id: 0 for venue in venues}  # Track venue usage
+        indefinite_events_total = 0  # Track total indefinite events
+        ongoing_events_today = 0  # Track ongoing events for current day
         
         for day in range(total_days):
             current_date = start_date + timedelta(days=day)
             
+            # Reset ongoing events counter for each day
+            ongoing_events_today = 0
+            
             # Generate events for this day
             for _ in range(events_per_day):
-                # Random start time between 8 AM and 8 PM
-                start_hour = random.randint(8, 20)
-                start_minute = random.choice([0, 15, 30, 45])
+                # Specific start hours between 8 AM and 11 PM
+                start_hour = random.choice([8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23])
                 
-                # Random duration between 30 minutes and 3 hours
-                duration_hours = random.randint(0, 2)
-                duration_minutes = random.choice([0, 15, 30, 45])
+                # Determine if this should be an ongoing event (stretching to next day)
+                should_be_ongoing = False
+                if ongoing_events_today < 3 and random.random() < 0.1:  # 10% chance, max 3 per day
+                    should_be_ongoing = True
+                    ongoing_events_today += 1
+                
+                # Random duration - shorter for most events, longer for ongoing events
+                if should_be_ongoing:
+                    # Ongoing events: 8-18 hours (to stretch to next day)
+                    duration_hours = random.randint(8, 18)
+                else:
+                    # Regular events: 1-6 hours
+                    duration_hours = random.randint(1, 6)
                 
                 start_time = current_date.replace(
                     hour=start_hour,
-                    minute=start_minute,
+                    minute=0,
                     second=0,
                     microsecond=0
                 )
                 
-                end_time = start_time + timedelta(
-                    hours=duration_hours,
-                    minutes=duration_minutes
-                )
+                end_time = start_time + timedelta(hours=duration_hours)
                 
-                # Ensure end time doesn't go past midnight
-                if end_time.day > start_time.day:
+                # For ongoing events, ensure they stretch to next day but not past noon
+                if should_be_ongoing and end_time.day > start_time.day:
+                    if end_time.hour > 12:
+                        end_time = end_time.replace(hour=12, minute=0)
+                elif not should_be_ongoing and end_time.day > start_time.day:
+                    # Regular events shouldn't cross midnight
                     end_time = start_time.replace(hour=23, minute=59)
                 
                 color, bg = generate_event_colors()
@@ -95,6 +140,36 @@ def populate_events(total_events=50000):
                 venue = min(venues, key=lambda v: venue_counts[v.id])
                 venue_counts[venue.id] += 1
                 
+                # Generate recurring pattern
+                pattern = generate_recurring_pattern(indefinite_events_total, max_indefinite=10)
+                
+                # Track indefinite events
+                if pattern["recurrence"] == "weekly" and pattern["expires"] is None:
+                    indefinite_events_total += 1
+                    print(f"Created indefinite event #{indefinite_events_total}/10")
+                
+                # Calculate expiration date if needed
+                recurring_until = None
+                rrule = None
+                is_recurring = False
+                
+                if pattern["recurrence"] is not None:
+                    is_recurring = True
+                    
+                    # Generate RRULE based on recurrence pattern
+                    if pattern["recurrence"] == "daily":
+                        rrule = "FREQ=DAILY"
+                        if pattern["expires"] is not None:
+                            recurring_until = current_date + timedelta(days=pattern["expires"])
+                    elif pattern["recurrence"] == "weekly":
+                        rrule = "FREQ=WEEKLY"
+                        if pattern["expires"] is not None:
+                            recurring_until = current_date + timedelta(weeks=pattern["expires"])
+                    elif pattern["recurrence"] == "monthly":
+                        rrule = "FREQ=MONTHLY"
+                        if pattern["expires"] is not None:
+                            recurring_until = current_date + timedelta(days=pattern["expires"] * 30)
+                
                 event = Event(
                     title=generate_event_title(),
                     description=generate_event_description(),
@@ -102,7 +177,10 @@ def populate_events(total_events=50000):
                     end=end_time,
                     venue_id=venue.id,
                     color=color,
-                    bg=bg
+                    bg=bg,
+                    is_recurring=is_recurring,
+                    recurring_until=recurring_until,
+                    rrule=rrule
                 )
                 events.append(event)
                 
@@ -112,7 +190,7 @@ def populate_events(total_events=50000):
                     get_next_event_ids(session, events)
                     session.bulk_save_objects(events)
                     session.commit()
-                    print(f"Added {len(events)} events...")
+                    print(f"Added {len(events)} events... (Indefinite events: {indefinite_events_total}/10, Ongoing events today: {ongoing_events_today})")
                     print("Current venue distribution:")
                     for v in venues:
                         print(f"Venue {v.name}: {venue_counts[v.id]} events")
@@ -129,7 +207,7 @@ def populate_events(total_events=50000):
             for v in venues:
                 print(f"Venue {v.name}: {venue_counts[v.id]} events")
         
-        print("All events have been added successfully!")
+        print(f"All events have been added successfully! Total indefinite events: {indefinite_events_total}/10")
         
         # Set up FTS after populating events
         print("Setting up FTS for search functionality...")

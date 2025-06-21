@@ -82,25 +82,32 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (events.length === 0) {
                         eventsListEl.innerHTML = '<p>No events found matching your search.</p>';
                     } else {
-                        const eventsHtml = events.map(event => `
-                            <div class="event-item">
-                                <div class="event-time">${formatTime(event.start)}</div>
-                                <div class="event-title">
-                                    ${event.title}
-                                    ${event.is_virtual ? '<span class="badge bg-primary ms-2">Virtual</span>' : ''}
-                                    ${event.is_hybrid ? '<span class="badge bg-success ms-2">Hybrid</span>' : ''}
-                                </div>
-                                ${event.description ? `<div class="event-description">${event.description}</div>` : ''}
-                                ${event.venue ? `<div class="event-venue">at ${event.venue}</div>` : ''}
-                                ${event.url ? `
-                                    <div class="mt-2">
-                                        <a href="${event.url}" target="_blank" class="btn btn-sm btn-primary">
-                                            <i class="fas fa-external-link-alt"></i> ${event.is_virtual || event.is_hybrid ? 'Join Event' : 'View Details'}
-                                        </a>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        `).join('');
+                        // Group search results by time
+                        const timeGroups = {};
+                        events.forEach(event => {
+                            const timeKey = formatTime(event.start);
+                            if (!timeGroups[timeKey]) {
+                                timeGroups[timeKey] = [];
+                            }
+                            timeGroups[timeKey].push(event);
+                        });
+                        
+                        let eventsHtml = '';
+                        
+                        // Sort time groups and create HTML
+                        Object.keys(timeGroups).sort((a, b) => {
+                            const timeA = new Date(`2000-01-01 ${a}`);
+                            const timeB = new Date(`2000-01-01 ${b}`);
+                            return timeA - timeB;
+                        }).forEach(timeKey => {
+                            eventsHtml += '<div class="time-group">';
+                            eventsHtml += `<div class="time-header">${timeKey}</div>`;
+                            timeGroups[timeKey].forEach(event => {
+                                eventsHtml += createEventHtml(event, false);
+                            });
+                            eventsHtml += '</div>';
+                        });
+                        
                         eventsListEl.innerHTML = eventsHtml;
                     }
                 })
@@ -140,25 +147,68 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (events.length === 0) {
                     eventsListEl.innerHTML = '<p>No events scheduled for this day.</p>';
                 } else {
-                    const eventsHtml = events.map(event => `
-                        <div class="event-item">
-                            <div class="event-time">${formatTime(event.start)}</div>
-                            <div class="event-title">
-                                ${event.title}
-                                ${event.is_virtual ? '<span class="badge bg-primary ms-2">Virtual</span>' : ''}
-                                ${event.is_hybrid ? '<span class="badge bg-success ms-2">Hybrid</span>' : ''}
-                            </div>
-                            ${event.description ? `<div class="event-description">${event.description}</div>` : ''}
-                            ${event.venue ? `<div class="event-venue">at ${event.venue}</div>` : ''}
-                            ${event.url ? `
-                                <div class="mt-2">
-                                    <a href="${event.url}" target="_blank" class="btn btn-sm btn-primary">
-                                        <i class="fas fa-external-link-alt"></i> ${event.is_virtual || event.is_hybrid ? 'Join Event' : 'View Details'}
-                                    </a>
-                                </div>
-                            ` : ''}
-                        </div>
-                    `).join('');
+                    // Separate ongoing events from new events
+                    const ongoingEvents = [];
+                    const newEvents = [];
+                    const currentTime = new Date();
+                    
+                    events.forEach(event => {
+                        const eventStart = new Date(event.start);
+                        const eventEnd = new Date(event.end);
+                        
+                        // Check if event started the previous day and is still ongoing
+                        const previousDay = new Date(date);
+                        previousDay.setDate(previousDay.getDate() - 1);
+                        const startOfCurrentDay = new Date(date);
+                        startOfCurrentDay.setHours(0, 0, 0, 0);
+                        
+                        // Event is ongoing if it started on the previous day and ends after the start of current day
+                        if (eventStart.getDate() === previousDay.getDate() && 
+                            eventStart.getMonth() === previousDay.getMonth() && 
+                            eventStart.getFullYear() === previousDay.getFullYear() &&
+                            eventEnd > startOfCurrentDay) {
+                            ongoingEvents.push(event);
+                        } else {
+                            newEvents.push(event);
+                        }
+                    });
+                    
+                    let eventsHtml = '';
+                    
+                    // Add ongoing section if there are ongoing events
+                    if (ongoingEvents.length > 0) {
+                        eventsHtml += '<div class="time-group ongoing-section">';
+                        eventsHtml += '<div class="time-header">ONGOING</div>';
+                        ongoingEvents.forEach(event => {
+                            eventsHtml += createEventHtml(event, true);
+                        });
+                        eventsHtml += '</div>';
+                    }
+                    
+                    // Group new events by time
+                    const timeGroups = {};
+                    newEvents.forEach(event => {
+                        const timeKey = formatTime(event.start);
+                        if (!timeGroups[timeKey]) {
+                            timeGroups[timeKey] = [];
+                        }
+                        timeGroups[timeKey].push(event);
+                    });
+                    
+                    // Sort time groups and create HTML
+                    Object.keys(timeGroups).sort((a, b) => {
+                        const timeA = new Date(`2000-01-01 ${a}`);
+                        const timeB = new Date(`2000-01-01 ${b}`);
+                        return timeA - timeB;
+                    }).forEach(timeKey => {
+                        eventsHtml += '<div class="time-group">';
+                        eventsHtml += `<div class="time-header">${timeKey}</div>`;
+                        timeGroups[timeKey].forEach(event => {
+                            eventsHtml += createEventHtml(event, false);
+                        });
+                        eventsHtml += '</div>';
+                    });
+                    
                     eventsListEl.innerHTML = eventsHtml;
                 }
             })
@@ -166,6 +216,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error loading events:', error);
                 eventsListEl.innerHTML = '<p>Error loading events. Please try again.</p>';
             });
+        }
+
+        function createEventHtml(event, isOngoing) {
+            const arrowSymbol = '→';
+            const eventTitle = event.title;
+            const venueText = event.venue ? ` at ${event.venue}` : '';
+            const descriptionText = event.description ? ` - ${event.description}` : '';
+            const fullText = `${eventTitle}${venueText}${descriptionText}`;
+            
+            let html = '<div class="event-line">';
+            
+            if (event.url) {
+                html += `<a href="${event.url}" target="_blank" class="event-link">`;
+                html += `<span class="event-arrow">${arrowSymbol}</span>`;
+                html += `<span class="event-text">${fullText}</span>`;
+                html += '</a>';
+            } else {
+                html += `<span class="event-arrow">${arrowSymbol}</span>`;
+                html += `<span class="event-text">${fullText}</span>`;
+            }
+            
+            // Add badges for virtual/hybrid events
+            if (event.is_virtual) {
+                html += '<span class="badge bg-primary ms-2">Virtual</span>';
+            }
+            if (event.is_hybrid) {
+                html += '<span class="badge bg-success ms-2">Hybrid</span>';
+            }
+            
+            html += '</div>';
+            return html;
         }
 
         function formatTime(dateStr) {
