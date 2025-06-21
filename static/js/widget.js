@@ -225,7 +225,91 @@ document.addEventListener('DOMContentLoaded', function() {
             const startTime = formatTime(event.start);
             const endTime = formatTime(event.end);
             const descriptionText = event.description ? event.description : '';
-            const fullText = `${eventTitle} : ${venueText} : ${startTime} - ${endTime} : ${descriptionText}`;
+            
+            // Get recurrence type for display
+            let recurrenceSuffix = '';
+            if (event.is_recurring && event.rrule) {
+                const rrule = event.rrule.toUpperCase();
+                
+                // Check for interval (e.g., every 2 weeks)
+                let interval = '';
+                const intervalMatch = rrule.match(/INTERVAL=(\d+)/);
+                if (intervalMatch && intervalMatch[1] !== '1') {
+                    interval = `Every ${intervalMatch[1]} `;
+                }
+                
+                // Get end date if available
+                let endDateStr = '';
+                if (event.recurring_until) {
+                    const endDate = new Date(event.recurring_until);
+                    endDateStr = endDate.toLocaleDateString('en-US', { 
+                        month: 'numeric', 
+                        day: 'numeric',
+                        year: 'numeric'
+                    });
+                }
+                
+                // Check for day of week patterns
+                const bydayMatch = rrule.match(/BYDAY=([^;]+)/);
+                if (bydayMatch) {
+                    const byday = bydayMatch[1];
+                    
+                    // Check for ordinal day patterns (1MO = 1st Monday, 2TU = 2nd Tuesday, etc.)
+                    const ordinalMatch = byday.match(/(\d+)(MO|TU|WE|TH|FR|SA|SU)/);
+                    if (ordinalMatch) {
+                        const ordinal = ordinalMatch[1];
+                        const day = ordinalMatch[2];
+                        const dayNames = { 'MO': 'Monday', 'TU': 'Tuesday', 'WE': 'Wednesday', 'TH': 'Thursday', 'FR': 'Friday', 'SA': 'Saturday', 'SU': 'Sunday' };
+                        const ordinalNames = { '1': '1st', '2': '2nd', '3': '3rd', '4': '4th', '5': '5th' };
+                        
+                        if (rrule.includes('FREQ=MONTHLY')) {
+                            const baseText = `${ordinalNames[ordinal] || ordinal} ${dayNames[day]}`;
+                            recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
+                        } else if (rrule.includes('FREQ=YEARLY')) {
+                            const baseText = `${ordinalNames[ordinal] || ordinal} ${dayNames[day]}`;
+                            recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
+                        }
+                    } else {
+                        // Regular day of week
+                        const days = byday.split(',').map(d => {
+                            const dayNames = { 'MO': 'Mon', 'TU': 'Tue', 'WE': 'Wed', 'TH': 'Thu', 'FR': 'Fri', 'SA': 'Sat', 'SU': 'Sun' };
+                            return dayNames[d] || d;
+                        });
+                        
+                        if (rrule.includes('FREQ=WEEKLY')) {
+                            if (days.length === 1) {
+                                const baseText = days[0];
+                                recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
+                            } else {
+                                const baseText = days.join(', ');
+                                recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
+                            }
+                        }
+                    }
+                }
+                
+                // If no specific pattern found, use basic frequency
+                if (!recurrenceSuffix) {
+                    if (rrule.includes('FREQ=DAILY')) {
+                        const baseText = `${interval}Daily`;
+                        recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
+                    } else if (rrule.includes('FREQ=WEEKLY')) {
+                        const baseText = `${interval}Weekly`;
+                        recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
+                    } else if (rrule.includes('FREQ=MONTHLY')) {
+                        const baseText = `${interval}Monthly`;
+                        recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
+                    } else if (rrule.includes('FREQ=YEARLY')) {
+                        const baseText = `${interval}Yearly`;
+                        recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
+                    } else {
+                        const baseText = 'Recurring';
+                        recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
+                    }
+                }
+            }
+            
+            const fullText = `${eventTitle} : ${venueText} : ${startTime} - ${endTime} : ${descriptionText}${recurrenceSuffix}`;
             
             let html = '<div class="event-line">';
             

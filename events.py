@@ -115,6 +115,9 @@ def register_events(app):
         if date:
             print(f"Events request for date: {date}")
             
+            # Clear cache to ensure fresh data with rrule field
+            clear_day_events_cache()
+            
             target_date = datetime.strptime(date, '%Y-%m-%d').date()
             
             # Check cache first for complete day events
@@ -195,7 +198,10 @@ def register_events(app):
                         'is_virtual': event.is_virtual,
                         'is_hybrid': event.is_hybrid,
                         'url': event.url,
-                    }
+                        'is_recurring': event.is_recurring,
+                        'rrule': event.rrule,
+                        'recurring_until': event.recurring_until.isoformat() if event.recurring_until else None,
+                    }                    
                     event_list.append(event_data)
                 
                 # Cache the complete day events
@@ -269,6 +275,7 @@ def register_events(app):
                         'is_virtual': event.is_virtual,
                         'is_hybrid': event.is_hybrid,
                         'url': event.url,
+                        'recurring_until': event.recurring_until.isoformat() if event.recurring_until else None,
                     }
                     event_list.append(event_data)
                 
@@ -514,6 +521,9 @@ def register_events(app):
                 is_virtual=event.is_virtual,
                 is_hybrid=event.is_hybrid,
                 url=event.url,
+                is_recurring=event.is_recurring,
+                rrule=event.rrule,
+                recurring_until=event.recurring_until,
             )
             expanded_events.append(instance_event)
         
