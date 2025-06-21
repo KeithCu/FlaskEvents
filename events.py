@@ -115,9 +115,6 @@ def register_events(app):
         if date:
             print(f"Events request for date: {date}")
             
-            # Clear cache to ensure fresh data with rrule field
-            clear_day_events_cache()
-            
             target_date = datetime.strptime(date, '%Y-%m-%d').date()
             
             # Check cache first for complete day events
