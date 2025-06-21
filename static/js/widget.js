@@ -221,9 +221,11 @@ document.addEventListener('DOMContentLoaded', function() {
         function createEventHtml(event, isOngoing) {
             const arrowSymbol = '→';
             const eventTitle = event.title;
-            const venueText = event.venue ? ` at ${event.venue}` : '';
-            const descriptionText = event.description ? ` - ${event.description}` : '';
-            const fullText = `${eventTitle}${venueText}${descriptionText}`;
+            const venueText = event.venue ? event.venue : 'No venue';
+            const startTime = formatTime(event.start);
+            const endTime = formatTime(event.end);
+            const descriptionText = event.description ? event.description : '';
+            const fullText = `${eventTitle} : ${venueText} : ${startTime} - ${endTime} : ${descriptionText}`;
             
             let html = '<div class="event-line">';
             
@@ -255,7 +257,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 hour: 'numeric', 
                 minute: '2-digit',
                 hour12: true 
-            });
+            }).replace(/\s/g, '');
         }
 
         function formatDateForDisplay(date) {
