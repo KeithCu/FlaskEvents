@@ -40,18 +40,13 @@ def get_db_session():
 
 def get_cached_day_events(date_str):
     """Get complete day events for a specific date from cache"""
-    print(f"get_cached_day_events: day_events_cache id = {id(day_events_cache)}")
     if day_events_cache is not None:
         cached = day_events_cache.get(date_str)
-        print(f"Cache lookup for {date_str}: {'HIT' if cached is not None else 'MISS'}")
         return cached
-    print(f"Cache lookup for {date_str}: NO CACHE (cache not initialized)")
     return None
 
 def set_cached_day_events(date_str, events):
     """Cache complete day events for a specific date"""
-    print(f"set_cached_day_events: day_events_cache id = {id(day_events_cache)}")
-    print(f"set_cached_day_events called with date_str={date_str}, events_count={len(events)}")
     if day_events_cache is not None:
         day_events_cache.set(date_str, events)
         print(f"Cached {len(events)} complete day events for {date_str}")
@@ -113,8 +108,6 @@ def register_events(app):
         # Check if this is a single-day request (from events list widget)
         date = request.args.get('date')
         if date:
-            print(f"Events request for date: {date}")
-            
             target_date = datetime.strptime(date, '%Y-%m-%d').date()
             
             # Check cache first for complete day events
@@ -198,7 +191,8 @@ def register_events(app):
                         'is_recurring': event.is_recurring,
                         'rrule': event.rrule,
                         'recurring_until': event.recurring_until.isoformat() if event.recurring_until else None,
-                    }                    
+                    }
+                    
                     event_list.append(event_data)
                 
                 # Cache the complete day events
@@ -213,8 +207,6 @@ def register_events(app):
         # Calendar widget request (date range)
         start = request.args.get('start')
         end = request.args.get('end')
-        
-        print(f"Calendar request: {start} to {end}")
         
         # Convert string dates to datetime objects
         start_date = datetime.fromisoformat(start.replace('Z', '+00:00'))
