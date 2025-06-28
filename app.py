@@ -239,11 +239,7 @@ def pool_stats():
 
 # Register routes from other modules
 from events import register_events
-from venue import register_venues
-from categories import register_categories
 from cache import register_cache_routes
 register_events(app)
-register_venues(app)
-register_categories(app)
 register_cache_routes(app)
 
