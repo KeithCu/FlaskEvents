@@ -1,4 +1,4 @@
-from app import Base, engine, SessionLocal, Venue
+from database import engine, SessionLocal, Base, Venue, migrate_database
 import re
 from fts import setup_fts_triggers
 
@@ -45,14 +45,20 @@ venues = [
 ]
 
 def populate_venues():
-    # Create tables
+    # Create tables first, before any model relationships are accessed
+    print("Creating database tables...")
     Base.metadata.create_all(engine)
+    
+    # Run migration to ensure categories are set up
+    print("Running database migration...")
+    migrate_database()
     
     # Create a session
     session = SessionLocal()
     
     try:
         # Add each venue
+        print("Setting up venues...")
         for venue_name in venues:
             # Check if venue already exists
             existing_venue = session.query(Venue).filter_by(name=venue_name).first()

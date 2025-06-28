@@ -1,5 +1,5 @@
 import os
-from sqlalchemy import create_engine, text, PrimaryKeyConstraint, Column, String, Float, DateTime, Integer, Date, ForeignKey, Text, Index, Boolean
+from sqlalchemy import create_engine, text, PrimaryKeyConstraint, Column, String, Float, DateTime, Integer, Date, ForeignKey, Text, Index, Boolean, Table
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 
 # Get the directory where the files are located
@@ -63,108 +63,70 @@ def optimize_database():
         print("Database optimized for read-heavy workload with large database but recent event access")
 
 def migrate_database():
-    """Migrate existing database to add recurring event columns"""
-    print("Starting database migration...")
-    
+    """Migrate database to add categories support"""
     with engine.connect() as conn:
-        # Check if the event table exists
-        table_exists = conn.execute(text("""
+        # Check if category table exists
+        category_table_exists = conn.execute(text("""
+            SELECT name FROM sqlite_master 
+            WHERE type='table' AND name='category'
+        """)).fetchone()
+        
+        if not category_table_exists:
+            print("Creating category table...")
+            conn.execute(text("""
+                CREATE TABLE category (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name VARCHAR(100) NOT NULL UNIQUE,
+                    usage_count INTEGER DEFAULT 0,
+                    is_active BOOLEAN DEFAULT TRUE
+                )
+            """))
+            conn.commit()
+            print("Created category table")
+        
+        # Check if event table exists before trying to add columns
+        event_table_exists = conn.execute(text("""
             SELECT name FROM sqlite_master 
             WHERE type='table' AND name='event'
         """)).fetchone()
         
-        if not table_exists:
-            print("Event table doesn't exist yet, skipping migration")
-            return
-        
-        # Check if the new columns already exist
-        result = conn.execute(text("""
-            SELECT name FROM pragma_table_info('event') 
-            WHERE name IN ('is_recurring', 'recurring_until', 'is_virtual', 'is_hybrid', 'url')
-        """)).fetchall()
-        
-        existing_columns = [row[0] for row in result]
-        print(f"Existing columns: {existing_columns}")
-        
-        # Add is_recurring column if it doesn't exist
-        if 'is_recurring' not in existing_columns:
-            print("Adding is_recurring column...")
-            conn.execute(text("ALTER TABLE event ADD COLUMN is_recurring BOOLEAN DEFAULT FALSE"))
-            conn.commit()
-            print("Added is_recurring column")
-        
-        # Add recurring_until column if it doesn't exist
-        if 'recurring_until' not in existing_columns:
-            print("Adding recurring_until column...")
-            conn.execute(text("ALTER TABLE event ADD COLUMN recurring_until DATE"))
-            conn.commit()
-            print("Added recurring_until column")
-        
-        # Add virtual event columns if they don't exist
-        if 'is_virtual' not in existing_columns:
-            print("Adding is_virtual column...")
-            conn.execute(text("ALTER TABLE event ADD COLUMN is_virtual BOOLEAN DEFAULT FALSE"))
-            conn.commit()
-            print("Added is_virtual column")
-        
-        if 'is_hybrid' not in existing_columns:
-            print("Adding is_hybrid column...")
-            conn.execute(text("ALTER TABLE event ADD COLUMN is_hybrid BOOLEAN DEFAULT FALSE"))
-            conn.commit()
-            print("Added is_hybrid column")
-        
-        # Handle URL field migration
-        if 'url' not in existing_columns:
-            print("Adding url column...")
-            conn.execute(text("ALTER TABLE event ADD COLUMN url VARCHAR(500)"))
-            conn.commit()
-            print("Added url column")
-        
-        # Create indexes if they don't exist
-        indexes = conn.execute(text("""
-            SELECT name FROM sqlite_master 
-            WHERE type='index' AND name IN ('idx_recurring', 'idx_virtual')
-        """)).fetchall()
-        
-        existing_indexes = [row[0] for row in indexes]
-        
-        if 'idx_recurring' not in existing_indexes:
-            print("Creating recurring events index...")
-            conn.execute(text("""
-                CREATE INDEX idx_recurring ON event (is_recurring, recurring_until)
-            """))
-            conn.commit()
-            print("Created recurring events index")
-        
-        if 'idx_virtual' not in existing_indexes:
-            print("Creating virtual events index...")
-            conn.execute(text("""
-                CREATE INDEX idx_virtual ON event (is_virtual, is_hybrid)
-            """))
-            conn.commit()
-            print("Created virtual events index")
-        
-        # Update existing events to set is_recurring flag
-        print("Updating existing events...")
-        session = SessionLocal()
-        try:
-            # Find events with rrule and set is_recurring flag
-            events_with_rrule = session.query(Event).filter(
-                Event.rrule.isnot(None),
-                Event.rrule != ''
-            ).all()
+        if event_table_exists:
+            # Check if categories column exists in event table
+            columns = conn.execute(text("""
+                PRAGMA table_info(event)
+            """)).fetchall()
             
-            for event in events_with_rrule:
-                event.is_recurring = True
-                # Set recurring_until to 2 years from start if not set
-                if not event.recurring_until:
-                    event.recurring_until = event.start_date.replace(year=event.start_date.year + 2)
-                print(f"Updated event '{event.title}' to recurring")
+            column_names = [col[1] for col in columns]
             
-            session.commit()
-            print(f"Updated {len(events_with_rrule)} events to recurring")
-        finally:
-            session.close()
+            if 'categories' not in column_names:
+                print("Adding categories column to event table...")
+                conn.execute(text("""
+                    ALTER TABLE event ADD COLUMN categories TEXT DEFAULT ''
+                """))
+                conn.commit()
+                print("Added categories column to event table")
+            else:
+                print("Categories column already exists in event table")
+        else:
+            print("Event table doesn't exist yet, skipping column addition")
+        
+        # Insert default categories if they don't exist
+        default_categories = [
+            "Art/Fashion", "Broadcast", "Comedy", "Community", "Concert", 
+            "Conferences", "Drag/Burlesque", "Education/Lecture", "Festival/Fair", 
+            "Film/TV", "Food/Drink", "Fundraisers", "Going Late", "Literature/Poetry", 
+            "Music : DJ", "Music : Live", "Other", "Record Store", "Record Store Day", 
+            "Theatre/Dance", "Tours"
+        ]
+        
+        for category_name in default_categories:
+            conn.execute(text("""
+                INSERT OR IGNORE INTO category (name, usage_count) 
+                VALUES (:name, 0)
+            """), {"name": category_name})
+        
+        conn.commit()
+        print(f"Inserted {len(default_categories)} default categories")
     
     print("Database migration completed successfully!")
 
@@ -206,7 +168,23 @@ optimize_database()
 
 Base.metadata.create_all(engine)  # Create all tables first
 
-# Event model
+# Simple Category model for managing available categories
+class Category(Base):
+    __tablename__ = 'category'
+    
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False, unique=True)
+    usage_count = Column(Integer, default=0)
+    is_active = Column(Boolean, default=True)
+    
+    def __init__(self, **kwargs):
+        super(Category, self).__init__(**kwargs)
+        if self.usage_count is None:
+            self.usage_count = 0
+        if self.is_active is None:
+            self.is_active = True
+
+# Event model (updated)
 class Event(Base):
     __tablename__ = 'event'
     
@@ -231,6 +209,9 @@ class Event(Base):
     is_virtual = Column(Boolean, default=False)
     is_hybrid = Column(Boolean, default=False)
     url = Column(String(500))  # General URL for any event (website, Facebook page, virtual meeting, etc.)
+    
+    # Add categories as a comma-separated list
+    categories = Column(Text, default='')
     
     venue = relationship("Venue", back_populates="events")
     

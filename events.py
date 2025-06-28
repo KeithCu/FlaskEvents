@@ -9,7 +9,7 @@ from sqlalchemy.orm import joinedload
 import os
 import pytz
 
-from database import SessionLocal, Event, Venue, get_next_event_id
+from database import SessionLocal, Event, Venue, Category, get_next_event_id
 from fts import ensure_fts_setup
 
 # Global cache configuration - can be adjusted
@@ -309,13 +309,21 @@ def register_events(app):
                     # If invalid date, use default
                     pass
             
+            # Get category IDs from form
+            category_ids = request.form.getlist('category_ids')
+            
+            # Convert category IDs to category names
+            categories_str = ','.join(category_ids) if category_ids else ''
+            
             with get_db_session() as session:
                 # Validate venue_id
                 if not venue_id:
                     flash('Please select a venue', 'error')
                     venues = session.query(Venue).all()
+                    categories = session.query(Category).filter(Category.is_active == True).order_by(Category.usage_count.desc(), Category.name).all()
                     return render_template('event_form.html', 
                                         venues=venues,
+                                        categories=categories,
                                         title=title,
                                         description=description,
                                         start=start,
@@ -350,13 +358,15 @@ def register_events(app):
                     recurring_until=recurring_until,
                     is_virtual=is_virtual,
                     is_hybrid=is_hybrid,
-                    url=url if url else None
+                    url=url if url else None,
+                    categories=categories_str
                 )
                 
                 # Generate ID for the new event based on its date
                 event.id = get_next_event_id(session, event.start_date)
                 print(f"Generated ID {event.id} for event on {event.start_date}")
                 print(f"Event is recurring: {is_recurring}, until: {recurring_until}")
+                print(f"Added categories: {categories_str}")
                 
                 session.add(event)
                 session.commit()
@@ -379,7 +389,8 @@ def register_events(app):
         
         with get_db_session() as session:
             venues = session.query(Venue).all()
-            return render_template('event_form.html', venues=venues)
+            categories = session.query(Category).filter(Category.is_active == True).order_by(Category.usage_count.desc(), Category.name).all()
+            return render_template('event_form.html', venues=venues, categories=categories)
 
     @app.route('/event/<int:id>/edit', methods=['GET', 'POST'])
     def edit_event(id):
@@ -408,6 +419,12 @@ def register_events(app):
                     # If invalid date, use default
                     pass
             
+            # Get category IDs from form
+            category_ids = request.form.getlist('category_ids')
+            
+            # Convert category IDs to category names
+            categories_str = ','.join(category_ids) if category_ids else ''
+            
             with get_db_session() as session:
                 event = session.query(Event).get_or_404(id)
                 
@@ -415,9 +432,11 @@ def register_events(app):
                 if not venue_id:
                     flash('Please select a venue', 'error')
                     venues = session.query(Venue).all()
+                    categories = session.query(Category).filter(Category.is_active == True).order_by(Category.usage_count.desc(), Category.name).all()
                     return render_template('event_form.html', 
                                         event=event,
                                         venues=venues,
+                                        categories=categories,
                                         title=title,
                                         description=description,
                                         start=start,
@@ -450,6 +469,9 @@ def register_events(app):
                 event.is_virtual = is_virtual
                 event.is_hybrid = is_hybrid
                 event.url = url if url else None
+                event.categories = categories_str
+                
+                print(f"Updated event with categories: {categories_str}")
                 
                 session.commit()
             
@@ -465,7 +487,8 @@ def register_events(app):
         with get_db_session() as session:
             event = session.query(Event).get_or_404(id)
             venues = session.query(Venue).all()
-            return render_template('event_form.html', event=event, venues=venues)
+            categories = session.query(Category).filter(Category.is_active == True).order_by(Category.usage_count.desc(), Category.name).all()
+            return render_template('event_form.html', event=event, venues=venues, categories=categories)
 
     @app.route('/event/<int:id>/delete', methods=['POST'])
     def delete_event(id):
