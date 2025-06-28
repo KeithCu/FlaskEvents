@@ -29,14 +29,14 @@
     <form method="POST" id="eventForm" onsubmit="return validateForm()">
         <!-- Basic Info Row -->
         <div class="row mb-3">
-            <div class="col-md-8">
+            <div class="col-md-6">
                 <div class="form-group mb-2">
                     <label for="title" class="form-label">Title</label>
                     <input type="text" class="form-control form-control-sm" id="title" name="title" required
                            value="{{ event.title if event else '' }}">
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="form-group mb-2">
                     <label for="venue_id" class="form-label required">Venue</label>
                     <div class="d-flex gap-2">
@@ -54,39 +54,50 @@
                     </div>
                 </div>
             </div>
+            <div class="col-md-3">
+                <div class="form-group mb-2">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea class="form-control form-control-sm" id="description" name="description" rows="1">{{ event.description if event else '' }}</textarea>
+                </div>
+            </div>
         </div>
 
         <!-- Date/Time Row -->
         <div class="row mb-3">
-            <div class="col-md-6">
+            <div class="col-md-3">
                 <div class="form-group mb-2">
                     <label for="start" class="form-label">Start</label>
                     <input type="datetime-local" class="form-control form-control-sm" id="start" name="start" required
                            value="{{ event.start.strftime('%Y-%m-%dT%H:%M') if event else '' }}">
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-3">
                 <div class="form-group mb-2">
                     <label for="end" class="form-label">End</label>
                     <input type="datetime-local" class="form-control form-control-sm" id="end" name="end" required
                            value="{{ event.end.strftime('%Y-%m-%dT%H:%M') if event else '' }}">
                 </div>
             </div>
-        </div>
-
-        <!-- Description Row -->
-        <div class="row mb-3">
-            <div class="col">
+            <div class="col-md-3">
                 <div class="form-group mb-2">
-                    <label for="description" class="form-label">Description</label>
-                    <textarea class="form-control form-control-sm" id="description" name="description" rows="2">{{ event.description if event else '' }}</textarea>
+                    <label for="rrule" class="form-label">Recurrence Rule</label>
+                    <input type="text" class="form-control form-control-sm" id="rrule" name="rrule"
+                           value="{{ event.rrule if event else '' }}"
+                           placeholder="FREQ=WEEKLY;BYDAY=MO">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group conditional-section mb-2" id="recurring-options">
+                    <label for="recurring_until" class="form-label">End Date</label>
+                    <input type="date" class="form-control form-control-sm" id="recurring_until" name="recurring_until"
+                           value="{{ event.recurring_until.strftime('%Y-%m-%d') if event and event.recurring_until else '' }}">
                 </div>
             </div>
         </div>
 
         <!-- Event Options Row -->
         <div class="row mb-3">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="form-section compact">
                     <div class="form-section-title">Event Type</div>
                     <div class="form-check form-check-inline">
@@ -108,7 +119,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="form-section compact">
                     <div class="form-section-title">Colors</div>
                     <div class="row">
@@ -125,27 +136,15 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Recurring Event Row -->
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <div class="form-group mb-2">
-                    <label for="rrule" class="form-label">Recurrence Rule</label>
-                    <input type="text" class="form-control form-control-sm" id="rrule" name="rrule"
-                           value="{{ event.rrule if event else '' }}"
-                           placeholder="FREQ=WEEKLY;BYDAY=MO">
-                    <div class="form-text small">
-                        <strong>Examples:</strong> FREQ=WEEKLY;BYDAY=MO (Mondays), FREQ=MONTHLY;BYDAY=1MO (1st Monday)
+            <div class="col-md-4">
+                <div class="form-section compact">
+                    <div class="form-section-title">Help</div>
+                    <div class="small text-muted">
+                        <strong>Recurrence Examples:</strong><br>
+                        • FREQ=WEEKLY;BYDAY=MO (Mondays)<br>
+                        • FREQ=MONTHLY;BYDAY=1MO (1st Monday)<br>
+                        • FREQ=YEARLY;BYMONTH=12;BYMONTHDAY=25 (Dec 25)
                     </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="form-group conditional-section mb-2" id="recurring-options">
-                    <label for="recurring_until" class="form-label">End Date</label>
-                    <input type="date" class="form-control form-control-sm" id="recurring_until" name="recurring_until"
-                           value="{{ event.recurring_until.strftime('%Y-%m-%d') if event and event.recurring_until else '' }}">
-                    <div class="form-text small">Leave empty for no end date</div>
                 </div>
             </div>
         </div>

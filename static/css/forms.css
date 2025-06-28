@@ -2,13 +2,14 @@
 
 /* Form container */
 .form-container {
-    max-width: 800px;
     margin: 0 auto;
+    padding: 0 1rem;
 }
 
 /* Compact form styles */
 .compact-form {
-    max-width: 1000px;
+    max-width: none;
+    width: 100%;
 }
 
 .compact-form .form-group {
