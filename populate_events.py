@@ -5,7 +5,7 @@ import argparse
 
 from fts import setup_fts_triggers
 from app import Base, engine, SessionLocal, Event, Venue
-from database import get_next_event_ids
+from database import get_next_event_ids, migrate_database
 
 fake = Faker()
 
@@ -64,6 +64,10 @@ def generate_recurring_pattern(indefinite_count, max_indefinite=10):
 def populate_events(total_events=50000):
     # Create tables
     Base.metadata.create_all(engine)
+    
+    # Run migration to ensure categories are set up
+    print("Running database migration...")
+    migrate_database()
     
     # Create a session
     session = SessionLocal()
