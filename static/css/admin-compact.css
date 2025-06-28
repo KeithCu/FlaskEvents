@@ -1,0 +1,220 @@
+/* Compact Flask-Admin Styles */
+
+/* Reduce padding and margins */
+.container-fluid {
+    padding: 10px !important;
+}
+
+.navbar {
+    padding: 0.25rem 1rem !important;
+    min-height: 40px !important;
+}
+
+.navbar-brand {
+    font-size: 1.1rem !important;
+    padding: 0.25rem 0 !important;
+}
+
+.navbar-nav .nav-link {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.9rem !important;
+}
+
+/* Compact table styles */
+.table {
+    font-size: 0.85rem !important;
+}
+
+.table th,
+.table td {
+    padding: 0.4rem 0.5rem !important;
+    vertical-align: middle !important;
+}
+
+.table thead th {
+    border-bottom: 1px solid #dee2e6 !important;
+    font-weight: 600 !important;
+    font-size: 0.8rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+/* Compact form styles */
+.form-group {
+    margin-bottom: 0.75rem !important;
+}
+
+.form-control {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.85rem !important;
+    height: auto !important;
+}
+
+.form-label {
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    margin-bottom: 0.25rem !important;
+}
+
+/* Compact button styles */
+.btn {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.8rem !important;
+    line-height: 1.2 !important;
+}
+
+.btn-sm {
+    padding: 0.2rem 0.4rem !important;
+    font-size: 0.75rem !important;
+}
+
+/* Compact card styles */
+.card {
+    margin-bottom: 1rem !important;
+}
+
+.card-header {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+}
+
+.card-body {
+    padding: 0.75rem 1rem !important;
+}
+
+/* Compact pagination */
+.pagination {
+    margin: 0.5rem 0 !important;
+}
+
+.page-link {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.8rem !important;
+}
+
+/* Compact search and filter areas */
+.model-list {
+    margin-bottom: 1rem !important;
+}
+
+.search-form {
+    margin-bottom: 0.75rem !important;
+}
+
+.filters {
+    margin-bottom: 0.75rem !important;
+}
+
+/* Compact action buttons */
+.action-buttons {
+    margin-bottom: 0.5rem !important;
+}
+
+/* Reduce spacing in lists */
+.list-group-item {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.85rem !important;
+}
+
+/* Compact badges */
+.badge {
+    font-size: 0.7rem !important;
+    padding: 0.2rem 0.4rem !important;
+}
+
+/* Compact alerts */
+.alert {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.85rem !important;
+    margin-bottom: 0.75rem !important;
+}
+
+/* Compact modal */
+.modal-header {
+    padding: 0.75rem 1rem !important;
+}
+
+.modal-body {
+    padding: 0.75rem 1rem !important;
+}
+
+.modal-footer {
+    padding: 0.5rem 1rem !important;
+}
+
+/* Compact sidebar */
+.sidebar {
+    padding: 0.5rem !important;
+}
+
+.sidebar .nav-link {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.85rem !important;
+}
+
+/* Reduce spacing in breadcrumbs */
+.breadcrumb {
+    padding: 0.25rem 0 !important;
+    font-size: 0.8rem !important;
+    margin-bottom: 0.5rem !important;
+}
+
+/* Compact tooltips */
+.tooltip {
+    font-size: 0.75rem !important;
+}
+
+/* Compact dropdowns */
+.dropdown-menu {
+    font-size: 0.85rem !important;
+    padding: 0.25rem 0 !important;
+}
+
+.dropdown-item {
+    padding: 0.25rem 0.75rem !important;
+}
+
+/* Compact tabs */
+.nav-tabs .nav-link {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.85rem !important;
+}
+
+.tab-content {
+    padding: 0.5rem 0 !important;
+}
+
+/* Compact progress bars */
+.progress {
+    height: 0.5rem !important;
+    margin-bottom: 0.5rem !important;
+}
+
+/* Compact wells/boxes */
+.well {
+    padding: 0.5rem !important;
+    margin-bottom: 0.75rem !important;
+}
+
+/* Compact grid spacing */
+.row {
+    margin-left: -0.25rem !important;
+    margin-right: -0.25rem !important;
+}
+
+.col, [class*="col-"] {
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
+}
+
+/* Compact spacing utilities */
+.mb-1 { margin-bottom: 0.25rem !important; }
+.mb-2 { margin-bottom: 0.5rem !important; }
+.mb-3 { margin-bottom: 0.75rem !important; }
+.mt-1 { margin-top: 0.25rem !important; }
+.mt-2 { margin-top: 0.5rem !important; }
+.mt-3 { margin-top: 0.75rem !important; }
+.p-1 { padding: 0.25rem !important; }
+.p-2 { padding: 0.5rem !important; }
+.p-3 { padding: 0.75rem !important; } 

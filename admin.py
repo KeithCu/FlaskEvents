@@ -380,16 +380,50 @@ def init_admin(app):
     """Initialize Flask-Admin with enhanced views"""
     admin = Admin(app, name='Events Calendar Admin', template_mode='bootstrap4')
     
+    # Configure compact settings for all model views
+    class CompactModelView(ModelView):
+        """Base model view with compact settings"""
+        page_size = 50  # More items per page
+        can_view_details = False  # Remove view details button
+        column_display_pk = False  # Hide primary key column
+        column_display_all_relations = False  # Don't display all relations
+        column_hide_backrefs = True  # Hide backrefs
+        column_list_display_pk = False  # Hide PK in list
+        column_default_sort = ('id', True)  # Default sort by ID descending
+        can_export = True  # Enable export
+        export_types = ['csv', 'xlsx']  # Export formats
+        column_searchable_list = []  # Will be overridden in subclasses
+        column_filters = []  # Will be overridden in subclasses
+        
+        # Additional compact settings
+        can_create = True
+        can_edit = True
+        can_delete = True
+    
     # Add custom views
     admin.add_view(DashboardView(name='Dashboard', endpoint='dashboard'))
     admin.add_view(DatabaseStatsView(name='Database Stats', endpoint='dbstats'))
     admin.add_view(BulkOperationsView(name='Bulk Operations', endpoint='bulkoperations'))
     admin.add_view(EventManagementView(name='Event Management', endpoint='eventmanagement'))
     
-    # Add model views
-    admin.add_view(CategoryModelView(Category, SessionLocal(), name='Categories', endpoint='categories'))
-    admin.add_view(EventModelView(Event, SessionLocal(), name='Events', endpoint='events'))
-    admin.add_view(VenueModelView(Venue, SessionLocal(), name='Venues', endpoint='venues'))
+    # Add model views with compact settings
+    class CompactCategoryModelView(CompactModelView, CategoryModelView):
+        page_size = 100
+        column_searchable_list = ('name',)
+        column_filters = ('is_active',)
+    
+    class CompactEventModelView(CompactModelView, EventModelView):
+        page_size = 50
+        column_searchable_list = ('title', 'description')
+        column_filters = ('is_recurring', 'is_virtual', 'is_hybrid', 'start_date')
+    
+    class CompactVenueModelView(CompactModelView, VenueModelView):
+        page_size = 100
+        column_searchable_list = ('name', 'address')
+    
+    admin.add_view(CompactCategoryModelView(Category, SessionLocal(), name='Categories', endpoint='categories'))
+    admin.add_view(CompactEventModelView(Event, SessionLocal(), name='Events', endpoint='events'))
+    admin.add_view(CompactVenueModelView(Venue, SessionLocal(), name='Venues', endpoint='venues'))
     
     return admin
 
