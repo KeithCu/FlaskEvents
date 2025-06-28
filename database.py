@@ -121,8 +121,8 @@ def migrate_database():
         
         for category_name in default_categories:
             conn.execute(text("""
-                INSERT OR IGNORE INTO category (name, usage_count) 
-                VALUES (:name, 0)
+                INSERT OR IGNORE INTO category (name, usage_count, is_active) 
+                VALUES (:name, 0, 1)
             """), {"name": category_name})
         
         conn.commit()
