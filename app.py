@@ -48,6 +48,7 @@ config = load_config()
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{config["database"]["path"]}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = config.get('secret_key', 'dev-secret-key-change-in-production')
 
 # Enable CORS for WordPress integration using config
 if config['cors']['enabled']:

@@ -1,0 +1,181 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<div class="container-fluid">
+    <h1 class="mb-4">Bulk Operations</h1>
+    
+    <div class="alert alert-info">
+        <h6>Bulk Operations</h6>
+        <p>Select multiple events and perform operations on them simultaneously. This is useful for updating categories, 
+        marking events as virtual, or deleting multiple events at once.</p>
+    </div>
+
+    <form method="POST">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Select Events</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            <input type="checkbox" id="select-all" onchange="toggleAll()">
+                                        </th>
+                                        <th>Title</th>
+                                        <th>Date</th>
+                                        <th>Venue</th>
+                                        <th>Categories</th>
+                                        <th>Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for event in events %}
+                                    <tr>
+                                        <td>
+                                            <input type="checkbox" name="event_ids" value="{{ event.id }}" class="event-checkbox">
+                                        </td>
+                                        <td>{{ event.title }}</td>
+                                        <td>{{ event.start.strftime('%Y-%m-%d %H:%M') if event.start else '' }}</td>
+                                        <td>{{ event.venue.name if event.venue else '' }}</td>
+                                        <td>{{ event.categories[:50] + '...' if event.categories and event.categories|length > 50 else event.categories or '' }}</td>
+                                        <td>
+                                            {% if event.is_virtual %}<span class="badge badge-info">Virtual</span>{% endif %}
+                                            {% if event.is_recurring %}<span class="badge badge-warning">Recurring</span>{% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Choose Operation</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="operation">Operation:</label>
+                            <select class="form-control" id="operation" name="operation" onchange="toggleOperationFields()">
+                                <option value="">Select an operation...</option>
+                                <option value="delete">Delete Selected Events</option>
+                                <option value="update_category">Add Category to Events</option>
+                                <option value="mark_virtual">Mark Events as Virtual</option>
+                            </select>
+                        </div>
+
+                        <!-- Category selection (hidden by default) -->
+                        <div class="form-group" id="category-field" style="display: none;">
+                            <label for="category">Category to Add:</label>
+                            <select class="form-control" id="category" name="category">
+                                <option value="">Select a category...</option>
+                                {% for category in categories %}
+                                <option value="{{ category.name }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="alert alert-warning" id="delete-warning" style="display: none;">
+                            <strong>Warning:</strong> This operation will permanently delete the selected events. This action cannot be undone.
+                        </div>
+
+                        <div class="alert alert-info" id="category-info" style="display: none;">
+                            <strong>Info:</strong> This will add the selected category to all chosen events. If an event already has this category, it won't be duplicated.
+                        </div>
+
+                        <div class="alert alert-info" id="virtual-info" style="display: none;">
+                            <strong>Info:</strong> This will mark all selected events as virtual events.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary" id="submit-btn" disabled>
+                    <i class="fa fa-play"></i> Execute Operation
+                </button>
+                <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">
+                    <i class="fa fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+function toggleAll() {
+    const selectAll = document.getElementById('select-all');
+    const checkboxes = document.querySelectorAll('.event-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+    
+    updateSubmitButton();
+}
+
+function updateSubmitButton() {
+    const checkboxes = document.querySelectorAll('.event-checkbox:checked');
+    const operation = document.getElementById('operation').value;
+    const submitBtn = document.getElementById('submit-btn');
+    
+    let canSubmit = checkboxes.length > 0 && operation !== '';
+    
+    if (operation === 'update_category') {
+        const category = document.getElementById('category').value;
+        canSubmit = canSubmit && category !== '';
+    }
+    
+    submitBtn.disabled = !canSubmit;
+}
+
+function toggleOperationFields() {
+    const operation = document.getElementById('operation').value;
+    const categoryField = document.getElementById('category-field');
+    const deleteWarning = document.getElementById('delete-warning');
+    const categoryInfo = document.getElementById('category-info');
+    const virtualInfo = document.getElementById('virtual-info');
+    
+    // Hide all info/warning messages
+    deleteWarning.style.display = 'none';
+    categoryInfo.style.display = 'none';
+    virtualInfo.style.display = 'none';
+    categoryField.style.display = 'none';
+    
+    // Show relevant message and fields
+    if (operation === 'delete') {
+        deleteWarning.style.display = 'block';
+    } else if (operation === 'update_category') {
+        categoryInfo.style.display = 'block';
+        categoryField.style.display = 'block';
+    } else if (operation === 'mark_virtual') {
+        virtualInfo.style.display = 'block';
+    }
+    
+    updateSubmitButton();
+}
+
+// Add event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.event-checkbox');
+    const categorySelect = document.getElementById('category');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateSubmitButton);
+    });
+    
+    categorySelect.addEventListener('change', updateSubmitButton);
+});
+</script>
+{% endblock %} 

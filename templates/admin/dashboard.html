@@ -1,0 +1,220 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<div class="container-fluid">
+    <h1 class="mb-4">Events Calendar Dashboard</h1>
+    
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Events</h5>
+                    <h2 class="card-text">{{ total_events }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Venues</h5>
+                    <h2 class="card-text">{{ total_venues }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Categories</h5>
+                    <h2 class="card-text">{{ total_categories }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Upcoming Events</h5>
+                    <h2 class="card-text">{{ upcoming_events|length }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Upcoming Events -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Upcoming Events (Next 30 Days)</h5>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_events %}
+                        <div class="list-group">
+                            {% for event in upcoming_events %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ event.title }}</h6>
+                                    <small>{{ event.start.strftime('%m/%d/%Y %H:%M') }}</small>
+                                </div>
+                                <p class="mb-1">
+                                    {% if event.venue %}{{ event.venue.name }}{% endif %}
+                                    {% if event.categories %} - {{ event.categories }}{% endif %}
+                                </p>
+                                {% if event.is_virtual %}<span class="badge badge-info">Virtual</span>{% endif %}
+                                {% if event.is_recurring %}<span class="badge badge-warning">Recurring</span>{% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No upcoming events</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Events -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Recent Events</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_events %}
+                        <div class="list-group">
+                            {% for event in recent_events %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ event.title }}</h6>
+                                    <small>{{ event.start.strftime('%m/%d/%Y %H:%M') }}</small>
+                                </div>
+                                <p class="mb-1">
+                                    {% if event.venue %}{{ event.venue.name }}{% endif %}
+                                    {% if event.categories %} - {{ event.categories }}{% endif %}
+                                </p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No recent events</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Popular Venues -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Most Popular Venues</h5>
+                </div>
+                <div class="card-body">
+                    {% if popular_venues %}
+                        <div class="list-group">
+                            {% for venue in popular_venues %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ venue.name }}
+                                <span class="badge badge-primary badge-pill">{{ venue.event_count }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No venue data available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Popular Categories -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Most Used Categories</h5>
+                </div>
+                <div class="card-body">
+                    {% if popular_categories %}
+                        <div class="list-group">
+                            {% for category in popular_categories %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ category.name }}
+                                <span class="badge badge-success badge-pill">{{ category.usage_count }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No category data available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Events Chart -->
+    {% if monthly_events %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Events by Month (Last 6 Months)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Month</th>
+                                    <th>Event Count</th>
+                                    <th>Bar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for month_data in monthly_events %}
+                                <tr>
+                                    <td>{{ month_data.month }}</td>
+                                    <td>{{ month_data.count }}</td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar" role="progressbar" 
+                                                 style="width: {{ (month_data.count / monthly_events|map(attribute='count')|max) * 100 }}%">
+                                                {{ month_data.count }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{{ url_for('events.create_view') }}" class="btn btn-primary mr-2">
+                        <i class="fa fa-plus"></i> Add New Event
+                    </a>
+                    <a href="{{ url_for('venues.create_view') }}" class="btn btn-success mr-2">
+                        <i class="fa fa-building"></i> Add New Venue
+                    </a>
+                    <a href="{{ url_for('categories.create_view') }}" class="btn btn-info mr-2">
+                        <i class="fa fa-tags"></i> Add New Category
+                    </a>
+                    <a href="{{ url_for('bulkoperations.index') }}" class="btn btn-warning">
+                        <i class="fa fa-tasks"></i> Bulk Operations
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

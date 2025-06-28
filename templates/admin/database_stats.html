@@ -1,0 +1,220 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<div class="container-fluid">
+    <h1 class="mb-4">Database Statistics</h1>
+    
+    <!-- Database Tables -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Database Tables</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Table Name</th>
+                                    <th>Schema</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for table in table_sizes %}
+                                <tr>
+                                    <td><code>{{ table.name }}</code></td>
+                                    <td><small class="text-muted">{{ table.sql[:100] }}...</small></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Distribution -->
+    {% if event_distribution %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Event Distribution by Year</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Year</th>
+                                    <th>Event Count</th>
+                                    <th>Percentage</th>
+                                    <th>Bar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% set total_events = event_distribution|map(attribute='count')|sum %}
+                                {% for year_data in event_distribution %}
+                                <tr>
+                                    <td>{{ year_data.year }}</td>
+                                    <td>{{ year_data.count }}</td>
+                                    <td>{{ "%.1f"|format((year_data.count / total_events) * 100) }}%</td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-info" role="progressbar" 
+                                                 style="width: {{ (year_data.count / total_events) * 100 }}%">
+                                                {{ year_data.count }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Venue Usage -->
+    {% if venue_usage %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Venue Usage Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Venue Name</th>
+                                    <th>Event Count</th>
+                                    <th>Bar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% set max_events = venue_usage|map(attribute='event_count')|max %}
+                                {% for venue in venue_usage %}
+                                <tr>
+                                    <td>{{ venue.name or 'Unnamed Venue' }}</td>
+                                    <td>{{ venue.event_count }}</td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-success" role="progressbar" 
+                                                 style="width: {{ (venue.event_count / max_events) * 100 }}%">
+                                                {{ venue.event_count }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Category Usage -->
+    {% if category_usage %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Category Usage Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Category Name</th>
+                                    <th>Usage Count</th>
+                                    <th>Status</th>
+                                    <th>Bar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% set max_usage = category_usage|map(attribute='usage_count')|max %}
+                                {% for category in category_usage %}
+                                <tr>
+                                    <td>{{ category.name }}</td>
+                                    <td>{{ category.usage_count }}</td>
+                                    <td>
+                                        {% if category.is_active %}
+                                            <span class="badge badge-success">Active</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if max_usage > 0 %}
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-warning" role="progressbar" 
+                                                 style="width: {{ (category.usage_count / max_usage) * 100 }}%">
+                                                {{ category.usage_count }}
+                                            </div>
+                                        </div>
+                                        {% else %}
+                                        <span class="text-muted">No usage data</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Database Maintenance -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Database Maintenance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6>Database Information</h6>
+                        <p>This view shows statistics about your events database including table structures, 
+                        event distribution, venue usage, and category statistics.</p>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Quick Stats</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Total Events:</strong> {{ event_distribution|map(attribute='count')|sum if event_distribution else 0 }}</li>
+                                <li><strong>Total Venues:</strong> {{ venue_usage|length if venue_usage else 0 }}</li>
+                                <li><strong>Active Categories:</strong> {{ category_usage|selectattr('is_active')|list|length if category_usage else 0 }}</li>
+                                <li><strong>Database Tables:</strong> {{ table_sizes|length if table_sizes else 0 }}</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Actions</h6>
+                            <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary btn-sm">
+                                <i class="fa fa-dashboard"></i> Back to Dashboard
+                            </a>
+                            <a href="{{ url_for('events.index_view') }}" class="btn btn-success btn-sm">
+                                <i class="fa fa-calendar"></i> Manage Events
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,191 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<div class="container-fluid">
+    <h1 class="mb-4">Event Management</h1>
+    
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Events</h5>
+                    <h2 class="card-text">{{ total_events }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Upcoming Events</h5>
+                    <h2 class="card-text">{{ upcoming_events }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Virtual Events</h5>
+                    <h2 class="card-text">{{ virtual_events }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Recurring Events</h5>
+                    <h2 class="card-text">{{ recurring_events }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Events Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>Events</h5>
+                    <a href="{{ url_for('events.create_view') }}" class="btn btn-primary btn-sm">
+                        <i class="fa fa-plus"></i> Add New Event
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if events.items %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Date & Time</th>
+                                        <th>Venue</th>
+                                        <th>Categories</th>
+                                        <th>Type</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for event in events.items %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ event.title }}</strong>
+                                            {% if event.description %}
+                                                <br><small class="text-muted">{{ event.description[:100] }}{% if event.description|length > 100 %}...{% endif %}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div>{{ event.start.strftime('%Y-%m-%d') if event.start else '' }}</div>
+                                            <small class="text-muted">{{ event.start.strftime('%H:%M') if event.start else '' }} - {{ event.end.strftime('%H:%M') if event.end else '' }}</small>
+                                        </td>
+                                        <td>{{ event.venue.name if event.venue else 'No venue' }}</td>
+                                        <td>
+                                            {% if event.categories %}
+                                                {% for category in event.categories.split(',') %}
+                                                    <span class="badge badge-secondary">{{ category.strip() }}</span>
+                                                {% endfor %}
+                                            {% else %}
+                                                <span class="text-muted">No categories</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if event.is_virtual %}<span class="badge badge-info">Virtual</span>{% endif %}
+                                            {% if event.is_hybrid %}<span class="badge badge-warning">Hybrid</span>{% endif %}
+                                            {% if event.is_recurring %}<span class="badge badge-success">Recurring</span>{% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ url_for('events.edit_view', id=event.id) }}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fa fa-edit"></i>
+                                                </a>
+                                                <a href="{{ url_for('eventmanagement.duplicate_event', event_id=event.id) }}" 
+                                                   class="btn btn-sm btn-outline-success"
+                                                   onclick="return confirm('Duplicate this event?')">
+                                                    <i class="fa fa-copy"></i>
+                                                </a>
+                                                <a href="{{ url_for('events.delete_view', id=event.id) }}" 
+                                                   class="btn btn-sm btn-outline-danger"
+                                                   onclick="return confirm('Delete this event? This action cannot be undone.')">
+                                                    <i class="fa fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if events.pages > 1 %}
+                        <nav aria-label="Event pagination">
+                            <ul class="pagination justify-content-center">
+                                {% if events.has_prev %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('eventmanagement.index', page=events.prev_num) }}">Previous</a>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for page_num in events.iter_pages() %}
+                                    {% if page_num %}
+                                        {% if page_num != events.page %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('eventmanagement.index', page=page_num) }}">{{ page_num }}</a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ page_num }}</span>
+                                            </li>
+                                        {% endif %}
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">...</span>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if events.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('eventmanagement.index', page=events.next_num) }}">Next</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fa fa-calendar fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No events found</h5>
+                            <p class="text-muted">Get started by creating your first event.</p>
+                            <a href="{{ url_for('events.create_view') }}" class="btn btn-primary">
+                                <i class="fa fa-plus"></i> Create First Event
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{{ url_for('bulkoperations.index') }}" class="btn btn-warning mr-2">
+                        <i class="fa fa-tasks"></i> Bulk Operations
+                    </a>
+                    <a href="{{ url_for('dbstats.index') }}" class="btn btn-info mr-2">
+                        <i class="fa fa-chart-bar"></i> Database Stats
+                    </a>
+                    <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">
+                        <i class="fa fa-dashboard"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
