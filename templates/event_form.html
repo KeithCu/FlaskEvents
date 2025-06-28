@@ -3,165 +3,165 @@
 {% block title %}{% if event %}Edit Event{% else %}New Event{% endif %}{% endblock %}
 
 {% block content %}
-<div class="form-container">
-    <div class="row mb-4">
+<div class="form-container compact-form">
+    <div class="row mb-3">
         <div class="col">
-            <h2>{% if event %}Edit Event{% else %}New Event{% endif %}</h2>
+            <h2 class="mb-0">{% if event %}Edit Event{% else %}New Event{% endif %}</h2>
         </div>
     </div>
 
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <div class="quick-date-selector">
-                <h5 class="card-title">Quick Date Selector</h5>
-                <p class="card-text">Select how many days to add to today's date:</p>
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-outline-primary" onclick="setDateOffset(0)">Today</button>
-                    <button type="button" class="btn btn-outline-primary" onclick="setDateOffset(1)">Tomorrow</button>
-                    <button type="button" class="btn btn-outline-primary" onclick="setDateOffset(2)">Day After</button>
-                    <button type="button" class="btn btn-outline-primary" onclick="setDateOffset(3)">+3 Days</button>
-                    <button type="button" class="btn btn-outline-primary" onclick="setDateOffset(7)">Next Week</button>
+    <div class="row mb-3">
+        <div class="col">
+            <div class="quick-date-selector compact">
+                <div class="d-flex align-items-center">
+                    <span class="me-3"><strong>Quick Date:</strong></span>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="setDateOffset(0)">Today</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="setDateOffset(1)">Tomorrow</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="setDateOffset(2)">+2 Days</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="setDateOffset(7)">Next Week</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-8">
-            <form method="POST" id="eventForm" onsubmit="return validateForm()">
-                <div class="form-group">
+    <form method="POST" id="eventForm" onsubmit="return validateForm()">
+        <!-- Basic Info Row -->
+        <div class="row mb-3">
+            <div class="col-md-8">
+                <div class="form-group mb-2">
                     <label for="title" class="form-label">Title</label>
-                    <input type="text" class="form-control" id="title" name="title" required
+                    <input type="text" class="form-control form-control-sm" id="title" name="title" required
                            value="{{ event.title if event else '' }}">
                 </div>
-                
-                <div class="form-group">
-                    <label for="description" class="form-label">Description</label>
-                    <textarea class="form-control" id="description" name="description" rows="3">{{ event.description if event else '' }}</textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label for="start" class="form-label">Start</label>
-                    <input type="datetime-local" class="form-control" id="start" name="start" required
-                           value="{{ event.start.strftime('%Y-%m-%dT%H:%M') if event else '' }}">
-                </div>
-                
-                <div class="form-group">
-                    <label for="end" class="form-label">End</label>
-                    <input type="datetime-local" class="form-control" id="end" name="end" required
-                           value="{{ event.end.strftime('%Y-%m-%dT%H:%M') if event else '' }}">
-                </div>
-                
-                <div class="form-group">
+            </div>
+            <div class="col-md-4">
+                <div class="form-group mb-2">
                     <label for="venue_id" class="form-label required">Venue</label>
-                    <div class="form-row">
-                        <select class="form-control" id="venue_id" name="venue_id" required>
-                            <option value="">Select a venue</option>
+                    <div class="d-flex gap-2">
+                        <select class="form-control form-control-sm" id="venue_id" name="venue_id" required>
+                            <option value="">Select venue</option>
                             {% for venue in venues %}
                             <option value="{{ venue.id }}" {% if event and event.venue_id == venue.id %}selected{% endif %}>
                                 {{ venue.name }}
                             </option>
                             {% endfor %}
                         </select>
-                        <a href="{{ url_for('add_venue') }}" class="btn btn-outline-secondary" target="_blank">
-                            Add Venue
+                        <a href="{{ url_for('add_venue') }}" class="btn btn-outline-secondary btn-sm" target="_blank" title="Add Venue">
+                            <i class="fas fa-plus"></i>
                         </a>
                     </div>
-                    <div class="invalid-feedback">
-                        Please select a venue
-                    </div>
-                    <div class="form-text">
-                        Don't see the venue you need? <a href="{{ url_for('add_venue') }}" target="_blank">Add a new venue</a> and then refresh this page.
-                    </div>
                 </div>
-                
-                <!-- Virtual Event Options -->
-                <div class="form-section">
-                    <div class="form-section-title">Event Options</div>
-                    <div class="form-check">
+            </div>
+        </div>
+
+        <!-- Date/Time Row -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <div class="form-group mb-2">
+                    <label for="start" class="form-label">Start</label>
+                    <input type="datetime-local" class="form-control form-control-sm" id="start" name="start" required
+                           value="{{ event.start.strftime('%Y-%m-%dT%H:%M') if event else '' }}">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group mb-2">
+                    <label for="end" class="form-label">End</label>
+                    <input type="datetime-local" class="form-control form-control-sm" id="end" name="end" required
+                           value="{{ event.end.strftime('%Y-%m-%dT%H:%M') if event else '' }}">
+                </div>
+            </div>
+        </div>
+
+        <!-- Description Row -->
+        <div class="row mb-3">
+            <div class="col">
+                <div class="form-group mb-2">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea class="form-control form-control-sm" id="description" name="description" rows="2">{{ event.description if event else '' }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Event Options Row -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <div class="form-section compact">
+                    <div class="form-section-title">Event Type</div>
+                    <div class="form-check form-check-inline">
                         <input class="form-check-input" type="checkbox" id="is_virtual" name="is_virtual" 
                                {% if event and event.is_virtual %}checked{% endif %}>
-                        <label class="form-check-label" for="is_virtual">
-                            <strong>Virtual Event</strong> - This event takes place entirely online
-                        </label>
+                        <label class="form-check-label" for="is_virtual">Virtual</label>
                     </div>
-                    
-                    <div class="form-check">
+                    <div class="form-check form-check-inline">
                         <input class="form-check-input" type="checkbox" id="is_hybrid" name="is_hybrid" 
                                {% if event and event.is_hybrid %}checked{% endif %}>
-                        <label class="form-check-label" for="is_hybrid">
-                            <strong>Hybrid Event</strong> - This event has both in-person and virtual components
-                        </label>
+                        <label class="form-check-label" for="is_hybrid">Hybrid</label>
                     </div>
                     
-                    <div class="form-group conditional-section" id="url-section">
+                    <div class="form-group conditional-section mt-2" id="url-section">
                         <label for="url" class="form-label">Event URL</label>
-                        <input type="url" class="form-control" id="url" name="url"
+                        <input type="url" class="form-control form-control-sm" id="url" name="url"
                                value="{{ event.url if event else '' }}"
-                               placeholder="https://zoom.us/j/123456789, https://facebook.com/events/..., or any event website">
-                        <div class="form-text">
-                            For virtual events: Zoom, Teams, or other meeting platform URL<br>
-                            For in-person events: Facebook event page, event website, or registration link
+                               placeholder="Zoom, Teams, or event website">
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-section compact">
+                    <div class="form-section-title">Colors</div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label for="color" class="form-label">Text Color</label>
+                            <input type="color" class="form-control form-control-sm" id="color" name="color"
+                                   value="{{ event.color if event else '#3788d8' }}">
+                        </div>
+                        <div class="col-6">
+                            <label for="bg" class="form-label">Background</label>
+                            <input type="color" class="form-control form-control-sm" id="bg" name="bg"
+                                   value="{{ event.bg if event else '#3788d8' }}">
                         </div>
                     </div>
                 </div>
-                
-                <div class="form-group">
-                    <label for="color" class="form-label">Text Color</label>
-                    <input type="color" class="form-control" id="color" name="color"
-                           value="{{ event.color if event else '#3788d8' }}">
-                </div>
-                
-                <div class="form-group">
-                    <label for="bg" class="form-label">Background Color</label>
-                    <input type="color" class="form-control" id="bg" name="bg"
-                           value="{{ event.bg if event else '#3788d8' }}">
-                </div>
-                
-                <div class="form-group">
-                    <label for="rrule" class="form-label">Recurrence Rule (Optional)</label>
-                    <input type="text" class="form-control" id="rrule" name="rrule"
-                           value="{{ event.rrule if event else '' }}"
-                           placeholder="Example: FREQ=WEEKLY;BYDAY=MO,WE,FR">
-                    <div class="form-text">
-                        <strong>Leave empty for one-time events.</strong> Use iCalendar RRULE format for recurring events.<br><br>
-                        <strong>Common Examples:</strong><br>
-                        • <code>FREQ=WEEKLY;BYDAY=MO</code> - Every Monday<br>
-                        • <code>FREQ=MONTHLY;BYDAY=1MO</code> - First Monday of every month<br>
-                        • <code>FREQ=YEARLY;BYMONTH=12;BYMONTHDAY=25</code> - December 25th every year<br>
-                        • <code>FREQ=WEEKLY;INTERVAL=2</code> - Every other week<br>
-                        <strong>Day Codes:</strong> MO=Monday, TU=Tuesday, WE=Wednesday, TH=Thursday, FR=Friday, SA=Saturday, SU=Sunday
-                    </div>
-                </div>
-                
-                <div class="form-section conditional-section" id="recurring-options">
-                    <div class="form-section-title">Recurring Event Settings</div>
-                    <div class="form-group">
-                        <label for="recurring_until" class="form-label">End Date for Recurring Series</label>
-                        <input type="date" class="form-control" id="recurring_until" name="recurring_until"
-                               value="{{ event.recurring_until.strftime('%Y-%m-%d') if event and event.recurring_until else '' }}">
-                        <div class="form-text">
-                            <strong>When should this recurring event series end?</strong><br>
-                            • Leave empty for no end date (series continues indefinitely)<br>
-                            • Set a specific date to end the series on that date<br>
-                            • If no date is set, the series will default to 2 years from the start date
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="form-buttons">
-                    <button type="submit" class="btn btn-primary">Save Event</button>
-                    <a href="{{ url_for('home') }}" class="btn btn-secondary">Cancel</a>
-                    
-                    {% if event %}
-                    <form action="{{ url_for('delete_event', id=event.id) }}" method="POST" class="d-inline">
-                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this event?')">Delete</button>
-                    </form>
-                    {% endif %}
-                </div>
-            </form>
+            </div>
         </div>
-    </div>
+
+        <!-- Recurring Event Row -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <div class="form-group mb-2">
+                    <label for="rrule" class="form-label">Recurrence Rule</label>
+                    <input type="text" class="form-control form-control-sm" id="rrule" name="rrule"
+                           value="{{ event.rrule if event else '' }}"
+                           placeholder="FREQ=WEEKLY;BYDAY=MO">
+                    <div class="form-text small">
+                        <strong>Examples:</strong> FREQ=WEEKLY;BYDAY=MO (Mondays), FREQ=MONTHLY;BYDAY=1MO (1st Monday)
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group conditional-section mb-2" id="recurring-options">
+                    <label for="recurring_until" class="form-label">End Date</label>
+                    <input type="date" class="form-control form-control-sm" id="recurring_until" name="recurring_until"
+                           value="{{ event.recurring_until.strftime('%Y-%m-%d') if event and event.recurring_until else '' }}">
+                    <div class="form-text small">Leave empty for no end date</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="form-buttons compact">
+            <button type="submit" class="btn btn-primary btn-sm">Save Event</button>
+            <a href="{{ url_for('home') }}" class="btn btn-secondary btn-sm">Cancel</a>
+            
+            {% if event %}
+            <form action="{{ url_for('delete_event', id=event.id) }}" method="POST" class="d-inline">
+                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this event?')">Delete</button>
+            </form>
+            {% endif %}
+        </div>
+    </form>
 </div>
 {% endblock %}
 

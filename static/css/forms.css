@@ -6,6 +6,74 @@
     margin: 0 auto;
 }
 
+/* Compact form styles */
+.compact-form {
+    max-width: 1000px;
+}
+
+.compact-form .form-group {
+    margin-bottom: 0.75rem;
+}
+
+.compact-form .form-section {
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.compact-form .form-section.compact {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.compact-form .form-section-title {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.25rem;
+}
+
+.compact-form .quick-date-selector.compact {
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.compact-form .form-buttons.compact {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+}
+
+.compact-form .form-text.small {
+    font-size: 0.75rem;
+    margin-top: 0.125rem;
+}
+
+.compact-form .form-control-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.25;
+}
+
+.compact-form textarea.form-control-sm {
+    min-height: 60px;
+}
+
+.compact-form input[type="color"] {
+    width: 50px;
+    height: 32px;
+}
+
+.compact-form .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.compact-form .form-check-inline {
+    margin-right: 1rem;
+}
+
+.compact-form .form-check-inline .form-check-input {
+    margin-right: 0.25rem;
+}
+
 /* Form groups and spacing */
 .form-group {
     margin-bottom: 1.5rem;
