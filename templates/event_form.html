@@ -115,11 +115,11 @@
                                 <label class="form-check-label" for="is_hybrid">Hybrid</label>
                             </div>
                             
-                            <div class="form-group conditional-section mt-2" id="url-section">
+                            <div class="form-group mt-2">
                                 <label for="url" class="form-label">Event URL</label>
                                 <input type="url" class="form-control form-control-sm" id="url" name="url"
                                        value="{{ event.url if event else '' }}"
-                                       placeholder="Zoom, Teams, or event website">
+                                       placeholder="Website, Facebook, Zoom, Teams, etc.">
                             </div>
                         </div>
                     </div>
@@ -147,7 +147,6 @@
                                 <strong>Recurrence Examples:</strong><br>
                                 • FREQ=WEEKLY;BYDAY=MO (Mondays)<br>
                                 • FREQ=MONTHLY;BYDAY=1MO (1st Monday)<br>
-                                • FREQ=YEARLY;BYMONTH=12;BYMONTHDAY=25 (Dec 25)
                             </div>
                         </div>
                     </div>
