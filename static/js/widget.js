@@ -259,28 +259,38 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 300); // Debounce search for 300ms
         });
 
+        function beginListUpdate() {
+            const scrollX = window.scrollX;
+            const scrollY = window.scrollY;
+            const listHeight = Math.max(eventsListEl.offsetHeight, 200);
+            eventsListEl.style.minHeight = listHeight + 'px';
+            eventsListEl.innerHTML = '<div class="loading">Loading...</div>';
+            return { scrollX, scrollY };
+        }
+
+        function finishListUpdate(scrollX, scrollY) {
+            eventsListEl.style.minHeight = '';
+            requestAnimationFrame(() => {
+                window.scrollTo(scrollX, scrollY);
+            });
+        }
+
         function loadEvents(date) {
             // Use local date formatting to avoid timezone issues
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
             const dateStr = `${year}-${month}-${day}`;
-            
+
             console.log(`Loading events for date: ${dateStr} (Date object: ${date})`);
-            
+
             // Update the date display - use the Date object directly
             selectedDateDisplayEl.textContent = formatDateForDisplay(date);
-            
+
             // Highlight the selected date in calendar
             highlightSelectedDate(date);
-            
-            // Create a placeholder with the same height as current content
-            const placeholder = document.createElement('div');
-            placeholder.style.height = eventsListEl.offsetHeight + 'px';
-            placeholder.style.backgroundColor = '#f8f9fa';
-            placeholder.style.borderRadius = '4px';
-            eventsListEl.innerHTML = '';
-            eventsListEl.appendChild(placeholder);
+
+            const scrollPos = beginListUpdate();
 
             fetch('/events?date=' + dateStr)
             .then(response => response.json())
@@ -352,10 +362,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     eventsListEl.innerHTML = eventsHtml;
                 }
+                finishListUpdate(scrollPos.scrollX, scrollPos.scrollY);
             })
             .catch(error => {
                 console.error('Error loading events:', error);
                 eventsListEl.innerHTML = '<p>Error loading events. Please try again.</p>';
+                finishListUpdate(scrollPos.scrollX, scrollPos.scrollY);
             });
         }
 
@@ -384,7 +396,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        function goToPreviousDay() {
+        function goToPreviousDay(e) {
+            if (e) e.preventDefault();
             currentDate.setDate(currentDate.getDate() - 1);
             loadEvents(currentDate);
             if (calendar) {
@@ -393,7 +406,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        function goToNextDay() {
+        function goToNextDay(e) {
+            if (e) e.preventDefault();
             currentDate.setDate(currentDate.getDate() + 1);
             loadEvents(currentDate);
             if (calendar) {

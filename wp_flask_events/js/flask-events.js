@@ -312,6 +312,22 @@
             }
         }
 
+        function beginListUpdate() {
+            const scrollX = window.scrollX;
+            const scrollY = window.scrollY;
+            const listHeight = Math.max(eventsListEl.offsetHeight, 200);
+            eventsListEl.style.minHeight = listHeight + 'px';
+            eventsListEl.innerHTML = '<div class="loading">Loading...</div>';
+            return { scrollX, scrollY };
+        }
+
+        function finishListUpdate(scrollX, scrollY) {
+            eventsListEl.style.minHeight = '';
+            requestAnimationFrame(() => {
+                window.scrollTo(scrollX, scrollY);
+            });
+        }
+
         function loadEvents(date) {
             currentDate = new Date(date);
             const year = currentDate.getFullYear();
@@ -324,14 +340,18 @@
             }
 
             highlightSelectedDate(currentDate);
-            eventsListEl.innerHTML = '<div class="loading">Loading...</div>';
+            const scrollPos = beginListUpdate();
 
             fetch(apiUrl((config.eventsEndpoint || '/events') + '?date=' + dateStr))
                 .then(response => response.json())
-                .then(events => renderEventsList(events, eventsListEl, currentDate))
+                .then(events => {
+                    renderEventsList(events, eventsListEl, currentDate);
+                    finishListUpdate(scrollPos.scrollX, scrollPos.scrollY);
+                })
                 .catch(error => {
                     console.error('Error loading events:', error);
                     eventsListEl.innerHTML = '<p>Error loading events. Please try again.</p>';
+                    finishListUpdate(scrollPos.scrollX, scrollPos.scrollY);
                 });
         }
 
@@ -361,7 +381,8 @@
             });
         }
 
-        function goToPreviousDay() {
+        function goToPreviousDay(e) {
+            if (e) e.preventDefault();
             currentDate.setDate(currentDate.getDate() - 1);
             loadEvents(currentDate);
             if (calendar) {
@@ -369,7 +390,8 @@
             }
         }
 
-        function goToNextDay() {
+        function goToNextDay(e) {
+            if (e) e.preventDefault();
             currentDate.setDate(currentDate.getDate() + 1);
             loadEvents(currentDate);
             if (calendar) {
