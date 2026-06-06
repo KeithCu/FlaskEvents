@@ -191,15 +191,16 @@ class EventModelView(ModelView):
 class VenueModelView(ModelView):
     """Admin interface for managing venues"""
     
-    column_list = ('name', 'address', 'event_count')
-    column_searchable_list = ('name', 'address')
+    column_list = ('name', 'address', 'phone', 'website', 'event_count')
+    column_searchable_list = ('name', 'address', 'phone')
     column_formatters = {
         'event_count': lambda v, c, m, p: len(m.events) if m.events else 0
     }
     
-    form_columns = ('name', 'address')
+    form_columns = ('name', 'address', 'description', 'phone', 'website')
     form_extra_fields = {
-        'address': TextAreaField('Address')
+        'address': TextAreaField('Address'),
+        'description': TextAreaField('Description')
     }
     
     def on_model_change(self, form, model, is_created):

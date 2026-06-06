@@ -44,11 +44,27 @@
     gap: 8px;
 }
 
+.event-arrow-link {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    flex-shrink: 0;
+    margin-right: 4px;
+}
+
+.event-arrow-link:hover {
+    text-decoration: none;
+}
+
+.event-arrow-link:hover .event-arrow {
+    color: #b02a37;
+}
+
 .event-arrow {
     color: #dc3545;
     font-weight: bold;
-    font-size: 1.1rem;
-    margin-right: 8px;
+    font-size: 1.6rem;
+    line-height: 1;
     cursor: pointer;
 }
 
@@ -59,21 +75,18 @@
     flex: 1;
 }
 
-.event-link {
-    display: flex;
-    align-items: center;
+.venue-link {
+    color: #212529;
     text-decoration: none;
-    color: inherit;
-    flex: 1;
 }
 
-.event-link:hover {
-    text-decoration: none;
-    color: #0056b3;
+.venue-link:hover {
+    color: #212529;
+    text-decoration: underline;
 }
 
-.event-link:hover .event-arrow {
-    color: #0056b3;
+.venue-link strong {
+    font-weight: 700;
 }
 
 /* Event badges */

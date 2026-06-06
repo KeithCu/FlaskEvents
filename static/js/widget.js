@@ -1,3 +1,142 @@
+// Debug only: sample-database events often have no url field set.
+// Remove this fallback once real event URLs are populated in production.
+const DEBUG_EVENT_URL_FALLBACK = 'https://thedetroitilove.com';
+
+function getEventArrowUrl(event) {
+    return event.url || DEBUG_EVENT_URL_FALLBACK;
+}
+
+function escapeHtml(text) {
+    if (text == null) {
+        return '';
+    }
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatVenueHtml(event) {
+    const venueName = event.venue || 'No venue';
+    if (event.venue_id) {
+        return `<a href="/venues/${event.venue_id}" class="venue-link"><strong>${escapeHtml(venueName)}</strong></a>`;
+    }
+    return escapeHtml(venueName);
+}
+
+function getRecurrenceSuffix(event) {
+    let recurrenceSuffix = '';
+    if (!event.is_recurring || !event.rrule) {
+        return recurrenceSuffix;
+    }
+
+    const rrule = event.rrule.toUpperCase();
+
+    let interval = '';
+    const intervalMatch = rrule.match(/INTERVAL=(\d+)/);
+    if (intervalMatch && intervalMatch[1] !== '1') {
+        interval = `Every ${intervalMatch[1]} `;
+    }
+
+    let endDateStr = '';
+    if (event.recurring_until) {
+        const endDate = new Date(event.recurring_until);
+        endDateStr = endDate.toLocaleDateString('en-US', {
+            month: 'numeric',
+            day: 'numeric',
+            year: 'numeric'
+        });
+    }
+
+    const bydayMatch = rrule.match(/BYDAY=([^;]+)/);
+    if (bydayMatch) {
+        const byday = bydayMatch[1];
+        const ordinalMatch = byday.match(/(\d+)(MO|TU|WE|TH|FR|SA|SU)/);
+        if (ordinalMatch) {
+            const ordinal = ordinalMatch[1];
+            const day = ordinalMatch[2];
+            const dayNames = { 'MO': 'Monday', 'TU': 'Tuesday', 'WE': 'Wednesday', 'TH': 'Thursday', 'FR': 'Friday', 'SA': 'Saturday', 'SU': 'Sunday' };
+            const ordinalNames = { '1': '1st', '2': '2nd', '3': '3rd', '4': '4th', '5': '5th' };
+
+            if (rrule.includes('FREQ=MONTHLY') || rrule.includes('FREQ=YEARLY')) {
+                const baseText = `${ordinalNames[ordinal] || ordinal} ${dayNames[day]}`;
+                recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
+            }
+        } else {
+            const days = byday.split(',').map(d => {
+                const dayNames = { 'MO': 'Mon', 'TU': 'Tue', 'WE': 'Wed', 'TH': 'Thu', 'FR': 'Fri', 'SA': 'Sat', 'SU': 'Sun' };
+                return dayNames[d] || d;
+            });
+
+            if (rrule.includes('FREQ=WEEKLY')) {
+                const baseText = days.length === 1 ? days[0] : days.join(', ');
+                recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
+            }
+        }
+    }
+
+    if (!recurrenceSuffix) {
+        if (rrule.includes('FREQ=DAILY')) {
+            const baseText = `${interval}Daily`;
+            recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
+        } else if (rrule.includes('FREQ=WEEKLY')) {
+            const baseText = `${interval}Weekly`;
+            recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
+        } else if (rrule.includes('FREQ=MONTHLY')) {
+            const baseText = `${interval}Monthly`;
+            recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
+        } else if (rrule.includes('FREQ=YEARLY')) {
+            const baseText = `${interval}Yearly`;
+            recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
+        } else {
+            const baseText = 'Recurring';
+            recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
+        }
+    }
+
+    return recurrenceSuffix;
+}
+
+function createEventHtml(event, isOngoing) {
+    const arrowSymbol = '→';
+    const eventTitle = escapeHtml(event.title);
+    const venueHtml = formatVenueHtml(event);
+    const startTime = formatTime(event.start);
+    const endTime = formatTime(event.end);
+    const descriptionText = event.description ? escapeHtml(event.description) : '';
+    const recurrenceSuffix = getRecurrenceSuffix(event);
+    const arrowUrl = getEventArrowUrl(event);
+
+    let html = '<div class="event-line">';
+    html += `<a href="${escapeHtml(arrowUrl)}" target="_blank" rel="noopener" class="event-arrow-link" title="Event link">`;
+    html += `<span class="event-arrow">${arrowSymbol}</span>`;
+    html += '</a>';
+    html += '<span class="event-text">';
+    html += `${eventTitle} : ${venueHtml} : ${startTime} - ${endTime}`;
+    if (descriptionText || recurrenceSuffix) {
+        html += ` : ${descriptionText}${recurrenceSuffix}`;
+    }
+    html += '</span>';
+
+    if (event.is_virtual) {
+        html += '<span class="badge bg-primary ms-2">Virtual</span>';
+    }
+    if (event.is_hybrid) {
+        html += '<span class="badge bg-success ms-2">Hybrid</span>';
+    }
+
+    html += '</div>';
+    return html;
+}
+
+function formatTime(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    }).replace(/\s/g, '');
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Get initial date from URL if available
     const pathParts = window.location.pathname.split('/');
@@ -220,132 +359,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        function createEventHtml(event, isOngoing) {
-            const arrowSymbol = '→';
-            const eventTitle = event.title;
-            const venueText = event.venue ? event.venue : 'No venue';
-            const startTime = formatTime(event.start);
-            const endTime = formatTime(event.end);
-            const descriptionText = event.description ? event.description : '';
-            
-            // Get recurrence type for display
-            let recurrenceSuffix = '';
-            if (event.is_recurring && event.rrule) {
-                const rrule = event.rrule.toUpperCase();
-                
-                // Check for interval (e.g., every 2 weeks)
-                let interval = '';
-                const intervalMatch = rrule.match(/INTERVAL=(\d+)/);
-                if (intervalMatch && intervalMatch[1] !== '1') {
-                    interval = `Every ${intervalMatch[1]} `;
-                }
-                
-                // Get end date if available
-                let endDateStr = '';
-                if (event.recurring_until) {
-                    const endDate = new Date(event.recurring_until);
-                    endDateStr = endDate.toLocaleDateString('en-US', { 
-                        month: 'numeric', 
-                        day: 'numeric',
-                        year: 'numeric'
-                    });
-                }
-                
-                // Check for day of week patterns
-                const bydayMatch = rrule.match(/BYDAY=([^;]+)/);
-                if (bydayMatch) {
-                    const byday = bydayMatch[1];
-                    
-                    // Check for ordinal day patterns (1MO = 1st Monday, 2TU = 2nd Tuesday, etc.)
-                    const ordinalMatch = byday.match(/(\d+)(MO|TU|WE|TH|FR|SA|SU)/);
-                    if (ordinalMatch) {
-                        const ordinal = ordinalMatch[1];
-                        const day = ordinalMatch[2];
-                        const dayNames = { 'MO': 'Monday', 'TU': 'Tuesday', 'WE': 'Wednesday', 'TH': 'Thursday', 'FR': 'Friday', 'SA': 'Saturday', 'SU': 'Sunday' };
-                        const ordinalNames = { '1': '1st', '2': '2nd', '3': '3rd', '4': '4th', '5': '5th' };
-                        
-                        if (rrule.includes('FREQ=MONTHLY')) {
-                            const baseText = `${ordinalNames[ordinal] || ordinal} ${dayNames[day]}`;
-                            recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
-                        } else if (rrule.includes('FREQ=YEARLY')) {
-                            const baseText = `${ordinalNames[ordinal] || ordinal} ${dayNames[day]}`;
-                            recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
-                        }
-                    } else {
-                        // Regular day of week
-                        const days = byday.split(',').map(d => {
-                            const dayNames = { 'MO': 'Mon', 'TU': 'Tue', 'WE': 'Wed', 'TH': 'Thu', 'FR': 'Fri', 'SA': 'Sat', 'SU': 'Sun' };
-                            return dayNames[d] || d;
-                        });
-                        
-                        if (rrule.includes('FREQ=WEEKLY')) {
-                            if (days.length === 1) {
-                                const baseText = days[0];
-                                recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
-                            } else {
-                                const baseText = days.join(', ');
-                                recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
-                            }
-                        }
-                    }
-                }
-                
-                // If no specific pattern found, use basic frequency
-                if (!recurrenceSuffix) {
-                    if (rrule.includes('FREQ=DAILY')) {
-                        const baseText = `${interval}Daily`;
-                        recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
-                    } else if (rrule.includes('FREQ=WEEKLY')) {
-                        const baseText = `${interval}Weekly`;
-                        recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
-                    } else if (rrule.includes('FREQ=MONTHLY')) {
-                        const baseText = `${interval}Monthly`;
-                        recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
-                    } else if (rrule.includes('FREQ=YEARLY')) {
-                        const baseText = `${interval}Yearly`;
-                        recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
-                    } else {
-                        const baseText = 'Recurring';
-                        recurrenceSuffix = endDateStr ? ` <i>(${baseText} until ${endDateStr})</i>` : ` <i>(${baseText})</i>`;
-                    }
-                }
-            }
-            
-            const fullText = `${eventTitle} : ${venueText} : ${startTime} - ${endTime} : ${descriptionText}${recurrenceSuffix}`;
-            
-            let html = '<div class="event-line">';
-            
-            if (event.url) {
-                html += `<a href="${event.url}" target="_blank" class="event-link">`;
-                html += `<span class="event-arrow">${arrowSymbol}</span>`;
-                html += `<span class="event-text">${fullText}</span>`;
-                html += '</a>';
-            } else {
-                html += `<span class="event-arrow">${arrowSymbol}</span>`;
-                html += `<span class="event-text">${fullText}</span>`;
-            }
-            
-            // Add badges for virtual/hybrid events
-            if (event.is_virtual) {
-                html += '<span class="badge bg-primary ms-2">Virtual</span>';
-            }
-            if (event.is_hybrid) {
-                html += '<span class="badge bg-success ms-2">Hybrid</span>';
-            }
-            
-            html += '</div>';
-            return html;
-        }
-
-        function formatTime(dateStr) {
-            const date = new Date(dateStr);
-            return date.toLocaleTimeString('en-US', { 
-                hour: 'numeric', 
-                minute: '2-digit',
-                hour12: true 
-            }).replace(/\s/g, '');
-        }
-
         function formatDateForDisplay(date) {
             const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' });
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -355,35 +368,27 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         function highlightSelectedDate(date) {
-            // Remove previous selection
             const prevSelected = document.querySelector('.fc-day.selected-date');
             if (prevSelected) {
                 prevSelected.classList.remove('selected-date');
             }
-            
-            // Add selection to current date - use timezone-safe date formatting
+
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
             const dateStr = `${year}-${month}-${day}`;
-            
-            // Try to find the day element with the exact date string
+
             const dayElement = document.querySelector(`[data-date="${dateStr}"]`);
             if (dayElement) {
                 dayElement.classList.add('selected-date');
-                console.log(`Highlighted date: ${dateStr}`);
-            } else {
-                console.log(`Could not find day element for date: ${dateStr}`);
             }
         }
 
         function goToPreviousDay() {
             currentDate.setDate(currentDate.getDate() - 1);
             loadEvents(currentDate);
-            // Update calendar to show the new date
             if (calendar) {
                 calendar.gotoDate(currentDate);
-                // Highlight the selected date immediately
                 highlightSelectedDate(currentDate);
             }
         }
@@ -391,10 +396,8 @@ document.addEventListener('DOMContentLoaded', function() {
         function goToNextDay() {
             currentDate.setDate(currentDate.getDate() + 1);
             loadEvents(currentDate);
-            // Update calendar to show the new date
             if (calendar) {
                 calendar.gotoDate(currentDate);
-                // Highlight the selected date immediately
                 highlightSelectedDate(currentDate);
             }
         }

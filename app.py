@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from fts import setup_fts_triggers, ensure_fts_setup, search_events
 from database import engine, db_path, Base, SessionLocal, Event, Venue, EventFTS, migrate_database, get_next_event_id
 from admin import init_admin
+from events import serialize_event
 
 
 def load_config():
@@ -79,6 +80,7 @@ css_bundle = Bundle(
     'css/calendar.css',
     'css/forms.css',
     'css/widgets.css',
+    'css/venue.css',
     filters='cssmin',
     output='gen/packed.css'
 )
@@ -152,20 +154,16 @@ def search():
     try:
         results = search_events(query, session)
         print(f"Search results count: {len(results)}")
-        
-        event_list = []
-        for event in results:
-            event_data = {
-                'id': event.id,
-                'title': event.title,
-                'start': event.start.isoformat(),
-                'end': event.end.isoformat(),
-                'description': event.description,
-                'venue': event.venue.name if event.venue else None,
-                'color': event.color,
-                'backgroundColor': event.bg
-            }
-            event_list.append(event_data)
+
+        if results:
+            event_ids = [event.id for event in results]
+            results = session.query(Event).options(joinedload(Event.venue)).filter(
+                Event.id.in_(event_ids)
+            ).all()
+            id_order = {event_id: index for index, event_id in enumerate(event_ids)}
+            results.sort(key=lambda event: id_order.get(event.id, 0))
+
+        event_list = [serialize_event(event) for event in results]
         return jsonify(event_list)
     except Exception as e:
         print(f"Error in search: {e}")

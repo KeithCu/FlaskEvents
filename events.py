@@ -83,6 +83,87 @@ def clear_calendar_events_cache():
     else:
         print("Attempted to clear calendar cache but cache not initialized")
 
+def serialize_event(event):
+    """Serialize an Event for JSON API responses."""
+    return {
+        'id': event.id,
+        'title': event.title,
+        'start': event.start.isoformat(),
+        'end': event.end.isoformat(),
+        'description': event.description,
+        'venue': event.venue.name if event.venue else None,
+        'venue_id': event.venue_id,
+        'is_virtual': event.is_virtual,
+        'is_hybrid': event.is_hybrid,
+        'url': event.url,
+        'is_recurring': event.is_recurring,
+        'rrule': event.rrule,
+        'recurring_until': event.recurring_until.isoformat() if event.recurring_until else None,
+        'color': event.color,
+        'backgroundColor': event.bg,
+    }
+
+def expand_recurring_events(event, start_date, end_date):
+    if not event.rrule:
+        return [event]
+
+    rule = rrulestr(event.rrule, dtstart=event.start)
+    instances = rule.between(start_date, end_date)
+
+    expanded_events = []
+    for instance_start in instances:
+        duration = event.end - event.start
+        instance_end = instance_start + duration
+
+        instance_event = Event(
+            title=event.title,
+            description=event.description,
+            start=instance_start,
+            end=instance_end,
+            venue_id=event.venue_id,
+            color=event.color,
+            bg=event.bg,
+            is_virtual=event.is_virtual,
+            is_hybrid=event.is_hybrid,
+            url=event.url,
+            is_recurring=event.is_recurring,
+            rrule=event.rrule,
+            recurring_until=event.recurring_until,
+        )
+        instance_event.venue = event.venue
+        expanded_events.append(instance_event)
+
+    return expanded_events
+
+def get_upcoming_events_for_venue(session, venue_id, limit=5, horizon_days=90):
+    """Return the next upcoming events at a venue, including expanded recurring instances."""
+    now = datetime.now()
+    horizon_end = now + timedelta(days=horizon_days)
+    today = now.date()
+
+    non_recurring = session.query(Event).options(joinedload(Event.venue)).filter(
+        Event.venue_id == venue_id,
+        Event.is_recurring == False,
+        Event.start >= now
+    ).order_by(Event.start).all()
+
+    recurring = session.query(Event).options(joinedload(Event.venue)).filter(
+        Event.venue_id == venue_id,
+        Event.is_recurring == True,
+        (Event.recurring_until == None) | (Event.recurring_until >= today)
+    ).all()
+
+    expanded = []
+    for event in recurring:
+        instances = expand_recurring_events(event, now, horizon_end)
+        for instance in instances:
+            if instance.start >= now:
+                expanded.append(instance)
+
+    all_events = list(non_recurring) + expanded
+    all_events.sort(key=lambda x: x.start)
+    return all_events[:limit]
+
 def register_events(app):
 
     def get_events_in_batches(session, start_date, end_date, batch_size=1000):
@@ -178,22 +259,7 @@ def register_events(app):
                 
                 event_list = []
                 for event in all_events:
-                    event_data = {
-                        'id': event.id,
-                        'title': event.title,
-                        'start': event.start.isoformat(),
-                        'end': event.end.isoformat(),
-                        'description': event.description,
-                        'venue': event.venue.name if event.venue else None,
-                        'is_virtual': event.is_virtual,
-                        'is_hybrid': event.is_hybrid,
-                        'url': event.url,
-                        'is_recurring': event.is_recurring,
-                        'rrule': event.rrule,
-                        'recurring_until': event.recurring_until.isoformat() if event.recurring_until else None,
-                    }
-                    
-                    event_list.append(event_data)
+                    event_list.append(serialize_event(event))
                 
                 # Cache the complete day events
                 set_cached_day_events(date, event_list)
@@ -251,22 +317,7 @@ def register_events(app):
                 
                 event_list = []
                 for event in all_events:
-                    event_data = {
-                        'id': event.id,
-                        'title': event.title,
-                        'start': event.start.isoformat(),
-                        'end': event.end.isoformat(),
-                        'rrule': event.rrule,
-                        'color': event.color,
-                        'backgroundColor': event.bg,
-                        'description': event.description,
-                        'venue': event.venue.name if event.venue else None,
-                        'is_virtual': event.is_virtual,
-                        'is_hybrid': event.is_hybrid,
-                        'url': event.url,
-                        'recurring_until': event.recurring_until.isoformat() if event.recurring_until else None,
-                    }
-                    event_list.append(event_data)
+                    event_list.append(serialize_event(event))
                 
                 # Cache the calendar events
                 set_cached_calendar_events(start_str, end_str, event_list)
@@ -276,6 +327,21 @@ def register_events(app):
         
         response = jsonify(event_list)
         return set_cache_headers(response, max_age=300)  # Cache for 5 minutes
+
+    @app.route('/venues/<int:id>')
+    def venue_detail(id):
+        with get_db_session() as session:
+            venue = session.query(Venue).filter(Venue.id == id).first()
+            if not venue:
+                from flask import abort
+                abort(404)
+            upcoming_events = get_upcoming_events_for_venue(session, id)
+            return render_template(
+                'venue_detail.html',
+                venue=venue,
+                upcoming_events=upcoming_events,
+                debug_event_url='https://thedetroitilove.com',
+            )
 
     @app.route('/event/new', methods=['GET', 'POST'])
     def add_event():
@@ -505,41 +571,6 @@ def register_events(app):
         ensure_fts_setup()
         
         return redirect(url_for('main.python_view'))
-
-    def expand_recurring_events(event, start_date, end_date):
-        if not event.rrule:
-            return [event]
-        
-        # Parse RRULE and generate all instances
-        rule = rrulestr(event.rrule, dtstart=event.start)
-        instances = rule.between(start_date, end_date)
-        
-        # Create event objects for each instance
-        expanded_events = []
-        for instance_start in instances:
-            # Calculate instance end time
-            duration = event.end - event.start
-            instance_end = instance_start + duration
-            
-            # Create new event object for this instance
-            instance_event = Event(
-                title=event.title,
-                description=event.description,
-                start=instance_start,
-                end=instance_end,
-                venue_id=event.venue_id,
-                color=event.color,
-                bg=event.bg,
-                is_virtual=event.is_virtual,
-                is_hybrid=event.is_hybrid,
-                url=event.url,
-                is_recurring=event.is_recurring,
-                rrule=event.rrule,
-                recurring_until=event.recurring_until,
-            )
-            expanded_events.append(instance_event)
-        
-        return expanded_events
 
     def set_cache_headers(response, max_age=3600):
         """Set cache headers for better performance"""

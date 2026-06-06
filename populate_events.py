@@ -184,7 +184,8 @@ def populate_events(total_events=50000):
                     bg=bg,
                     is_recurring=is_recurring,
                     recurring_until=recurring_until,
-                    rrule=rrule
+                    rrule=rrule,
+                    url=fake.url() if random.random() < 0.3 else None,
                 )
                 events.append(event)
                 

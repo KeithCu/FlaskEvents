@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}{{ venue.name }}{% endblock %}
+
+{% block content %}
+<div class="venue-page">
+    <h1 class="venue-title">{{ venue.name }}</h1>
+
+    {% if venue.description %}
+    <div class="venue-description">
+        {% for paragraph in venue.description.split('\n\n') %}
+        <p>{{ paragraph }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <h2 class="venue-section-heading">Location</h2>
+
+    <div class="venue-map-placeholder" aria-hidden="true"></div>
+
+    <div class="venue-info-box">
+        {% if venue.address %}
+        <div>{{ venue.address }}</div>
+        {% endif %}
+        {% if venue.phone or venue.website %}
+        <div>
+            {% if venue.phone %}{{ venue.phone }}{% endif %}
+            {% if venue.phone and venue.website %} : {% endif %}
+            {% if venue.website %}
+            <a href="{{ venue.website }}" target="_blank" rel="noopener">{{ venue.website.replace('https://', '').replace('http://', '') }}</a>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% if not venue.address and not venue.phone and not venue.website %}
+        <div class="text-muted">No location details available.</div>
+        {% endif %}
+    </div>
+
+    <h2 class="venue-section-heading">Upcoming Events at {{ venue.name }}</h2>
+
+    <div class="venue-upcoming-events">
+        {% if upcoming_events %}
+            {% for event in upcoming_events %}
+            <div class="event-line">
+                <a href="{{ event.url or debug_event_url }}" target="_blank" rel="noopener" class="event-arrow-link" title="Event link">
+                    <span class="event-arrow">⇒</span>
+                </a>
+                <span class="event-text">
+                    {{ event.start.strftime('%m-%d') }}:{{ event.start.strftime('%I:%M %p').lstrip('0') }}
+                    <strong>{{ event.title }}</strong>
+                    : {{ event.start.strftime('%I:%M %p').lstrip('0') }}-{{ event.end.strftime('%I:%M %p').lstrip('0') }}
+                    {% if event.description %}
+                    : {{ event.description[:120] }}{% if event.description|length > 120 %}...{% endif %}
+                    {% endif %}
+                </span>
+            </div>
+            {% endfor %}
+        {% else %}
+        <p class="venue-empty-events">No upcoming events scheduled at this venue.</p>
+        {% endif %}
+    </div>
+
+    <p class="venue-debug-note">Debug: event arrows without a URL link to thedetroitilove.com (sample database only).</p>
+</div>
+{% endblock %}

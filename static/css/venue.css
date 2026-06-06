@@ -1,0 +1,89 @@
+/* Venue detail page - inspired by thedetroitilove.com venue layout */
+
+.venue-page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 2rem 1rem 3rem;
+}
+
+.venue-title {
+    color: #dc3545;
+    text-align: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+}
+
+.venue-description {
+    text-align: center;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.venue-section-heading {
+    text-align: center;
+    text-decoration: underline;
+    text-transform: uppercase;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    margin: 2rem 0 1rem;
+}
+
+.venue-map-placeholder {
+    background: #e9ecef;
+    min-height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0;
+    position: relative;
+}
+
+.venue-map-placeholder::after {
+    content: '📍';
+    font-size: 2rem;
+    color: #dc3545;
+}
+
+.venue-info-box {
+    border: 1px solid #dee2e6;
+    padding: 1rem 1.25rem;
+    text-align: center;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.venue-info-box a {
+    color: #dc3545;
+}
+
+.venue-upcoming-events {
+    margin-top: 1rem;
+}
+
+.venue-upcoming-events .event-line {
+    padding: 0.35rem 0;
+}
+
+.venue-upcoming-events .event-arrow {
+    font-size: 1.6rem;
+}
+
+.venue-upcoming-events .event-text strong {
+    font-weight: 700;
+}
+
+.venue-empty-events {
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    padding: 1rem 0;
+}
+
+.venue-debug-note {
+    text-align: center;
+    color: #6c757d;
+    font-size: 0.85rem;
+    margin-top: 2rem;
+}

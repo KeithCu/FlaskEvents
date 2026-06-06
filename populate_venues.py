@@ -44,6 +44,29 @@ venues = [
     "Good Life"
 ]
 
+# Sample metadata for demo venue pages
+VENUE_METADATA = {
+    "Marble Bar": {
+        "address": "1501 Holden Street, Detroit, MI 48208",
+        "description": (
+            "Located on the lower level of the historic Detroit Masonic Temple, "
+            "Marble Bar is a 500-capacity live music venue.\n\n"
+            "Marble floors, a large wooden dance floor, and a vintage 40-foot bar "
+            "create a classic Detroit nightlife atmosphere."
+        ),
+        "phone": "313-338-3674",
+        "website": "https://facebook.com/marblebardetroit/",
+    },
+    "Menjo's": {
+        "address": "950 W McNichols Rd, Detroit, MI 48203",
+        "phone": "313-832-8590",
+    },
+    "Society Detroit": {
+        "address": "1434 Griswold St, Detroit, MI 48226",
+        "website": "https://societydetroit.com",
+    },
+}
+
 def populate_venues():
     # Create tables first, before any model relationships are accessed
     print("Creating database tables...")
@@ -60,12 +83,23 @@ def populate_venues():
         # Add each venue
         print("Setting up venues...")
         for venue_name in venues:
-            # Check if venue already exists
+            metadata = VENUE_METADATA.get(venue_name, {})
             existing_venue = session.query(Venue).filter_by(name=venue_name).first()
             if not existing_venue:
-                venue = Venue(name=venue_name)
+                venue = Venue(
+                    name=venue_name,
+                    address=metadata.get('address'),
+                    description=metadata.get('description'),
+                    phone=metadata.get('phone'),
+                    website=metadata.get('website'),
+                )
                 session.add(venue)
                 print(f"Added venue: {venue_name}")
+            elif metadata:
+                for field in ('address', 'description', 'phone', 'website'):
+                    if metadata.get(field) and not getattr(existing_venue, field):
+                        setattr(existing_venue, field, metadata[field])
+                print(f"Updated venue metadata: {venue_name}")
         
         # Commit the changes
         session.commit()

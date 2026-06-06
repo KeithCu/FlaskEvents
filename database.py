@@ -127,6 +127,31 @@ def migrate_database():
         
         conn.commit()
         print(f"Inserted {len(default_categories)} default categories")
+
+        # Add venue detail columns if venue table exists
+        venue_table_exists = conn.execute(text("""
+            SELECT name FROM sqlite_master 
+            WHERE type='table' AND name='venue'
+        """)).fetchone()
+
+        if venue_table_exists:
+            venue_columns = conn.execute(text("PRAGMA table_info(venue)")).fetchall()
+            venue_column_names = [col[1] for col in venue_columns]
+
+            if 'description' not in venue_column_names:
+                print("Adding description column to venue table...")
+                conn.execute(text("ALTER TABLE venue ADD COLUMN description TEXT"))
+                conn.commit()
+
+            if 'phone' not in venue_column_names:
+                print("Adding phone column to venue table...")
+                conn.execute(text("ALTER TABLE venue ADD COLUMN phone VARCHAR(50)"))
+                conn.commit()
+
+            if 'website' not in venue_column_names:
+                print("Adding website column to venue table...")
+                conn.execute(text("ALTER TABLE venue ADD COLUMN website VARCHAR(500)"))
+                conn.commit()
     
     print("Database migration completed successfully!")
 
@@ -248,6 +273,9 @@ class Venue(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
     address = Column(Text)
+    description = Column(Text)
+    phone = Column(String(50))
+    website = Column(String(500))
     
     events = relationship("Event", back_populates="venue")
 
