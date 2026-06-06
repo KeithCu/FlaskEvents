@@ -50,24 +50,23 @@ database:
 # Timezone Settings
 timezone:
   local: "America/New_York"
-
-# CORS Settings for WordPress Integration
-cors:
-  enabled: true
-  origins:
-    - "https://your-wordpress-domain.com"
-    - "http://localhost:3000"  # For local development
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-  allow_headers: ["Content-Type", "Authorization"]
 ```
 
 ### Critical Configuration Notes:
 
-- **CORS Origins**: Must include your WordPress domain for integration to work
 - **Timezone**: Set to your local timezone (e.g., "America/New_York", "America/Chicago")
 - **Database Path**: Default is "events.db" in the application root
 
-**Without proper CORS configuration, the WordPress integration will fail!** The application will exit with an error if the config.yaml file is missing or malformed.
+The application will exit with an error if the `config.yaml` file is missing or malformed.
+
+### CORS (WordPress integration)
+
+CORS is **not** configured in `config.yaml`. Allowed origins are hardcoded in [`app.py`](app.py) for the WordPress host site:
+
+- `https://thedetroitilove.com`
+- `https://www.thedetroitilove.com`
+
+No extra setup is required for that site. To allow a different WordPress domain, edit the `CORS_ORIGINS` list in `app.py`.
 
 ## Usage
 
@@ -104,7 +103,7 @@ This Flask Events Calendar can be integrated with WordPress using the included W
 
 ### Quick Setup Steps
 
-For a typical setup with Flask on a subdomain (e.g., `flaskevents.example.com`) and WordPress on the main domain (e.g., `example.com`):
+For a typical setup with Flask on a subdomain (e.g., `flaskevents.thedetroitilove.com`) and WordPress on the main site (`thedetroitilove.com`):
 
 1. **Copy WordPress Plugin Files**
    ```bash
@@ -122,16 +121,13 @@ For a typical setup with Flask on a subdomain (e.g., `flaskevents.example.com`) 
    define('FLASK_EVENTS_URL', 'https://flaskevents.example.com');
    ```
 
-4. **Configure CORS**
-   - Set your WordPress domain in `config.yaml` (see [Configuration](#configuration) above)
-
-5. **Add Widgets to WordPress**
+4. **Add Widgets to WordPress**
    - Go to Appearance → Widgets
    - Add "Events Calendar" and "Events List" widgets to your sidebar
 
 **Key Points:**
 - **SSL Required**: Both sites need HTTPS for CORS to work properly
-- **CORS Configuration**: Flask app must allow requests from your WordPress domain (via `config.yaml`)
+- **CORS**: Already allowed for `thedetroitilove.com` (hardcoded in `app.py` — no config needed)
 - **Two Widgets Available**: Calendar widget (monthly view) and Events List widget (daily events)
 - **No Database Changes**: WordPress and Flask remain completely separate
 
@@ -180,19 +176,19 @@ WordPress Site                    Flask Events Calendar
 ### Configuration Options
 
 - **Flask App URL**: Set in the WordPress plugin (`FLASK_EVENTS_URL`)
-- **CORS**: Configure in `config.yaml` (see [Configuration](#configuration))
+- **CORS**: Hardcoded in `app.py` for `thedetroitilove.com` (see [Configuration](#cors-wordpress-integration))
 - **Widget CSS**: Customize via `wp_flask_events/css/flask-events.css`
 
 ### Security Considerations
 
-- **CORS**: Configure allowed origins in `config.yaml` — see [Configuration](#configuration)
+- **CORS**: Allowed origins are hardcoded in `app.py` — see [CORS (WordPress integration)](#cors-wordpress-integration)
 - **Rate limiting**: Consider rate limiting for `/events` and `/search` endpoints in production
 - **Input validation**: The Flask app validates inputs; ensure WordPress-side validation for any user-submitted data
 
 ### Troubleshooting WordPress Integration
 
 1. **Widgets Not Loading** — Verify the Flask app URL, confirm the app is running, check browser console for JavaScript errors
-2. **CORS Errors** — Ensure your WordPress domain is in `config.yaml` CORS origins
+2. **CORS Errors** — Confirm the WordPress site URL matches an entry in `CORS_ORIGINS` in `app.py` (currently `thedetroitilove.com` with and without `www`); both sites must use HTTPS
 3. **Events Not Displaying** — Verify the `/events` endpoint works and events exist in the database; check browser network tab
 4. **Styling Issues** — WordPress theme CSS may conflict with widget styles; test with a default theme
 
@@ -230,7 +226,7 @@ When integrated with WordPress, this solution provides several advantages:
 
 **Flask app:** Use a production WSGI server (Gunicorn, uWSGI), reverse proxy (Nginx, Apache), SSL, and process management (systemd, supervisor).
 
-**WordPress integration:** Ensure HTTPS for both sites, configure CORS for production domains, and set up monitoring.
+**WordPress integration:** Ensure HTTPS for both sites; CORS for `thedetroitilove.com` is built in. Set up monitoring as needed.
 
 **Database:** SQLite works well for moderate loads; consider PostgreSQL or MySQL for high traffic. Implement backups.
 

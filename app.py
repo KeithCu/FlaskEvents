@@ -55,12 +55,15 @@ app.config['SECRET_KEY'] = config.get('secret_key', 'dev-secret-key-change-in-pr
 def inject_template_globals():
     return {'event_link_arrow': EVENT_LINK_ARROW}
 
-# Enable CORS for WordPress integration using config
-if config['cors']['enabled']:
-    CORS(app, 
-         origins=config['cors']['origins'],
-         methods=config['cors'].get('methods', ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']),
-         allow_headers=config['cors'].get('allow_headers', ['Content-Type', 'Authorization']))
+# WordPress host site — hardcoded CORS for now
+CORS_ORIGINS = [
+    'https://thedetroitilove.com',
+    'https://www.thedetroitilove.com',
+]
+CORS(app,
+     origins=CORS_ORIGINS,
+     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+     allow_headers=['Content-Type', 'Authorization'])
 
 # Set timezone to local timezone instead of UTC
 # You can change this to your specific timezone if needed
