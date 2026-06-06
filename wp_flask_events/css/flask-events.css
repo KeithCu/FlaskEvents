@@ -267,3 +267,47 @@
         font-size: 16px;
     }
 }
+
+/* Edge theme overrides on thedetroitilove.com */
+.entry-content .flask-events-wrap,
+.widget .flask-events-wrap {
+    width: 100%;
+    max-width: none;
+    text-align: left;
+}
+
+.entry-content .flask-events-wrap p,
+.widget .flask-events-wrap p {
+    margin-bottom: 0;
+}
+
+.entry-content .flask-events-wrap .event-line,
+.widget .flask-events-wrap .event-line {
+    display: flex !important;
+    align-items: center;
+    flex-wrap: wrap;
+    border-left: none !important;
+    background: transparent !important;
+    padding: 6px 0 !important;
+    margin-bottom: 0 !important;
+}
+
+.entry-content .flask-events-wrap .event-arrow,
+.widget .flask-events-wrap .event-arrow {
+    color: #dc3545 !important;
+    font-size: 1.6rem !important;
+    font-weight: bold !important;
+}
+
+.entry-content .flask-events-wrap .time-header,
+.widget .flask-events-wrap .time-header {
+    text-transform: none;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.entry-content .flask-events-wrap #selected-date-display,
+.widget .flask-events-wrap #selected-date-display {
+    color: #dc3545 !important;
+    font-weight: 600;
+}

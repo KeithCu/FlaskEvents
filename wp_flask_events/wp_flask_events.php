@@ -62,12 +62,20 @@ function flask_events_page_needs_assets() {
            has_shortcode($post->post_content, 'flask_events_list');
 }
 
-add_action('wp_enqueue_scripts', 'flask_events_enqueue_assets');
+add_action('wp_enqueue_scripts', 'flask_events_enqueue_assets', 999);
+
+function flask_events_asset_version($relative_path) {
+    $path = plugin_dir_path(__FILE__) . ltrim($relative_path, '/');
+    return file_exists($path) ? (string) filemtime($path) : '1.0.2';
+}
 
 function flask_events_enqueue_assets() {
     if (!flask_events_page_needs_assets()) {
         return;
     }
+
+    $css_version = flask_events_asset_version('css/flask-events.css');
+    $js_version = flask_events_asset_version('js/flask-events.js');
 
     wp_enqueue_script(
         'fullcalendar',
@@ -81,14 +89,14 @@ function flask_events_enqueue_assets() {
         'flask-events-style',
         plugins_url('css/flask-events.css', __FILE__),
         array(),
-        '1.0.1'
+        $css_version
     );
 
     wp_enqueue_script(
         'flask-events-js',
         plugins_url('js/flask-events.js', __FILE__),
         array('fullcalendar'),
-        '1.0.1',
+        $js_version,
         true
     );
 
@@ -99,4 +107,22 @@ function flask_events_enqueue_assets() {
         'eventLinkArrow' => '⇒',
         'fallbackEventUrl' => 'https://thedetroitilove.com',
     ));
+}
+
+// Keep Flask Events assets out of W3 Total Cache minify so updates apply immediately.
+add_filter('w3tc_minify_css_do_tag', 'flask_events_skip_w3tc_minify_css', 10, 3);
+add_filter('w3tc_minify_js_do_tag', 'flask_events_skip_w3tc_minify_js', 10, 3);
+
+function flask_events_skip_w3tc_minify_css($do_tag, $style_tag, $style) {
+    if (!empty($style['src']) && strpos($style['src'], 'wp_flask_events') !== false) {
+        return false;
+    }
+    return $do_tag;
+}
+
+function flask_events_skip_w3tc_minify_js($do_tag, $script_tag, $script) {
+    if (!empty($script['src']) && strpos($script['src'], 'wp_flask_events') !== false) {
+        return false;
+    }
+    return $do_tag;
 }
