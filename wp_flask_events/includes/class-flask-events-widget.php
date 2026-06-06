@@ -39,7 +39,9 @@ class Flask_Events_Widget extends WP_Widget {
 function flask_events_calendar_markup() {
     ob_start();
     ?>
-    <div id="events-calendar" class="events-calendar-widget"></div>
+    <div class="flask-events-wrap">
+        <div id="events-calendar" class="events-calendar-widget"></div>
+    </div>
     <?php
     return ob_get_clean();
 }

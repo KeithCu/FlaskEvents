@@ -39,12 +39,21 @@ class Flask_Events_List_Widget extends WP_Widget {
 function flask_events_list_markup() {
     ob_start();
     ?>
-    <div class="events-list-widget">
-        <div class="navigation-buttons">
-            <div id="prev-day">« Previous Day</div>
-            <div id="next-day">Next Day »</div>
-        </div>
-        <div id="events-list" class="event-list">
+    <div class="flask-events-wrap">
+        <div class="events-list-widget">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Search events...">
+            </div>
+            <div class="navigation-buttons">
+                <div id="prev-day">&laquo; Previous Day</div>
+                <div id="next-day">Next Day &raquo;</div>
+            </div>
+            <div id="selected-date-display"></div>
+            <div id="events-list" class="event-list"></div>
+            <div class="navigation-buttons">
+                <div id="prev-day-bottom">&laquo; Previous Day</div>
+                <div id="next-day-bottom">Next Day &raquo;</div>
+            </div>
         </div>
     </div>
     <?php

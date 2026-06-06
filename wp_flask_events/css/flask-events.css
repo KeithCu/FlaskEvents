@@ -1,86 +1,269 @@
+/* Isolate Flask Events from theme styles */
+.flask-events-wrap {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #212529;
+    line-height: 1.5;
+}
+
+.flask-events-wrap *,
+.flask-events-wrap *::before,
+.flask-events-wrap *::after {
+    box-sizing: border-box;
+}
+
 /* Flask Events calendar styles */
-.events-calendar-widget {
+.flask-events-wrap .events-calendar-widget {
     max-width: 300px;
     margin: 0 auto;
 }
 
-.events-calendar-widget .fc-header-toolbar {
+.flask-events-wrap .events-calendar-widget .fc-header-toolbar {
     padding: 2px !important;
     font-size: 0.8em !important;
     margin-bottom: 2px !important;
 }
 
-.events-calendar-widget .fc-button {
+.flask-events-wrap .events-calendar-widget .fc-button {
     padding: 1px 3px !important;
     font-size: 0.8em !important;
 }
 
-.events-calendar-widget .fc-daygrid-day {
+.flask-events-wrap .events-calendar-widget .fc-daygrid-day {
     height: 20px !important;
 }
 
-.events-calendar-widget .fc-daygrid-day-number {
+.flask-events-wrap .events-calendar-widget .fc-daygrid-day-number {
     font-size: 0.8em !important;
     padding: 1px !important;
 }
 
-.events-calendar-widget .fc-col-header-cell {
+.flask-events-wrap .events-calendar-widget .fc-col-header-cell {
     padding: 1px !important;
 }
 
-.events-calendar-widget .fc-col-header-cell-cushion {
+.flask-events-wrap .events-calendar-widget .fc-col-header-cell-cushion {
     font-size: 0.7em !important;
     padding: 1px !important;
 }
 
-/* Flask Events List styles */
-.events-list-widget {
+.flask-events-wrap .fc-day.selected-date {
+    background-color: rgba(0, 123, 255, 0.3) !important;
+    color: inherit !important;
+}
+
+.flask-events-wrap .fc-day.selected-date .fc-day-number {
+    color: inherit !important;
+    font-weight: bold !important;
+}
+
+.flask-events-wrap .fc-day.selected-date:hover {
+    background-color: rgba(0, 86, 179, 0.4) !important;
+}
+
+/* Event list widget styles (matches Flask app widgets.css) */
+.flask-events-wrap .events-list-widget {
+    position: relative;
+}
+
+.flask-events-wrap .event-list {
     margin-top: 20px;
+    min-height: 200px;
+    opacity: 1;
+    transition: opacity 0.05s ease-in-out;
 }
 
-.event-list {
-    margin-top: 20px;
+.flask-events-wrap .event-list.updating {
+    opacity: 0;
 }
 
-.event-item {
-    padding: 10px;
-    margin-bottom: 10px;
-    border-left: 4px solid #3788d8;
-    background-color: #f8f9fa;
+.flask-events-wrap .time-group {
+    margin-bottom: 20px;
 }
 
-.event-time {
+.flask-events-wrap .time-header {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #495057;
+    margin-bottom: 8px;
+    padding: 4px 0;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.flask-events-wrap .ongoing-section .time-header {
+    color: #dc3545;
+    border-bottom-color: #dc3545;
+}
+
+.flask-events-wrap .event-line {
+    padding: 6px 0;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.flask-events-wrap .event-arrow-link {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    flex-shrink: 0;
+    margin-right: 4px;
+}
+
+.flask-events-wrap .event-arrow-link:hover {
+    text-decoration: none;
+}
+
+.flask-events-wrap .event-arrow-link:hover .event-arrow {
+    color: #b02a37;
+}
+
+.flask-events-wrap .event-arrow {
+    color: #dc3545;
     font-weight: bold;
-    color: #666;
+    font-size: 1.6rem;
+    line-height: 1;
+    cursor: pointer;
 }
 
-.event-title {
-    font-size: 1.1em;
-    margin: 5px 0;
+.flask-events-wrap .event-text {
+    color: #212529;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    flex: 1;
 }
 
-.event-description {
-    color: #666;
-    font-size: 0.9em;
+.flask-events-wrap .venue-link {
+    color: #212529;
+    text-decoration: none;
 }
 
-.event-venue {
-    color: #666;
-    font-size: 0.9em;
-    font-style: italic;
+.flask-events-wrap .venue-link:hover {
+    color: #212529;
+    text-decoration: underline;
 }
 
-.navigation-buttons {
+.flask-events-wrap .venue-link strong {
+    font-weight: 700;
+}
+
+.flask-events-wrap .event-line .badge {
+    font-size: 0.7rem;
+    padding: 0.2em 0.5em;
+    margin-left: 0.25rem;
+}
+
+.flask-events-wrap .badge.bg-primary {
+    background-color: #3788d8 !important;
+    color: #fff;
+}
+
+.flask-events-wrap .badge.bg-success {
+    background-color: #28a745 !important;
+    color: #fff;
+}
+
+.flask-events-wrap .navigation-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
     margin-top: 20px;
-    text-align: center;
 }
 
-.navigation-buttons .btn {
-    margin: 0 5px;
+.flask-events-wrap #prev-day,
+.flask-events-wrap #next-day,
+.flask-events-wrap #prev-day-bottom,
+.flask-events-wrap #next-day-bottom {
+    flex: 1;
+    border-radius: 0.375rem;
+    background-color: #6c757d;
+    border: 1px solid #6c757d;
+    color: white;
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-align: center;
+    display: inline-block;
+    text-decoration: none;
+    margin: 0;
+    line-height: 1.5;
+    user-select: none;
+    transition: all 0.2s ease-in-out;
 }
 
-.loading {
+.flask-events-wrap #prev-day:hover,
+.flask-events-wrap #next-day:hover,
+.flask-events-wrap #prev-day-bottom:hover,
+.flask-events-wrap #next-day-bottom:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+    color: white;
+    text-decoration: none;
+}
+
+.flask-events-wrap .search-box {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.flask-events-wrap .search-box input {
+    width: 100%;
+    padding: 0.375rem 2.5rem 0.375rem 0.75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    border-radius: 0.375rem;
+    border: 1px solid #ced4da;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.flask-events-wrap .search-box input:focus {
+    border-color: #3788d8;
+    box-shadow: 0 0 0 0.2rem rgba(55, 136, 216, 0.25);
+    outline: 0;
+}
+
+.flask-events-wrap .search-box::after {
+    content: '🔍';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    font-size: 1rem;
+    opacity: 0.6;
+}
+
+.flask-events-wrap .loading {
     text-align: center;
-    color: #666;
-    padding: 20px;
-} 
+    color: #6c757d;
+    padding: 40px 20px;
+    font-size: 1rem;
+}
+
+.flask-events-wrap #selected-date-display {
+    font-weight: 600;
+    color: #dc3545;
+    font-size: 1.1rem;
+    text-align: center;
+    padding: 10px;
+    margin: 15px 0;
+}
+
+@media (max-width: 768px) {
+    .flask-events-wrap .event-text {
+        font-size: 0.9rem;
+    }
+
+    .flask-events-wrap .time-header {
+        font-size: 1rem;
+    }
+
+    .flask-events-wrap .navigation-buttons {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .flask-events-wrap .search-box input {
+        font-size: 16px;
+    }
+}

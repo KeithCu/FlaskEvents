@@ -81,20 +81,22 @@ function flask_events_enqueue_assets() {
         'flask-events-style',
         plugins_url('css/flask-events.css', __FILE__),
         array(),
-        '1.0.0'
+        '1.0.1'
     );
 
     wp_enqueue_script(
         'flask-events-js',
         plugins_url('js/flask-events.js', __FILE__),
         array('fullcalendar'),
-        '1.0.0',
+        '1.0.1',
         true
     );
 
     wp_localize_script('flask-events-js', 'flaskEvents', array(
         'flaskUrl' => FLASK_EVENTS_URL,
         'eventsEndpoint' => '/events',
-        'searchEndpoint' => '/search'
+        'searchEndpoint' => '/search',
+        'eventLinkArrow' => '⇒',
+        'fallbackEventUrl' => 'https://thedetroitilove.com',
     ));
 }
