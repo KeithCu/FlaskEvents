@@ -16,7 +16,18 @@
 
     <h2 class="venue-section-heading">Location</h2>
 
-    <div class="venue-map-placeholder" aria-hidden="true"></div>
+    <div class="venue-map-embed">
+        <iframe
+            src="{{ map_embed_url }}"
+            title="Map for {{ venue.name }}"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            allowfullscreen>
+        </iframe>
+    </div>
+    {% if map_is_fallback %}
+    <p class="venue-map-fallback-note">Exact location not available — showing downtown Detroit.</p>
+    {% endif %}
 
     <div class="venue-info-box">
         {% if venue.address %}

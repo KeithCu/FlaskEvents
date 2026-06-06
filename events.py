@@ -8,6 +8,7 @@ from contextlib import contextmanager
 from sqlalchemy.orm import joinedload
 import os
 import pytz
+from urllib.parse import quote_plus
 
 from database import SessionLocal, Event, Venue, Category, get_next_event_id
 from fts import ensure_fts_setup
@@ -83,6 +84,12 @@ def clear_calendar_events_cache():
     else:
         print("Attempted to clear calendar cache but cache not initialized")
 
+def _event_venue_name(event):
+    """Venue name for persisted or expanded (transient) event instances."""
+    if event.venue is not None:
+        return event.venue.name
+    return getattr(event, '_venue_name', None)
+
 def serialize_event(event):
     """Serialize an Event for JSON API responses."""
     return {
@@ -91,7 +98,7 @@ def serialize_event(event):
         'start': event.start.isoformat(),
         'end': event.end.isoformat(),
         'description': event.description,
-        'venue': event.venue.name if event.venue else None,
+        'venue': _event_venue_name(event),
         'venue_id': event.venue_id,
         'is_virtual': event.is_virtual,
         'is_hybrid': event.is_hybrid,
@@ -130,7 +137,9 @@ def expand_recurring_events(event, start_date, end_date):
             rrule=event.rrule,
             recurring_until=event.recurring_until,
         )
-        instance_event.venue = event.venue
+        venue_name = _event_venue_name(event)
+        if venue_name:
+            instance_event._venue_name = venue_name
         expanded_events.append(instance_event)
 
     return expanded_events
@@ -163,6 +172,22 @@ def get_upcoming_events_for_venue(session, venue_id, limit=5, horizon_days=90):
     all_events = list(non_recurring) + expanded
     all_events.sort(key=lambda x: x.start)
     return all_events[:limit]
+
+DOWNTOWN_DETROIT_MAP_QUERY = "Downtown Detroit, MI"
+
+def get_venue_map_embed(venue):
+    """Build legacy Google Maps iframe URL (no API key required)."""
+    if venue.address and venue.address.strip():
+        query = venue.address.strip()
+        is_fallback = False
+    else:
+        query = DOWNTOWN_DETROIT_MAP_QUERY
+        is_fallback = True
+    embed_url = (
+        "https://maps.google.com/maps?"
+        f"q={quote_plus(query)}&z=15&ie=UTF8&iwloc=&output=embed"
+    )
+    return embed_url, is_fallback
 
 def register_events(app):
 
@@ -336,10 +361,13 @@ def register_events(app):
                 from flask import abort
                 abort(404)
             upcoming_events = get_upcoming_events_for_venue(session, id)
+            map_embed_url, map_is_fallback = get_venue_map_embed(venue)
             return render_template(
                 'venue_detail.html',
                 venue=venue,
                 upcoming_events=upcoming_events,
+                map_embed_url=map_embed_url,
+                map_is_fallback=map_is_fallback,
                 debug_event_url='https://thedetroitilove.com',
             )
 
