@@ -1,5 +1,12 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize calendar if the element exists
+    const apiBase = (typeof flaskEvents !== 'undefined' && flaskEvents.flaskUrl)
+        ? flaskEvents.flaskUrl.replace(/\/$/, '')
+        : '';
+    const eventsPath = (typeof flaskEvents !== 'undefined' && flaskEvents.eventsEndpoint)
+        ? flaskEvents.eventsEndpoint
+        : '/events';
+    const eventsUrl = apiBase + eventsPath;
+
     const calendarEl = document.getElementById('events-calendar');
     if (calendarEl) {
         const calendar = new FullCalendar.Calendar(calendarEl, {
@@ -10,8 +17,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 right: 'next'
             },
             dateClick: function(info) {
-                // Redirect to the day view
-                window.location.href = '/day/' + info.dateStr;
+                if (apiBase) {
+                    window.location.href = apiBase + '/day/' + info.dateStr;
+                }
             },
             height: 'auto',
             dayMaxEvents: false,
@@ -19,11 +27,10 @@ document.addEventListener('DOMContentLoaded', function() {
             firstDay: 1,
             locale: 'en'
         });
-        
+
         calendar.render();
     }
 
-    // Initialize events list if the element exists
     const eventsListEl = document.getElementById('events-list');
     if (eventsListEl) {
         const prevDayBtn = document.getElementById('prev-day');
@@ -32,9 +39,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function loadEvents(date) {
             const dateStr = date.toISOString().split('T')[0];
-            eventsListEl.innerHTML = '';  // Start with empty content
+            eventsListEl.innerHTML = '';
 
-            fetch('/events?date=' + dateStr)
+            fetch(eventsUrl + '?date=' + dateStr)
             .then(response => response.json())
             .then(events => {
                 if (events.length === 0) {
@@ -61,10 +68,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function formatTime(dateStr) {
             const date = new Date(dateStr);
-            return date.toLocaleTimeString('en-US', { 
-                hour: 'numeric', 
+            return date.toLocaleTimeString('en-US', {
+                hour: 'numeric',
                 minute: '2-digit',
-                hour12: true 
+                hour12: true
             });
         }
 
@@ -78,11 +85,13 @@ document.addEventListener('DOMContentLoaded', function() {
             loadEvents(currentDate);
         }
 
-        // Add event listeners
-        prevDayBtn.addEventListener('click', goToPreviousDay);
-        nextDayBtn.addEventListener('click', goToNextDay);
+        if (prevDayBtn) {
+            prevDayBtn.addEventListener('click', goToPreviousDay);
+        }
+        if (nextDayBtn) {
+            nextDayBtn.addEventListener('click', goToNextDay);
+        }
 
-        // Load initial events
         loadEvents(currentDate);
     }
-}); 
+});

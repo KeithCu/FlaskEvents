@@ -379,7 +379,7 @@ class EventManagementView(BaseView):
 
 def init_admin(app):
     """Initialize Flask-Admin with enhanced views"""
-    admin = Admin(app, name='Events Calendar Admin')
+    admin = Admin(app, name='Flask Events Admin')
     
     # Configure compact settings for all model views
     class CompactModelView(ModelView):

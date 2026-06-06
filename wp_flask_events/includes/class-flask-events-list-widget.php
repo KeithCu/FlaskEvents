@@ -1,10 +1,10 @@
 <?php
-class Events_List_Widget extends WP_Widget {
+class Flask_Events_List_Widget extends WP_Widget {
     public function __construct() {
         parent::__construct(
-            'events_list_widget',
-            'Events List',
-            array('description' => 'Displays events for the selected day')
+            'flask_events_list_widget',
+            'Flask Events List',
+            array('description' => 'Daily event list from Flask Events')
         );
     }
 
@@ -13,16 +13,7 @@ class Events_List_Widget extends WP_Widget {
         if (!empty($instance['title'])) {
             echo $args['before_title'] . apply_filters('widget_title', $instance['title']) . $args['after_title'];
         }
-        ?>
-        <div class="events-list-widget">
-            <div class="navigation-buttons">
-                <div id="prev-day">« Previous Day</div>
-                <div id="next-day">Next Day »</div>
-            </div>
-            <div id="events-list" class="event-list">
-            </div>
-        </div>
-        <?php
+        echo flask_events_list_markup();
         echo $args['after_widget'];
     }
 
@@ -31,8 +22,8 @@ class Events_List_Widget extends WP_Widget {
         ?>
         <p>
             <label for="<?php echo esc_attr($this->get_field_id('title')); ?>">Title:</label>
-            <input class="widefat" id="<?php echo esc_attr($this->get_field_id('title')); ?>" 
-                   name="<?php echo esc_attr($this->get_field_id('title')); ?>" 
+            <input class="widefat" id="<?php echo esc_attr($this->get_field_id('title')); ?>"
+                   name="<?php echo esc_attr($this->get_field_name('title')); ?>"
                    type="text" value="<?php echo esc_attr($title); ?>">
         </p>
         <?php
@@ -43,4 +34,19 @@ class Events_List_Widget extends WP_Widget {
         $instance['title'] = (!empty($new_instance['title'])) ? strip_tags($new_instance['title']) : '';
         return $instance;
     }
-} 
+}
+
+function flask_events_list_markup() {
+    ob_start();
+    ?>
+    <div class="events-list-widget">
+        <div class="navigation-buttons">
+            <div id="prev-day">« Previous Day</div>
+            <div id="next-day">Next Day »</div>
+        </div>
+        <div id="events-list" class="event-list">
+        </div>
+    </div>
+    <?php
+    return ob_get_clean();
+}

@@ -1,4 +1,4 @@
-# Flask Event Calendar
+# Flask Events
 
 A simple event calendar application built with [Flask](https://flask.palletsprojects.com/) and [FullCalendar](https://fullcalendar.io/).
 
@@ -41,7 +41,7 @@ python app.py
 The application requires a `config.yaml` file in the root directory with the following settings:
 
 ```yaml
-# Flask Events Calendar Configuration
+# Flask Events Configuration
 
 # Database Settings
 database:
@@ -99,7 +99,7 @@ The application supports recurring events using the iCalendar RRULE format.
 
 ## WordPress Integration
 
-This Flask Events Calendar can be integrated with WordPress using the included WordPress plugin, displaying the calendar on any WordPress site while keeping event data on the Flask backend.
+This Flask Events app can be integrated with WordPress using the included WordPress plugin, displaying events on any WordPress site while keeping event data on the Flask backend.
 
 ### Quick Setup Steps
 
@@ -112,7 +112,7 @@ For a typical setup with Flask on a subdomain (e.g., `flaskevents.thedetroitilov
 
 2. **Activate the Plugin**
    - Go to WordPress admin → Plugins → Installed Plugins
-   - Find "Events Calendar" and click **Activate**
+   - Find "Flask Events" and click **Activate**
 
 3. **Configure Flask App URL**
    - Edit `wp_flask_events/wp_flask_events.php`
@@ -121,40 +121,58 @@ For a typical setup with Flask on a subdomain (e.g., `flaskevents.thedetroitilov
    define('FLASK_EVENTS_URL', 'https://flaskevents.example.com');
    ```
 
-4. **Add Widgets to WordPress**
-   - Go to Appearance → Widgets
-   - Add "Events Calendar" and "Events List" widgets to your sidebar
+4. **Add widgets or shortcodes**
+
+   **Test page (recommended):** create a page and add these shortcodes in a Shortcode block:
+
+   ```
+   [flask_events]
+   [flask_events_list]
+   ```
+
+   **Sidebar widgets:** go to **Appearance → Widgets**, add **Flask Events** and **Flask Events List** to a widget area your theme displays.
+
+5. **View the page** — publish and open it on the site.
 
 **Key Points:**
 - **SSL Required**: Both sites need HTTPS for CORS to work properly
 - **CORS**: Already allowed for `thedetroitilove.com` (hardcoded in `app.py` — no config needed)
-- **Two Widgets Available**: Calendar widget (monthly view) and Events List widget (daily events)
+- **Two embed options**: **Flask Events** (monthly calendar) and **Flask Events List** (daily list)
 - **No Database Changes**: WordPress and Flask remain completely separate
 
-### Available WordPress Widgets
+### Available Embeds
 
-#### 1. Events Calendar Widget
+#### 1. Flask Events (calendar)
 - Displays a compact monthly calendar for event navigation
-- Click on any date to view events for that day
+- Click on any date to open that day on the Flask app
 - Navigation between months; responsive design for sidebars
 
-#### 2. Events List Widget
+#### 2. Flask Events List
 - Shows all events for the current day
 - Navigation buttons to move between days
-- Displays event time, title, description, venue, virtual/hybrid badges, and event URLs
+- Displays event time, title, description, and venue
 
-### Adding Widgets to Your WordPress Site
+### Adding to Your WordPress Site
 
-1. Go to **Appearance** → **Widgets** (or **Customize** → **Widgets**)
-2. Drag "Events Calendar" to your desired widget area; set a custom title (optional); click **Save**
-3. Drag "Events List" to your desired widget area; set a custom title (optional); click **Save**
+**Shortcodes (easiest for a test page):**
+
+1. **Pages → Add New** (e.g. "Flask Events Test")
+2. Add a **Shortcode** block with `[flask_events]`
+3. Add another **Shortcode** block with `[flask_events_list]`
+4. Publish and view the page
+
+**Widgets:**
+
+1. Go to **Appearance → Widgets**
+2. Add **Flask Events** and **Flask Events List** to a sidebar or footer area
+3. Save — widgets appear wherever your theme renders that area
 
 ### WordPress Integration Architecture
 
 The WordPress integration uses a client-side approach. WordPress handles content while Flask handles event data, keeping event queries off the WordPress database.
 
 ```
-WordPress Site                    Flask Events Calendar
+WordPress Site                    Flask Events
 ┌─────────────────┐              ┌─────────────────────┐
 │                 │              │                     │
 │  WordPress      │              │  Flask App          │
@@ -204,13 +222,15 @@ For custom shortcodes, REST API proxying, plugin hooks, and widget development, 
 wp_flask_events/
 ├── wp_flask_events.php          # Main plugin file
 ├── includes/
-│   ├── class-flask-events-calendar-widget.php
+│   ├── class-flask-events-widget.php
 │   └── class-flask-events-list-widget.php
 ├── css/
 │   └── flask-events.css
 └── js/
     └── flask-events.js
 ```
+
+Shortcodes: `[flask_events]` and `[flask_events_list]`
 
 ### Performance Benefits in WordPress Context
 

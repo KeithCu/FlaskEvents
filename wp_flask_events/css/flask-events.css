@@ -1,4 +1,4 @@
-/* Calendar Widget Styles */
+/* Flask Events calendar styles */
 .events-calendar-widget {
     max-width: 300px;
     margin: 0 auto;
@@ -33,7 +33,7 @@
     padding: 1px !important;
 }
 
-/* Events List Widget Styles */
+/* Flask Events List styles */
 .events-list-widget {
     margin-top: 20px;
 }

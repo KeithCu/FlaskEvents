@@ -1,10 +1,10 @@
 <?php
-class Events_Calendar_Widget extends WP_Widget {
+class Flask_Events_Widget extends WP_Widget {
     public function __construct() {
         parent::__construct(
-            'events_calendar_widget',
-            'Events Calendar',
-            array('description' => 'Displays a monthly calendar for event navigation')
+            'flask_events_widget',
+            'Flask Events',
+            array('description' => 'Monthly calendar for Flask Events navigation')
         );
     }
 
@@ -13,9 +13,7 @@ class Events_Calendar_Widget extends WP_Widget {
         if (!empty($instance['title'])) {
             echo $args['before_title'] . apply_filters('widget_title', $instance['title']) . $args['after_title'];
         }
-        ?>
-        <div id="events-calendar" class="events-calendar-widget"></div>
-        <?php
+        echo flask_events_calendar_markup();
         echo $args['after_widget'];
     }
 
@@ -24,8 +22,8 @@ class Events_Calendar_Widget extends WP_Widget {
         ?>
         <p>
             <label for="<?php echo esc_attr($this->get_field_id('title')); ?>">Title:</label>
-            <input class="widefat" id="<?php echo esc_attr($this->get_field_id('title')); ?>" 
-                   name="<?php echo esc_attr($this->get_field_id('title')); ?>" 
+            <input class="widefat" id="<?php echo esc_attr($this->get_field_id('title')); ?>"
+                   name="<?php echo esc_attr($this->get_field_name('title')); ?>"
                    type="text" value="<?php echo esc_attr($title); ?>">
         </p>
         <?php
@@ -36,4 +34,12 @@ class Events_Calendar_Widget extends WP_Widget {
         $instance['title'] = (!empty($new_instance['title'])) ? strip_tags($new_instance['title']) : '';
         return $instance;
     }
-} 
+}
+
+function flask_events_calendar_markup() {
+    ob_start();
+    ?>
+    <div id="events-calendar" class="events-calendar-widget"></div>
+    <?php
+    return ob_get_clean();
+}
