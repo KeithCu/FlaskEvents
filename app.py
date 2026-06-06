@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from fts import setup_fts_triggers, ensure_fts_setup, search_events
 from database import engine, db_path, Base, SessionLocal, Event, Venue, EventFTS, migrate_database, get_next_event_id
 from admin import init_admin
+from auth import init_auth, register_auth_routes
 from events import serialize_event, EVENT_LINK_ARROW
 
 
@@ -45,6 +46,7 @@ def load_config():
 
 # Load configuration
 config = load_config()
+init_auth(config)
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{config["database"]["path"]}'
@@ -191,6 +193,9 @@ try:
 except Exception as e:
     print(f"FTS setup failed: {e}")
     print("Starting app without FTS...")
+
+# Auth routes (login/logout) before admin
+register_auth_routes(app)
 
 # Initialize Flask-Admin
 init_admin(app)

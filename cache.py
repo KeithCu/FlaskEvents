@@ -1,14 +1,19 @@
 from flask import render_template, request, jsonify
 
+from auth import login_required
+
+
 def register_cache_routes(app):
     """Register cache management routes with the Flask app"""
     
     @app.route('/cache-management')
+    @login_required
     def cache_management():
         """Cache management and testing page"""
         return render_template('cache_management.html')
 
     @app.route('/api/cache/stats')
+    @login_required
     def cache_stats():
         """Get cache statistics"""
         try:
@@ -37,6 +42,7 @@ def register_cache_routes(app):
             return jsonify({'error': str(e)}), 500
 
     @app.route('/api/cache/test', methods=['POST'])
+    @login_required
     def test_cache():
         """Test cache functionality"""
         try:
@@ -61,6 +67,7 @@ def register_cache_routes(app):
             return jsonify({'error': str(e)}), 500
 
     @app.route('/api/cache/clear', methods=['POST'])
+    @login_required
     def clear_cache():
         """Clear all caches"""
         try:
@@ -78,6 +85,7 @@ def register_cache_routes(app):
             return jsonify({'error': str(e)}), 500
 
     @app.route('/api/cache/get/<key>')
+    @login_required
     def get_cache_value(key):
         """Get a specific cache value"""
         try:
@@ -98,6 +106,7 @@ def register_cache_routes(app):
             return jsonify({'error': str(e)}), 500
 
     @app.route('/api/cache/set', methods=['POST'])
+    @login_required
     def set_cache_value():
         """Set a cache value"""
         try:

@@ -12,6 +12,7 @@ from urllib.parse import quote_plus
 
 from database import SessionLocal, Event, Venue, Category, get_next_event_id
 from fts import ensure_fts_setup
+from auth import login_required
 
 # Global cache configuration - can be adjusted
 CACHE_TTL_HOURS = 1
@@ -375,6 +376,7 @@ def register_events(app):
             )
 
     @app.route('/event/new', methods=['GET', 'POST'])
+    @login_required
     def add_event():
         print("="*50)
         print("ADD EVENT ENDPOINT CALLED")
@@ -490,6 +492,7 @@ def register_events(app):
             return render_template('event_form.html', venues=venues, categories=categories)
 
     @app.route('/event/<int:id>/edit', methods=['GET', 'POST'])
+    @login_required
     def edit_event(id):
         if request.method == 'POST':
             title = request.form['title']
@@ -588,6 +591,7 @@ def register_events(app):
             return render_template('event_form.html', event=event, venues=venues, categories=categories)
 
     @app.route('/event/<int:id>/delete', methods=['POST'])
+    @login_required
     def delete_event(id):
         with get_db_session() as session:
             event = session.query(Event).get_or_404(id)

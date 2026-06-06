@@ -47,6 +47,14 @@ The application requires a `config.yaml` file in the root directory with the fol
 database:
   path: "events.db"
 
+# Flask Settings
+secret_key: "your-secret-key-change-this-in-production"
+
+# Admin login
+admin:
+  username: "admin"
+  password_hash: ""   # see Admin Login below
+
 # Timezone Settings
 timezone:
   local: "America/New_York"
@@ -56,8 +64,24 @@ timezone:
 
 - **Timezone**: Set to your local timezone (e.g., "America/New_York", "America/Chicago")
 - **Database Path**: Default is "events.db" in the application root
+- **Secret Key**: Use a strong random value in production (required for session cookies)
+- **Admin Login**: Required to access `/admin/`, event create/edit/delete, and cache management
 
 The application will exit with an error if the `config.yaml` file is missing or malformed.
+
+### Admin Login
+
+Admin credentials are stored in `config.yaml` (no user-management UI). To set up:
+
+1. Set `admin.username` to the desired login name.
+2. Generate a password hash:
+   ```bash
+   python hash_password.py 'your-password'
+   ```
+3. Paste the output into `admin.password_hash` in `config.yaml`.
+4. Log in at `/login` to access the admin panel, event forms, and cache management.
+
+Public calendar views and the `/events` API (WordPress widgets) remain accessible without login.
 
 ### CORS (WordPress integration)
 

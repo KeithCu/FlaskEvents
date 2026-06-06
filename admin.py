@@ -8,13 +8,22 @@ from cacheout import Cache
 from sqlalchemy import text, func
 from sqlalchemy.orm import joinedload
 from datetime import datetime, timedelta
-from flask import render_template, request, flash, redirect, url_for
+from flask import render_template, request, flash, redirect, url_for, session
 import json
 
 # Cache for most recently used categories (session-based)
 mru_cache = Cache(maxsize=100, ttl=3600)  # 1 hour TTL
 
-class DashboardView(BaseView):
+
+class AuthMixin:
+    def is_accessible(self):
+        return session.get('logged_in')
+
+    def inaccessible_callback(self, name, **kwargs):
+        return redirect(url_for('login', next=request.url))
+
+
+class DashboardView(AuthMixin, BaseView):
     """Custom dashboard view with statistics"""
     
     @expose('/')
@@ -75,7 +84,7 @@ class DashboardView(BaseView):
         finally:
             session.close()
 
-class DatabaseStatsView(BaseView):
+class DatabaseStatsView(AuthMixin, BaseView):
     """Database statistics and maintenance view"""
     
     @expose('/')
@@ -213,7 +222,7 @@ class VenueModelView(ModelView):
         clear_day_events_cache()
         clear_calendar_events_cache()
 
-class BulkOperationsView(BaseView):
+class BulkOperationsView(AuthMixin, BaseView):
     """Bulk operations for events"""
     
     @expose('/', methods=['GET', 'POST'])
@@ -235,7 +244,7 @@ class BulkOperationsView(BaseView):
                         session.delete(event)
                     session.commit()
                     flash(f'Deleted {len(events)} events', 'success')
-                
+                 
                 elif operation == 'update_category':
                     category = request.form.get('category')
                     if category:
@@ -274,7 +283,7 @@ class BulkOperationsView(BaseView):
         
         return self.render('admin/bulk_operations.html', events=events, categories=categories)
 
-class EventManagementView(BaseView):
+class EventManagementView(AuthMixin, BaseView):
     """Custom event management view with advanced features"""
     
     @expose('/')
@@ -382,7 +391,7 @@ def init_admin(app):
     admin = Admin(app, name='Flask Events Admin')
     
     # Configure compact settings for all model views
-    class CompactModelView(ModelView):
+    class CompactModelView(AuthMixin, ModelView):
         """Base model view with compact settings"""
         page_size = 50  # More items per page
         can_view_details = False  # Remove view details button
