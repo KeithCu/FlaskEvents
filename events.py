@@ -30,6 +30,9 @@ calendar_events_cache = Cache(maxsize=10, ttl=CACHE_TTL_SECONDS)
 # Set timezone to local timezone instead of UTC
 LOCAL_TIMEZONE = pytz.timezone('America/New_York')  # Adjust this to your timezone
 
+# Shared event link arrow (events list + venue upcoming events)
+EVENT_LINK_ARROW = '⇒'
+
 @contextmanager
 def get_db_session():
     """Context manager for database sessions"""

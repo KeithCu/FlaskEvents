@@ -54,7 +54,7 @@
             {% for event in upcoming_events %}
             <div class="event-line">
                 <a href="{{ event.url or debug_event_url }}" target="_blank" rel="noopener" class="event-arrow-link" title="Event link">
-                    <span class="event-arrow">⇒</span>
+                    <span class="event-arrow">{{ event_link_arrow }}</span>
                 </a>
                 <span class="event-text">
                     {{ event.start.strftime('%m-%d') }}:{{ event.start.strftime('%I:%M %p').lstrip('0') }}

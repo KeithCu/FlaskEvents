@@ -97,7 +97,7 @@ function getRecurrenceSuffix(event) {
 }
 
 function createEventHtml(event, isOngoing) {
-    const arrowSymbol = '→';
+    const arrowSymbol = window.EVENT_LINK_ARROW || '⇒';
     const eventTitle = escapeHtml(event.title);
     const venueHtml = formatVenueHtml(event);
     const startTime = formatTime(event.start);

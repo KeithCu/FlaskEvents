@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from fts import setup_fts_triggers, ensure_fts_setup, search_events
 from database import engine, db_path, Base, SessionLocal, Event, Venue, EventFTS, migrate_database, get_next_event_id
 from admin import init_admin
-from events import serialize_event
+from events import serialize_event, EVENT_LINK_ARROW
 
 
 def load_config():
@@ -50,6 +50,10 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{config["database"]["path"]}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = config.get('secret_key', 'dev-secret-key-change-in-production')
+
+@app.context_processor
+def inject_template_globals():
+    return {'event_link_arrow': EVENT_LINK_ARROW}
 
 # Enable CORS for WordPress integration using config
 if config['cors']['enabled']:
