@@ -14,6 +14,9 @@ if (!defined('ABSPATH')) {
 // Configuration - Update this URL to point to your Flask app
 define('FLASK_EVENTS_URL', 'http://localhost:5000');
 
+require_once plugin_dir_path(__FILE__) . 'includes/class-flask-events-calendar-widget.php';
+require_once plugin_dir_path(__FILE__) . 'includes/class-flask-events-list-widget.php';
+
 // Register widgets
 add_action('widgets_init', 'register_events_widgets');
 
@@ -39,22 +42,22 @@ function events_calendar_scripts() {
         );
         
         wp_enqueue_style(
-            'events-calendar-style',
-            plugins_url('css/events-calendar.css', __FILE__),
+            'flask-events-style',
+            plugins_url('css/flask-events.css', __FILE__),
             array(),
             '1.0.0'
         );
         
         wp_enqueue_script(
-            'events-calendar-js',
-            plugins_url('js/events-calendar.js', __FILE__),
+            'flask-events-js',
+            plugins_url('js/flask-events.js', __FILE__),
             array('fullcalendar'),
             '1.0.0',
             true
         );
         
         // Localize script with Flask app URL instead of WordPress REST API
-        wp_localize_script('events-calendar-js', 'eventsCalendar', array(
+        wp_localize_script('flask-events-js', 'eventsCalendar', array(
             'flaskUrl' => FLASK_EVENTS_URL,
             'eventsEndpoint' => '/events',
             'searchEndpoint' => '/search'

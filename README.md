@@ -108,7 +108,7 @@ For a typical setup with Flask on a subdomain (e.g., `flaskevents.example.com`) 
 
 1. **Copy WordPress Plugin Files**
    ```bash
-   cp -r wp-events-calendar/ /path/to/wordpress/wp-content/plugins/
+   cp -r wp_flask_events/ /path/to/wordpress/wp-content/plugins/
    ```
 
 2. **Activate the Plugin**
@@ -116,7 +116,7 @@ For a typical setup with Flask on a subdomain (e.g., `flaskevents.example.com`) 
    - Find "Events Calendar" and click **Activate**
 
 3. **Configure Flask App URL**
-   - Edit `wp-events-calendar/wp-events-calendar.php`
+   - Edit `wp_flask_events/wp_flask_events.php`
    - Update the `FLASK_EVENTS_URL` constant:
    ```php
    define('FLASK_EVENTS_URL', 'https://flaskevents.example.com');
@@ -181,7 +181,7 @@ WordPress Site                    Flask Events Calendar
 
 - **Flask App URL**: Set in the WordPress plugin (`FLASK_EVENTS_URL`)
 - **CORS**: Configure in `config.yaml` (see [Configuration](#configuration))
-- **Widget CSS**: Customize via `wp-events-calendar/css/events-calendar.css`
+- **Widget CSS**: Customize via `wp_flask_events/css/flask-events.css`
 
 ### Security Considerations
 
@@ -196,24 +196,24 @@ WordPress Site                    Flask Events Calendar
 3. **Events Not Displaying** — Verify the `/events` endpoint works and events exist in the database; check browser network tab
 4. **Styling Issues** — WordPress theme CSS may conflict with widget styles; test with a default theme
 
-**Debug mode:** Add `define('FLASK_EVENTS_DEBUG', true);` to `wp-events-calendar.php` for additional troubleshooting output.
+**Debug mode:** Add `define('FLASK_EVENTS_DEBUG', true);` to `wp_flask_events.php` for additional troubleshooting output.
 
 ### Advanced Integration
 
-For custom shortcodes, REST API proxying, plugin hooks, and widget development, see the source in `wp-events-calendar/` — particularly `wp-events-calendar.php` and the classes in `includes/`.
+For custom shortcodes, REST API proxying, plugin hooks, and widget development, see the source in `wp_flask_events/` — particularly `wp_flask_events.php` and the classes in `includes/`.
 
 ### WordPress Plugin Structure
 
 ```
-wp-events-calendar/
-├── wp-events-calendar.php          # Main plugin file
+wp_flask_events/
+├── wp_flask_events.php          # Main plugin file
 ├── includes/
-│   ├── class-events-calendar-widget.php
-│   └── class-events-list-widget.php
+│   ├── class-flask-events-calendar-widget.php
+│   └── class-flask-events-list-widget.php
 ├── css/
-│   └── events-calendar.css
+│   └── flask-events.css
 └── js/
-    └── events-calendar.js
+    └── flask-events.js
 ```
 
 ### Performance Benefits in WordPress Context
