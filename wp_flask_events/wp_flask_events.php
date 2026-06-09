@@ -103,8 +103,7 @@ function flask_events_enqueue_assets() {
     wp_localize_script('flask-events-js', 'flaskEvents', array(
         'flaskUrl' => FLASK_EVENTS_URL,
         'eventsEndpoint' => '/events',
-        'searchEndpoint' => '/search',
-        'eventLinkArrow' => '⇒',
+        'eventLinkArrow' => '→',
         'fallbackEventUrl' => 'https://thedetroitilove.com',
     ));
 }

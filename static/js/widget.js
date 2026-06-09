@@ -97,7 +97,7 @@ function getRecurrenceSuffix(event) {
 }
 
 function createEventHtml(event, isOngoing) {
-    const arrowSymbol = window.EVENT_LINK_ARROW || '⇒';
+    const arrowSymbol = window.EVENT_LINK_ARROW || '→';
     const eventTitle = escapeHtml(event.title);
     const venueHtml = formatVenueHtml(event);
     const startTime = formatTime(event.start);
@@ -194,70 +194,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize events list if the element exists
     const eventsListEl = document.getElementById('events-list');
     const selectedDateDisplayEl = document.getElementById('selected-date-display');
-    const searchInput = document.getElementById('search-input');
     if (eventsListEl) {
         const prevDayBtn = document.getElementById('prev-day');
         const nextDayBtn = document.getElementById('next-day');
         const prevDayBottomBtn = document.getElementById('prev-day-bottom');
         const nextDayBottomBtn = document.getElementById('next-day-bottom');
         let currentDate = initialDate;
-        let searchTimeout;
-
-        // Add search functionality
-        searchInput.addEventListener('input', function(e) {
-            clearTimeout(searchTimeout);
-            const query = e.target.value.trim();
-            
-            if (query.length < 2) {
-                loadEvents(currentDate);
-                return;
-            }
-
-            searchTimeout = setTimeout(() => {
-                // Show loading state
-                eventsListEl.innerHTML = '<div class="loading">Searching...</div>';
-                
-                fetch('/search?q=' + encodeURIComponent(query))
-                .then(response => response.json())
-                .then(events => {
-                    if (events.length === 0) {
-                        eventsListEl.innerHTML = '<p>No events found matching your search.</p>';
-                    } else {
-                        // Group search results by time
-                        const timeGroups = {};
-                        events.forEach(event => {
-                            const timeKey = formatTime(event.start);
-                            if (!timeGroups[timeKey]) {
-                                timeGroups[timeKey] = [];
-                            }
-                            timeGroups[timeKey].push(event);
-                        });
-                        
-                        let eventsHtml = '';
-                        
-                        // Sort time groups and create HTML
-                        Object.keys(timeGroups).sort((a, b) => {
-                            const timeA = new Date(`2000-01-01 ${a}`);
-                            const timeB = new Date(`2000-01-01 ${b}`);
-                            return timeA - timeB;
-                        }).forEach(timeKey => {
-                            eventsHtml += '<div class="time-group">';
-                            eventsHtml += `<div class="time-header">${timeKey}</div>`;
-                            timeGroups[timeKey].forEach(event => {
-                                eventsHtml += createEventHtml(event, false);
-                            });
-                            eventsHtml += '</div>';
-                        });
-                        
-                        eventsListEl.innerHTML = eventsHtml;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error searching events:', error);
-                    eventsListEl.innerHTML = '<p>Error searching events. Please try again.</p>';
-                });
-            }, 300); // Debounce search for 300ms
-        });
 
         function beginListUpdate() {
             const scrollX = window.scrollX;

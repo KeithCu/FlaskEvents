@@ -3,7 +3,7 @@
     const apiBase = (config.flaskUrl || '').replace(/\/$/, '');
     const DEBUG_EVENT_URL_FALLBACK = config.fallbackEventUrl || 'https://thedetroitilove.com';
 
-    window.EVENT_LINK_ARROW = config.eventLinkArrow || '⇒';
+    window.EVENT_LINK_ARROW = config.eventLinkArrow || '→';
 
     function apiUrl(path) {
         return apiBase + path;
@@ -104,7 +104,7 @@
     }
 
     function createEventHtml(event) {
-        const arrowSymbol = window.EVENT_LINK_ARROW || '⇒';
+        const arrowSymbol = window.EVENT_LINK_ARROW || '→';
         const eventTitle = escapeHtml(event.title);
         const venueHtml = formatVenueHtml(event);
         const startTime = formatTime(event.start);
@@ -215,38 +215,6 @@
         eventsListEl.innerHTML = eventsHtml;
     }
 
-    function renderSearchResults(events, eventsListEl) {
-        if (events.length === 0) {
-            eventsListEl.innerHTML = '<p>No events found matching your search.</p>';
-            return;
-        }
-
-        const timeGroups = {};
-        events.forEach(event => {
-            const timeKey = formatTime(event.start);
-            if (!timeGroups[timeKey]) {
-                timeGroups[timeKey] = [];
-            }
-            timeGroups[timeKey].push(event);
-        });
-
-        let eventsHtml = '';
-        Object.keys(timeGroups).sort((a, b) => {
-            const timeA = new Date(`2000-01-01 ${a}`);
-            const timeB = new Date(`2000-01-01 ${b}`);
-            return timeA - timeB;
-        }).forEach(timeKey => {
-            eventsHtml += '<div class="time-group">';
-            eventsHtml += `<div class="time-header">${timeKey}</div>`;
-            timeGroups[timeKey].forEach(event => {
-                eventsHtml += createEventHtml(event);
-            });
-            eventsHtml += '</div>';
-        });
-
-        eventsListEl.innerHTML = eventsHtml;
-    }
-
     document.addEventListener('DOMContentLoaded', function() {
         const today = new Date();
         const initialDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -283,7 +251,6 @@
 
         const eventsListEl = document.getElementById('events-list');
         const selectedDateDisplayEl = document.getElementById('selected-date-display');
-        const searchInput = document.getElementById('search-input');
 
         if (!eventsListEl || !apiBase) {
             return;
@@ -294,7 +261,6 @@
         const prevDayBottomBtn = document.getElementById('prev-day-bottom');
         const nextDayBottomBtn = document.getElementById('next-day-bottom');
         let currentDate = initialDate;
-        let searchTimeout;
 
         function highlightSelectedDate(date) {
             const prevSelected = document.querySelector('.flask-events-wrap .fc-day.selected-date');
@@ -356,30 +322,6 @@
         }
 
         window.flaskEventsLoadDay = loadEvents;
-
-        if (searchInput) {
-            searchInput.addEventListener('input', function(e) {
-                clearTimeout(searchTimeout);
-                const query = e.target.value.trim();
-
-                if (query.length < 2) {
-                    loadEvents(currentDate);
-                    return;
-                }
-
-                searchTimeout = setTimeout(() => {
-                    eventsListEl.innerHTML = '<div class="loading">Searching...</div>';
-
-                    fetch(apiUrl((config.searchEndpoint || '/search') + '?q=' + encodeURIComponent(query)))
-                        .then(response => response.json())
-                        .then(events => renderSearchResults(events, eventsListEl))
-                        .catch(error => {
-                            console.error('Error searching events:', error);
-                            eventsListEl.innerHTML = '<p>Error searching events. Please try again.</p>';
-                        });
-                }, 300);
-            });
-        }
 
         function goToPreviousDay(e) {
             if (e) e.preventDefault();

@@ -4,6 +4,9 @@
 
 {% block content %}
 <div class="venue-page">
+    {% if venue.image_url %}
+    <img src="{{ venue.image_url }}" alt="{{ venue.name }}" class="venue-image">
+    {% endif %}
     <h1 class="venue-title">{{ venue.name }}</h1>
 
     {% if venue.description %}
