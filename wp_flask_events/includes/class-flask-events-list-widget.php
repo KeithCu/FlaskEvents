@@ -41,9 +41,6 @@ function flask_events_list_markup() {
     ?>
     <div class="flask-events-wrap">
         <div class="events-list-widget">
-            <div class="search-box">
-                <input type="text" id="search-input" placeholder="Search events...">
-            </div>
             <div class="navigation-buttons">
                 <div id="prev-day">&laquo; Previous Day</div>
                 <div id="next-day">Next Day &raquo;</div>

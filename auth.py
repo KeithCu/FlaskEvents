@@ -1,11 +1,11 @@
 from functools import wraps
+from urllib.parse import urlparse
 
 from flask import (
     session, redirect, url_for, request, render_template,
     flash, jsonify,
 )
 from werkzeug.security import check_password_hash
-from werkzeug.urls import url_parse
 
 _admin_config = None
 
@@ -52,7 +52,7 @@ def _safe_redirect_target(next_url):
     """Reject open redirects; allow only same-host relative paths."""
     if not next_url:
         return None
-    parsed = url_parse(next_url)
+    parsed = urlparse(next_url)
     if parsed.scheme or parsed.netloc:
         return None
     if not next_url.startswith('/'):
