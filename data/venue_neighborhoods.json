@@ -1,0 +1,2422 @@
+{
+  "generated_from": "db-6-08-26.log",
+  "venue_count": 604,
+  "venues": {
+    "Trinosophes": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Coffee"
+    },
+    "Germack": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Coffee"
+    },
+    "Cairo Coffee": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Coffee"
+    },
+    "Anthology Coffee": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Coffee"
+    },
+    "(closed) Bea's Detroit": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Coffee"
+    },
+    "La Ventana Cafe": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Coffee"
+    },
+    "Paradise Valley Coffee": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Coffee"
+    },
+    "Cutter's Bar & Grill": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "Supino Pizzeria": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "Bert's Market Place": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "(closed) Louisiana Creole Gumbo": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "Eastern Market Brewing Company": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "Detroit City Distillery": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "Vivio's Food & Spirits": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "Amore Da Roma": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "Saffron De Twah": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "Detroit Vineyards": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "Pietrzyk Pierogi": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "Warda Pâtisserie": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "Pocket Change": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "Spot Lite": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "Farmer Franks": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "Louie's Ham & Corned Beef": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "Thomas Magee's": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "Zeff's Coney Island": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "Midnight Temple": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "Frank's Deli & Grill": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "Market Room Detroit": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "Lagerhaus #5": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "Tocororo": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "Cøllect Beer Bar": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "Mitsos": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "District 5": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Eat/Drink"
+    },
+    "Peoples Records": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Records"
+    },
+    "Eastern Market": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Shop"
+    },
+    "Well Done Goods": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Shop"
+    },
+    "DeVries & Company": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Shop"
+    },
+    "Detroit Hustles Harder": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Shop"
+    },
+    "Savvy Chic": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Shop"
+    },
+    "Cost Plus Wine Warehouse": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Shop"
+    },
+    "Tailored Detroit": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Shop"
+    },
+    "Vintage Eastern Market": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Shop"
+    },
+    "Two18": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Shop"
+    },
+    "Henry the Hatter": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Shop"
+    },
+    "Viva La Vida Imports": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Shop"
+    },
+    "Twinn Spice and Nut": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Shop"
+    },
+    "Wasserman Projects": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Art/Museums"
+    },
+    "The Heidelberg Project": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Art/Museums"
+    },
+    "Whitdel Arts": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Art/Museums"
+    },
+    "Playground Detroit": {
+      "neighborhood": "Eastern Market",
+      "venue_type": "Art/Museums"
+    },
+    "Avalon International Breads": {
+      "neighborhood": "Midtown",
+      "venue_type": "Coffee"
+    },
+    "(closed) Bikes & Coffee": {
+      "neighborhood": "Midtown",
+      "venue_type": "Coffee"
+    },
+    "(closed) SocraTea": {
+      "neighborhood": "Midtown",
+      "venue_type": "Coffee"
+    },
+    "For the Love of Sugar": {
+      "neighborhood": "Midtown",
+      "venue_type": "Coffee"
+    },
+    "The Roost": {
+      "neighborhood": "Midtown",
+      "venue_type": "Coffee"
+    },
+    "(closed) Cafe Alto": {
+      "neighborhood": "Midtown",
+      "venue_type": "Coffee"
+    },
+    "The Red Hook (Midtown)": {
+      "neighborhood": "Midtown",
+      "venue_type": "Coffee"
+    },
+    "Kitab Café": {
+      "neighborhood": "Midtown",
+      "venue_type": "Coffee"
+    },
+    "Sgt. Pepperoni's": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Honest John's": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Selden Standard": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Chartreuse Kitchen": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Common Pub": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Bronx Bar": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "The Peterboro": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Grey Ghost": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Seva": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Café 78": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Griot Music Lounge": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Pho Lucky Midtown": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Shangri-La": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "(closed) Founders Taproom": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "La Feria": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Wasabi": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Temple Bar": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Willis Show Bar": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "SheWolf Pastificio & Bar": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Detroit Shipping Company": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "(closed) Urban Ramen": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "(closed) Chili Mustard Onions": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Second Best Bar": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Izakaya Katsu": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Pie-Sci": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Woodbridge Pub": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Raven Lounge": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "(closed) Treat Dreams": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Shield's Pizza Midtown": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "(closed) Nacks": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Babo": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Hammer & Nail": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Momo Cha": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "TV Lounge": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Bash": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "ima Midtown": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Rocco’s Italian Deli": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Cold Truth": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "(closed) City Wings": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "The Block": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "(closed) Pastability": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "BasBlue": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Super Crisp": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "The Potato Place": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "The Jolly Old Timers Club": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "The Lexington Bar": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Bar Pigalle": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Mad Nice": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Motor City Brewing Works (Midtown)": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Cafe Sous Terre": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Castalia": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Vecino": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Leña": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "8 Degrees Plato": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Bon Bon Bon": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Mezcal": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "dose.": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Vollmer's Bar": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Roar Brewing Co.": {
+      "neighborhood": "Midtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Third Man Records": {
+      "neighborhood": "Midtown",
+      "venue_type": "Records"
+    },
+    "(closed) Motown Shakedown": {
+      "neighborhood": "Midtown",
+      "venue_type": "Shop"
+    },
+    "City Bird": {
+      "neighborhood": "Midtown",
+      "venue_type": "Shop"
+    },
+    "Source Booksellers": {
+      "neighborhood": "Midtown",
+      "venue_type": "Shop"
+    },
+    "Flo Boutique": {
+      "neighborhood": "Midtown",
+      "venue_type": "Shop"
+    },
+    "Mongers’ Provisions": {
+      "neighborhood": "Midtown",
+      "venue_type": "Shop"
+    },
+    "Back Alley Bikes": {
+      "neighborhood": "Midtown",
+      "venue_type": "Shop"
+    },
+    "Detroit Artists Market": {
+      "neighborhood": "Midtown",
+      "venue_type": "Art/Museums"
+    },
+    "MOCAD": {
+      "neighborhood": "Midtown",
+      "venue_type": "Art/Museums"
+    },
+    "Simone DeSousa Gallery": {
+      "neighborhood": "Midtown",
+      "venue_type": "Art/Museums"
+    },
+    "The Scarab Club": {
+      "neighborhood": "Midtown",
+      "venue_type": "Art/Museums"
+    },
+    "N'Namdi Center For Contemporary Art": {
+      "neighborhood": "Midtown",
+      "venue_type": "Art/Museums"
+    },
+    "Galerie Camille": {
+      "neighborhood": "Midtown",
+      "venue_type": "Art/Museums"
+    },
+    "Charles H. Wright Museum of African American History": {
+      "neighborhood": "Midtown",
+      "venue_type": "Art/Museums"
+    },
+    "Detroit Institute of Arts": {
+      "neighborhood": "Midtown",
+      "venue_type": "Art/Museums"
+    },
+    "Detroit Historical Museum": {
+      "neighborhood": "Midtown",
+      "venue_type": "Art/Museums"
+    },
+    "(closed) Art of Armageddon Beachparty": {
+      "neighborhood": "Midtown",
+      "venue_type": "Art/Museums"
+    },
+    "Spread Art": {
+      "neighborhood": "Midtown",
+      "venue_type": "Art/Museums"
+    },
+    "Hidden Gate Gallery": {
+      "neighborhood": "Midtown",
+      "venue_type": "Art/Museums"
+    },
+    "Collected Detroit": {
+      "neighborhood": "Midtown",
+      "venue_type": "Art/Museums"
+    },
+    "Detroit Contemporary": {
+      "neighborhood": "Midtown",
+      "venue_type": "Art/Museums"
+    },
+    "Stella Good Coffee": {
+      "neighborhood": "Northend",
+      "venue_type": "Coffee"
+    },
+    "Avalon Café & Biscuit Bar": {
+      "neighborhood": "Northend",
+      "venue_type": "Coffee"
+    },
+    "The Congregation": {
+      "neighborhood": "Northend",
+      "venue_type": "Coffee"
+    },
+    "Gathering Coffee Co.": {
+      "neighborhood": "Northend",
+      "venue_type": "Coffee"
+    },
+    "Milwaukee Caffé": {
+      "neighborhood": "Northend",
+      "venue_type": "Coffee"
+    },
+    "Moondog Café": {
+      "neighborhood": "Northend",
+      "venue_type": "Coffee"
+    },
+    "Northern Lights": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "Bucharest Grill (Milwaukee Junction)": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "Marble Bar": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "Kiesling Detroit": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "New Center Eatery": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "Yum Village": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "Ms. Lottie's Ice Cream & Candy Factory": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "Cuisine": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "The Kitchen by Cooking with Que": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "Parks Old Style Bar-B-Que": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "Oak and Reel": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "Baobab Fare": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "Supino Pizzeria New Center": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "Chroma": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "Freya": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "Joe Louis Southern Kitchen": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "See You Tomorrow": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "Detroit Drinking Den": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "Tuxedo": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "Cakes and Shakes": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "Friends Cocktail Lounge": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "Time Will Tell": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "Michigan & Trumbull": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "Foxglove": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "The Norwood Theatre": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "MJ's North End Ice Cream Parlor": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "Someday": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "Café Noir": {
+      "neighborhood": "Northend",
+      "venue_type": "Eat/Drink"
+    },
+    "Submerge": {
+      "neighborhood": "Northend",
+      "venue_type": "Records"
+    },
+    "Pure Detroit": {
+      "neighborhood": "Northend",
+      "venue_type": "Shop"
+    },
+    "Stef-n-Ty": {
+      "neighborhood": "Northend",
+      "venue_type": "Shop"
+    },
+    "KAN Books": {
+      "neighborhood": "Northend",
+      "venue_type": "Shop"
+    },
+    "Coup D'état": {
+      "neighborhood": "Northend",
+      "venue_type": "Shop"
+    },
+    "Vault of Midnight": {
+      "neighborhood": "Northend",
+      "venue_type": "Shop"
+    },
+    "Detroit People's Food Co-op": {
+      "neighborhood": "Northend",
+      "venue_type": "Shop"
+    },
+    "333 Midland": {
+      "neighborhood": "Northend",
+      "venue_type": "Art/Museums"
+    },
+    "Motown Museum": {
+      "neighborhood": "Northend",
+      "venue_type": "Art/Museums"
+    },
+    "The Baltimore Gallery (closed)": {
+      "neighborhood": "Northend",
+      "venue_type": "Art/Museums"
+    },
+    "Dabl's African Bead Gallery": {
+      "neighborhood": "Northend",
+      "venue_type": "Art/Museums"
+    },
+    "Gallery Bypass": {
+      "neighborhood": "Northend",
+      "venue_type": "Art/Museums"
+    },
+    "Lincoln Street Art Park": {
+      "neighborhood": "Northend",
+      "venue_type": "Parks"
+    },
+    "New Center Park": {
+      "neighborhood": "Northend",
+      "venue_type": "Parks"
+    },
+    "Black Bottom Park": {
+      "neighborhood": "Northend",
+      "venue_type": "Parks"
+    },
+    "Avalon Downtown": {
+      "neighborhood": "Downtown",
+      "venue_type": "Coffee"
+    },
+    "Roasting Plant": {
+      "neighborhood": "Downtown",
+      "venue_type": "Coffee"
+    },
+    "Dessert Oasis": {
+      "neighborhood": "Downtown",
+      "venue_type": "Coffee"
+    },
+    "The Red Hook (The Wine Side)": {
+      "neighborhood": "Downtown",
+      "venue_type": "Coffee"
+    },
+    "Mad Cup Coffee": {
+      "neighborhood": "Downtown",
+      "venue_type": "Coffee"
+    },
+    "SPKR BOX": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Dime Store": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "(closed) Checker Bar": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Grand Trunk Pub": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Deluxx Fluxx": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Central Kitchen + Bar": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Café d'Mongo's Speakeasy": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Lafayette Coney Island": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Sweetwater Tavern": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Basement Burger Bar": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Hudson Café": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Bad Luck Bar": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Monger's Provisions": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "The Skip": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Huddle Soft Serve": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Apparatus Room": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "The Elephant Room": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "MIX Bricktown": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Penny Red's": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "San Morello": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "American Coney Island": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "The Royce": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Mootz Pizzeria and Bar": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Aretha's Jazz Café": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "PAO": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Detroit Mini Donut": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Bai Mai Thai": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Urban Soul": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Steve's Soul Food": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Leila": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Frita Batidos": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Highlands": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "The Breakfast Loft": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Cannelle": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Jose's Tacos": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Savannah Blue": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Flood's Bar & Grill": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Motown Bistro": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Green Beat": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Shelby": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Atwater Brewery": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Wright & Company": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "The Brakeman": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "La Pecora Nera": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Olin": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Sid Gold's": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Bucharest (Foxtown)": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Bucharest (Rivertown)": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Lumen": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Mister Dips": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Basan": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Room 1904": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Cambria": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Candy Bar": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Standby": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Le Suprême": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Side Hustle Lounge": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Vincente Cuban Cuisine": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "The Vinyl Society": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Brisa Bar": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Brass Rail": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Easy Peasy": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Lowkey": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Greenwhich Time Pub": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "The London Chop House": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Zuzu": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Mati's Avli": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Red Tent": {
+      "neighborhood": "Downtown",
+      "venue_type": "Eat/Drink"
+    },
+    "Spectacles": {
+      "neighborhood": "Downtown",
+      "venue_type": "Shop"
+    },
+    "Detroit is the New Black": {
+      "neighborhood": "Downtown",
+      "venue_type": "Shop"
+    },
+    "The Music Hall Boutique": {
+      "neighborhood": "Downtown",
+      "venue_type": "Shop"
+    },
+    "Library Street Collective": {
+      "neighborhood": "Downtown",
+      "venue_type": "Art/Museums"
+    },
+    "Greenroom Gallery": {
+      "neighborhood": "Downtown",
+      "venue_type": "Art/Museums"
+    },
+    "Beacon Park": {
+      "neighborhood": "Downtown",
+      "venue_type": "Parks"
+    },
+    "Campus Martius Park": {
+      "neighborhood": "Downtown",
+      "venue_type": "Parks"
+    },
+    "Capitol Park": {
+      "neighborhood": "Downtown",
+      "venue_type": "Parks"
+    },
+    "Grand Circus Park": {
+      "neighborhood": "Downtown",
+      "venue_type": "Parks"
+    },
+    "Hart Plaza": {
+      "neighborhood": "Downtown",
+      "venue_type": "Parks"
+    },
+    "Spirit Plaza": {
+      "neighborhood": "Downtown",
+      "venue_type": "Parks"
+    },
+    "Milliken State Park and Harbor": {
+      "neighborhood": "Downtown",
+      "venue_type": "Parks"
+    },
+    "Lafayette Park": {
+      "neighborhood": "Downtown",
+      "venue_type": "Parks"
+    },
+    "Mt. Elliott Park": {
+      "neighborhood": "Downtown",
+      "venue_type": "Parks"
+    },
+    "Belle Isle": {
+      "neighborhood": "Downtown",
+      "venue_type": "Parks"
+    },
+    "Robert C. Valade Park": {
+      "neighborhood": "Downtown",
+      "venue_type": "Parks"
+    },
+    "James Oliver Coffee": {
+      "neighborhood": "Corktown",
+      "venue_type": "Coffee"
+    },
+    "Lucky Detroit": {
+      "neighborhood": "Corktown",
+      "venue_type": "Coffee"
+    },
+    "Cafe Prince": {
+      "neighborhood": "Corktown",
+      "venue_type": "Coffee"
+    },
+    "Alba": {
+      "neighborhood": "Corktown",
+      "venue_type": "Coffee"
+    },
+    "Takoi": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Slows BBQ": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Mercury Bar": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Ottava Via": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "ima Izakaya": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Mudgie's": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Green Dot Stables": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Johnny Noodle King": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "PJ's Lager House": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Two James": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "LJ's Lounge": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "MotorCity Wine": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "The Sugar House": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Nancy Whiskys": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "UFO Bar": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Corktown Tavern": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Cork & Gabel": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Folk": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Grandma Bob's": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Mink": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Momento Gelato": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Supergeil": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Brooklyn Street Local": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Batch Brewing Company": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Nemo's": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Soul On Ice": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Ladder 4 Wine Bar": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Summertown Fresh Bar": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Alpino": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Hamilton's": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "I|O Godfrey Rooftop Lounge": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Gaelic League": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "The Yard": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Puma": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Lady of the House": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Corktown Taphouse": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Prohibition": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "All Things Marketplace": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Ruggero Clothing": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Obedient Missionary Baptist Church": {
+      "neighborhood": "Corktown",
+      "venue_type": "Eat/Drink"
+    },
+    "Metropolis Cycles": {
+      "neighborhood": "Corktown",
+      "venue_type": "Shop"
+    },
+    "Eldorado General Store": {
+      "neighborhood": "Corktown",
+      "venue_type": "Shop"
+    },
+    "John King Used & Rare Books": {
+      "neighborhood": "Corktown",
+      "venue_type": "Shop"
+    },
+    "Mama Coo's Boutique": {
+      "neighborhood": "Corktown",
+      "venue_type": "Shop"
+    },
+    "Periodicals": {
+      "neighborhood": "Corktown",
+      "venue_type": "Shop"
+    },
+    "Hard Gallery": {
+      "neighborhood": "Corktown",
+      "venue_type": "Art/Museums"
+    },
+    "Corktown Studios": {
+      "neighborhood": "Corktown",
+      "venue_type": "Art/Museums"
+    },
+    "Roosevelt Park": {
+      "neighborhood": "Corktown",
+      "venue_type": "Parks"
+    },
+    "Muliett Park": {
+      "neighborhood": "Corktown",
+      "venue_type": "Parks"
+    },
+    "Nagel Park": {
+      "neighborhood": "Corktown",
+      "venue_type": "Parks"
+    },
+    "Dean Savage Park": {
+      "neighborhood": "Corktown",
+      "venue_type": "Parks"
+    },
+    "North Corktown Commons": {
+      "neighborhood": "Corktown",
+      "venue_type": "Parks"
+    },
+    "Intersections Park": {
+      "neighborhood": "Corktown",
+      "venue_type": "Parks"
+    },
+    "West Riverfront Park": {
+      "neighborhood": "Corktown",
+      "venue_type": "Parks"
+    },
+    "Macomb Park": {
+      "neighborhood": "Corktown",
+      "venue_type": "Parks"
+    },
+    "Ginkgo Records": {
+      "neighborhood": "Corktown",
+      "venue_type": "Records"
+    },
+    "Camino Real Mexican Grill": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "El Nacimiento": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Los Altos Restaurant": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Evie's Tamales": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "(closed) Tacos El Parian": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "(closed) Pizzaplex": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Flowers of Vietnam": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Taqueria Lupitas": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "El Rey de las Arepas": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "El Asador Steakhouse": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Mexicantown Bakery": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Duly's Place": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Armando's Mexican Restaurant": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Mi Pueblo": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Mutiny Bar": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Donovan's Pub": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "El Club": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Vicki's Bar-B-Q": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Donut Villa": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "(closed) Peso": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Mangonadas Del Barrio #2": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Hygrade Deli": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Mike's Famous Ham Place": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Taqueria y Cenaduria Triángulo Dorado": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Antojitos el Catracho": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Rincon Tropical": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "The Michigan Squeeze Station": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Delray Barbecue": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "La Gloria Bakery": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "El Taco Veloz": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "The Original Gonella's": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Telway Hamburgers": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Motz Burgers": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Pollo Chapin": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "El Barzon": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "La Jalisciense Supermercado Y Taqueria": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Nepantla Café": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Vamonos": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "(closed) La Cantina": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "The Deep End Cafe & Gallery": {
+      "neighborhood": "Southwest",
+      "venue_type": "Eat/Drink"
+    },
+    "Grey Area": {
+      "neighborhood": "Southwest",
+      "venue_type": "Records"
+    },
+    "Flamingo Vintage": {
+      "neighborhood": "Southwest",
+      "venue_type": "Shop"
+    },
+    "Natures Compliments": {
+      "neighborhood": "Southwest",
+      "venue_type": "Shop"
+    },
+    "Holding House": {
+      "neighborhood": "Southwest",
+      "venue_type": "Art/Museums"
+    },
+    "Patton Park": {
+      "neighborhood": "Southwest",
+      "venue_type": "Parks"
+    },
+    "Saint Hedwig Park": {
+      "neighborhood": "Southwest",
+      "venue_type": "Parks"
+    },
+    "Clark Park": {
+      "neighborhood": "Southwest",
+      "venue_type": "Parks"
+    },
+    "Boyer Park": {
+      "neighborhood": "Southwest",
+      "venue_type": "Parks"
+    },
+    "Fort Wayne": {
+      "neighborhood": "Southwest",
+      "venue_type": "Parks"
+    },
+    "The Red Hook (Ferndale)": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Coffee"
+    },
+    "Java Hutt": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Coffee"
+    },
+    "Chazzano Cafe": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Coffee"
+    },
+    "Drifter Coffee": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Coffee"
+    },
+    "Hazel Perk Café": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Coffee"
+    },
+    "May's Bangkok Express": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "Anita's Kitchen": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "Howe's Bayou": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "Sidecar Slider Bar": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "One Eyed Betty's": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "Star of India": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "Pop's for Italian": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "Inyo": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "The Fly Trap": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "The Oakland": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "Sneakers Pub": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "Woodward Avenue Brewers": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "Detroit Axe": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "Belle's Lounge": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "Valentine Distilling Co": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "Imperial": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "Mabel Gray": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "frameBar": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "Detroit Fleat": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "frame": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "Starting Gate": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "Treat Dreams": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "B. Nektar": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "Ferndale Project": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "Como's": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "Voyager": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "The Corner": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "Mezcal Mexican Bar & Kitchen": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "215 West": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "Eastern Palace Club": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "Orchid Theatre": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "Syndicate": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Eat/Drink"
+    },
+    "Found Sound": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Records"
+    },
+    "Stay Pressed Records": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Records"
+    },
+    "Village Vinyl": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Records"
+    },
+    "The Hi Hat": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Shop"
+    },
+    "The Rust Belt Market": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Shop"
+    },
+    "Loose Cannon Flagship": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Shop"
+    },
+    "Not Sorry Goods": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Shop"
+    },
+    "M Contemporary Art": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Art/Museums"
+    },
+    "The White Brick Gallery": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Art/Museums"
+    },
+    "Color | Ink Studio": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Art/Museums"
+    },
+    "Detroit GT": {
+      "neighborhood": "Ferndale",
+      "venue_type": "Art/Museums"
+    },
+    "Oloman Café": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Coffee"
+    },
+    "Café 1923": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Coffee"
+    },
+    "Dos Locos Tacos": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "Polish Village Café": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "Polonia": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "Royal Kabob": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "Fat Salmon": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "Amar Pizza": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "Yemen Café": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "The Balkan House": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "Aladdin Sweets & Café": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "Krakus Restaurant": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "Boostan Café": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "Remas Restaurant": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "California Burgerz": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "Buddy's Pizza": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "Detroit Zen Center": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "Bumbo's": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "The Painted Lady Lounge": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "Whiskey in the Jar": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "Trixie's Bar": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "The High Dive": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "The Balkan House Restaurant": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "(closed) The Nosh Pit": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "Detroit Soul": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "Generations Bistro": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "Henrietta Haus": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "The Black Salt": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "Sylhet Cafe": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "The Paris Bar": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Eat/Drink"
+    },
+    "Detroit Threads": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Records"
+    },
+    "Record Graveyard": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Records"
+    },
+    "Lo & Behold Records & Books": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Records"
+    },
+    "Rat Queen Vintage": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Shop"
+    },
+    "Nice Price": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Shop"
+    },
+    "Woodward Throwbacks": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Shop"
+    },
+    "Tekla Vintage": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Shop"
+    },
+    "Public Thrift": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Shop"
+    },
+    "Hamtramck Disneyland": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Art/Museums"
+    },
+    "Hatch Art": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Art/Museums"
+    },
+    "Disco Walls": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Art/Museums"
+    },
+    "Public Pool": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Art/Museums"
+    },
+    "Play House": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Art/Museums"
+    },
+    "Ukraianian American Archives and Museum": {
+      "neighborhood": "Hamtramck",
+      "venue_type": "Art/Museums"
+    },
+    "(closed) Narrow Way Cafe": {
+      "neighborhood": "University District",
+      "venue_type": "Coffee"
+    },
+    "Detroit Sip": {
+      "neighborhood": "University District",
+      "venue_type": "Coffee"
+    },
+    "(closed) Oh Wee Coffee": {
+      "neighborhood": "University District",
+      "venue_type": "Coffee"
+    },
+    "Kuzzo's Chicken & Waffles": {
+      "neighborhood": "University District",
+      "venue_type": "Eat/Drink"
+    },
+    "La Dolce Vita": {
+      "neighborhood": "University District",
+      "venue_type": "Eat/Drink"
+    },
+    "Baker's Keyboard Lounge": {
+      "neighborhood": "University District",
+      "venue_type": "Eat/Drink"
+    },
+    "Good Cakes and Bakes": {
+      "neighborhood": "University District",
+      "venue_type": "Eat/Drink"
+    },
+    "Menjo's": {
+      "neighborhood": "University District",
+      "venue_type": "Eat/Drink"
+    },
+    "Lucki's Cheesecakes": {
+      "neighborhood": "University District",
+      "venue_type": "Eat/Drink"
+    },
+    "(closed) Table No. 2": {
+      "neighborhood": "University District",
+      "venue_type": "Eat/Drink"
+    },
+    "Lou's Deli - 6 Mile": {
+      "neighborhood": "University District",
+      "venue_type": "Eat/Drink"
+    },
+    "The Jamaican Pot": {
+      "neighborhood": "University District",
+      "venue_type": "Eat/Drink"
+    },
+    "Motor City Soul Food": {
+      "neighborhood": "University District",
+      "venue_type": "Eat/Drink"
+    },
+    "Sloppy Chops": {
+      "neighborhood": "University District",
+      "venue_type": "Eat/Drink"
+    },
+    "Sweet Soul Bistro": {
+      "neighborhood": "University District",
+      "venue_type": "Eat/Drink"
+    },
+    "Chef Greg's Soul 'N' The Wall": {
+      "neighborhood": "University District",
+      "venue_type": "Eat/Drink"
+    },
+    "(closed) Motor City Brewing Works (Uptown)": {
+      "neighborhood": "University District",
+      "venue_type": "Eat/Drink"
+    },
+    "Trap Vegan": {
+      "neighborhood": "University District",
+      "venue_type": "Eat/Drink"
+    },
+    "Asian Corned Beef (Northwest)": {
+      "neighborhood": "University District",
+      "venue_type": "Eat/Drink"
+    },
+    "Bucharest (Avenue of Fashion)": {
+      "neighborhood": "University District",
+      "venue_type": "Eat/Drink"
+    },
+    "(closed) Petty Cash": {
+      "neighborhood": "University District",
+      "venue_type": "Eat/Drink"
+    },
+    "Good Times": {
+      "neighborhood": "University District",
+      "venue_type": "Eat/Drink"
+    },
+    "What’s The Dill": {
+      "neighborhood": "University District",
+      "venue_type": "Eat/Drink"
+    },
+    "Two Way Inn": {
+      "neighborhood": "University District",
+      "venue_type": "Eat/Drink"
+    },
+    "Kalahari": {
+      "neighborhood": "University District",
+      "venue_type": "Eat/Drink"
+    },
+    "Arcenciel": {
+      "neighborhood": "University District",
+      "venue_type": "Eat/Drink"
+    },
+    "GreenBliss": {
+      "neighborhood": "University District",
+      "venue_type": "Shop"
+    },
+    "Sherwood Forest Art Gallery": {
+      "neighborhood": "University District",
+      "venue_type": "Art/Museums"
+    },
+    "Jo's Gallery": {
+      "neighborhood": "University District",
+      "venue_type": "Art/Museums"
+    },
+    "Palmer Park": {
+      "neighborhood": "University District",
+      "venue_type": "Parks"
+    },
+    "Yellow Light Coffee & Donuts": {
+      "neighborhood": "The Villages",
+      "venue_type": "Coffee"
+    },
+    "The Red Hook (West Village)": {
+      "neighborhood": "The Villages",
+      "venue_type": "Coffee"
+    },
+    "Sister Pie": {
+      "neighborhood": "The Villages",
+      "venue_type": "Eat/Drink"
+    },
+    "(closed) Detroit Vegan Soul East": {
+      "neighborhood": "The Villages",
+      "venue_type": "Eat/Drink"
+    },
+    "(closed) Brix Wine & Charcuterie Boutique": {
+      "neighborhood": "The Villages",
+      "venue_type": "Eat/Drink"
+    },
+    "(closed) Lost River": {
+      "neighborhood": "The Villages",
+      "venue_type": "Eat/Drink"
+    },
+    "Marrow": {
+      "neighborhood": "The Villages",
+      "venue_type": "Eat/Drink"
+    },
+    "The Charlevoix": {
+      "neighborhood": "The Villages",
+      "venue_type": "Eat/Drink"
+    },
+    "Destination 1905 Bar": {
+      "neighborhood": "The Villages",
+      "venue_type": "Eat/Drink"
+    },
+    "Brewery Faisan": {
+      "neighborhood": "The Villages",
+      "venue_type": "Eat/Drink"
+    },
+    "Ivy Kitchen + Cocktails": {
+      "neighborhood": "The Villages",
+      "venue_type": "Eat/Drink"
+    },
+    "Pop Culture Vegan Cafe": {
+      "neighborhood": "The Villages",
+      "venue_type": "Eat/Drink"
+    },
+    "Le Petit Dejeuner": {
+      "neighborhood": "The Villages",
+      "venue_type": "Eat/Drink"
+    },
+    "East Eats": {
+      "neighborhood": "The Villages",
+      "venue_type": "Eat/Drink"
+    },
+    "Coriander Kitchen and Farm": {
+      "neighborhood": "The Villages",
+      "venue_type": "Eat/Drink"
+    },
+    "Two Birds": {
+      "neighborhood": "The Villages",
+      "venue_type": "Eat/Drink"
+    },
+    "Metropolitan Variety Store": {
+      "neighborhood": "The Villages",
+      "venue_type": "Eat/Drink"
+    },
+    "Planted Detroit": {
+      "neighborhood": "The Villages",
+      "venue_type": "Eat/Drink"
+    },
+    "Empacho": {
+      "neighborhood": "The Villages",
+      "venue_type": "Eat/Drink"
+    },
+    "Barkside": {
+      "neighborhood": "The Villages",
+      "venue_type": "Eat/Drink"
+    },
+    "Big Pink": {
+      "neighborhood": "The Villages",
+      "venue_type": "Eat/Drink"
+    },
+    "Pewabic": {
+      "neighborhood": "The Villages",
+      "venue_type": "Shop"
+    },
+    "Signal-Return": {
+      "neighborhood": "The Villages",
+      "venue_type": "Shop"
+    },
+    "The Secret Garden Gallery": {
+      "neighborhood": "The Villages",
+      "venue_type": "Art/Museums"
+    },
+    "Town Hall Caffe'": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Coffee"
+    },
+    "Motor City Java House": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Coffee"
+    },
+    "Public Square": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Coffee"
+    },
+    "Just A Bit Eclectic": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Coffee"
+    },
+    "Maty's Restaurant": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Eat/Drink"
+    },
+    "Sweet Potato Sensations": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Eat/Drink"
+    },
+    "Detroit Vegan Soul West": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Eat/Drink"
+    },
+    "Scotty Simpson's Fish & Chips": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Eat/Drink"
+    },
+    "Pho Lucky Redford": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Eat/Drink"
+    },
+    "J's Café": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Eat/Drink"
+    },
+    "Auntie Betty’s": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Eat/Drink"
+    },
+    "La Kabob Grill": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Eat/Drink"
+    },
+    "Lovelee Vibes": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Eat/Drink"
+    },
+    "Elias Donuts": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Eat/Drink"
+    },
+    "Old Redford Kitchen & Cafe": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Eat/Drink"
+    },
+    "Urban Renaissance Salon and Urban GLAM Boutique": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Eat/Drink"
+    },
+    "(closed) Street Cuisine": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Eat/Drink"
+    },
+    "Lou's Deli - Seven Mile": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Eat/Drink"
+    },
+    "Fusion Flare Kitchen and Cocktails": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Eat/Drink"
+    },
+    "HM Style Lounge": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Eat/Drink"
+    },
+    "Miss Eva's": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Eat/Drink"
+    },
+    "Pages Bookshop": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Shop"
+    },
+    "Beaverland Farms": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Shop"
+    },
+    "Redford Theatre": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Theatre"
+    },
+    "Norwest Gallery of Art": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Art/Museums"
+    },
+    "The Artist Village": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Art/Museums"
+    },
+    "Eliza Howell Park": {
+      "neighborhood": "Grandmont/Rosedale",
+      "venue_type": "Parks"
+    },
+    "(closed) The Grasshopper Underground": {
+      "neighborhood": "Ferndale",
+      "venue_type": null
+    },
+    "Ghost Light": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "Planet Ant": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "The Magic Bag": {
+      "neighborhood": "Ferndale",
+      "venue_type": null
+    },
+    "(closed) GreenSpace Cafe": {
+      "neighborhood": "Ferndale",
+      "venue_type": null
+    },
+    "(closed) Otus Supply": {
+      "neighborhood": "Ferndale",
+      "venue_type": null
+    },
+    "New Way Bar": {
+      "neighborhood": "Ferndale",
+      "venue_type": null
+    },
+    "SOHO": {
+      "neighborhood": "Ferndale",
+      "venue_type": null
+    },
+    "Small's": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "Affirmations": {
+      "neighborhood": "Ferndale",
+      "venue_type": null
+    },
+    "Kelly's Bar": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "Sanctuary": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "Atomic Cafe": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "Donald Red Geary Park": {
+      "neighborhood": "Ferndale",
+      "venue_type": null
+    },
+    "Suzy's Bar": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "(closed) Antihero": {
+      "neighborhood": "Ferndale",
+      "venue_type": null
+    },
+    "D-Loft": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "(closed) Bon Bon Bon (Hamtramck)": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "Hudson Industrial Furnishings": {
+      "neighborhood": "Ferndale",
+      "venue_type": null
+    },
+    "Ferndale Area Library": {
+      "neighborhood": "Ferndale",
+      "venue_type": null
+    },
+    "(closed) Barter": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "Bank Suey": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "White Star Nightclub": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "Lawrence Street Gallery": {
+      "neighborhood": "Ferndale",
+      "venue_type": null
+    },
+    "The Film Lab": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "Transcend the Binary": {
+      "neighborhood": "Ferndale",
+      "venue_type": null
+    },
+    "Rosie O'Grady's": {
+      "neighborhood": "Ferndale",
+      "venue_type": null
+    },
+    "18469 Conant Street": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "New Dodge Lounge": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "Detroit Circle Center": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "Planet Ant Studio": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "Baker's Streetcar Bar": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "P.L.A.V. Post 10 Bar": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "10337 Joseph Campau Avenue": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "The Independent Comedy Club": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "No Label Audio": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "Plav Post #10": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "The Terrarium": {
+      "neighborhood": "Ferndale",
+      "venue_type": null
+    },
+    "Play Post #10": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "Passenger Recovery": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "Simpson's Record Shop": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "Traverse City Whiskey Co. - Ferndale": {
+      "neighborhood": "Ferndale",
+      "venue_type": null
+    },
+    "D'Artillery": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "Flip": {
+      "neighborhood": "Ferndale",
+      "venue_type": null
+    },
+    "The Strays": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    },
+    "Motivational Museum Contemporary Art Gallery": {
+      "neighborhood": "Hamtramck",
+      "venue_type": null
+    }
+  }
+}

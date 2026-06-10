@@ -167,7 +167,10 @@ def migrate_database():
                 print("Adding venue_type column to venue table...")
                 conn.execute(text("ALTER TABLE venue ADD COLUMN venue_type VARCHAR(100)"))
                 conn.commit()
-    
+
+    from migrate_venue_neighborhoods import migrate_venue_neighborhoods
+    migrate_venue_neighborhoods()
+
     print("Database migration completed successfully!")
 
 def check_database_stats():
