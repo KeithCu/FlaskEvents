@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, send_from_directory
 from flask_compress import Compress
 from flask_cors import CORS
 from flask_assets import Environment, Bundle
@@ -94,6 +94,14 @@ css_bundle = Bundle(
     output='gen/packed.css'
 )
 assets.register('css_all', css_bundle)
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(
+        os.path.join(app.root_path, 'static'),
+        'favicon.ico',
+        mimetype='image/vnd.microsoft.icon',
+    )
 
 # Future JavaScript bundle (for when you add JS files)
 # js_bundle = Bundle(
