@@ -204,8 +204,10 @@ document.addEventListener('DOMContentLoaded', function() {
         function beginListUpdate() {
             const scrollX = window.scrollX;
             const scrollY = window.scrollY;
-            const listHeight = Math.max(eventsListEl.offsetHeight, 200);
-            eventsListEl.style.minHeight = listHeight + 'px';
+            const listHeight = eventsListEl.offsetHeight;
+            if (listHeight > 0) {
+                eventsListEl.style.minHeight = listHeight + 'px';
+            }
             eventsListEl.innerHTML = '<div class="loading">Loading...</div>';
             return { scrollX, scrollY };
         }

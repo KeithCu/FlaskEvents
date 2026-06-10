@@ -67,7 +67,6 @@
 
 .flask-events-wrap .event-list {
     margin-top: 20px;
-    min-height: 200px;
     opacity: 1;
     transition: opacity 0.05s ease-in-out;
 }

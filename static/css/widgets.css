@@ -7,7 +7,6 @@
 
 .event-list {
     margin-top: 20px;
-    min-height: 800px;
     opacity: 1;
     transition: opacity 0.05s ease-in-out;
 }
