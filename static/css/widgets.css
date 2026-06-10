@@ -26,12 +26,10 @@
     color: #495057;
     margin-bottom: 8px;
     padding: 4px 0;
-    border-bottom: 2px solid #e9ecef;
 }
 
 .ongoing-section .time-header {
     color: #dc3545;
-    border-bottom-color: #dc3545;
 }
 
 /* Individual event lines */
