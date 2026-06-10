@@ -157,6 +157,16 @@ def migrate_database():
                 print("Adding image_url column to venue table...")
                 conn.execute(text("ALTER TABLE venue ADD COLUMN image_url VARCHAR(500)"))
                 conn.commit()
+
+            if 'neighborhood' not in venue_column_names:
+                print("Adding neighborhood column to venue table...")
+                conn.execute(text("ALTER TABLE venue ADD COLUMN neighborhood VARCHAR(100)"))
+                conn.commit()
+
+            if 'venue_type' not in venue_column_names:
+                print("Adding venue_type column to venue table...")
+                conn.execute(text("ALTER TABLE venue ADD COLUMN venue_type VARCHAR(100)"))
+                conn.commit()
     
     print("Database migration completed successfully!")
 
@@ -282,6 +292,8 @@ class Venue(Base):
     phone = Column(String(50))
     website = Column(String(500))
     image_url = Column(String(500))
+    neighborhood = Column(String(100))
+    venue_type = Column(String(100))
     
     events = relationship("Event", back_populates="venue")
 

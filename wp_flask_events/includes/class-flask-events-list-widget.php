@@ -41,10 +41,6 @@ function flask_events_list_markup() {
     ?>
     <div class="flask-events-wrap">
         <div class="events-list-widget">
-            <div class="navigation-buttons">
-                <div id="prev-day">&laquo; Previous Day</div>
-                <div id="next-day">Next Day &raquo;</div>
-            </div>
             <div id="selected-date-display"></div>
             <div id="events-list" class="event-list"></div>
             <div class="navigation-buttons">

@@ -357,6 +357,34 @@ def register_events(app):
         response = jsonify(event_list)
         return set_cache_headers(response, max_age=300)  # Cache for 5 minutes
 
+    def venue_to_dict(venue):
+        return {
+            'id': venue.id,
+            'name': venue.name,
+            'address': venue.address,
+            'neighborhood': venue.neighborhood,
+            'venue_type': venue.venue_type,
+        }
+
+    @app.route('/venues')
+    def list_venues():
+        neighborhood = request.args.get('neighborhood', '').strip()
+        venue_type = request.args.get('venue_type', '').strip()
+
+        with get_db_session() as session:
+            query = session.query(Venue)
+
+            if neighborhood:
+                query = query.filter(Venue.neighborhood.ilike(neighborhood))
+            if venue_type:
+                query = query.filter(Venue.venue_type.ilike(venue_type))
+
+            venues = query.order_by(Venue.venue_type, Venue.name).all()
+            venue_list = [venue_to_dict(v) for v in venues]
+
+        response = jsonify(venue_list)
+        return set_cache_headers(response, max_age=300)
+
     @app.route('/venues/<int:id>')
     def venue_detail(id):
         with get_db_session() as session:

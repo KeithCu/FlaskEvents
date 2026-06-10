@@ -200,13 +200,13 @@ class EventModelView(ModelView):
 class VenueModelView(ModelView):
     """Admin interface for managing venues"""
     
-    column_list = ('name', 'image_url', 'address', 'phone', 'website', 'event_count')
-    column_searchable_list = ('name', 'address', 'phone')
+    column_list = ('name', 'neighborhood', 'venue_type', 'image_url', 'address', 'phone', 'website', 'event_count')
+    column_searchable_list = ('name', 'address', 'phone', 'neighborhood', 'venue_type')
     column_formatters = {
         'event_count': lambda v, c, m, p: len(m.events) if m.events else 0
     }
     
-    form_columns = ('name', 'image_url', 'address', 'description', 'phone', 'website')
+    form_columns = ('name', 'neighborhood', 'venue_type', 'image_url', 'address', 'description', 'phone', 'website')
     form_extra_fields = {
         'address': TextAreaField('Address'),
         'description': TextAreaField('Description')

@@ -105,7 +105,7 @@
     background-color: #28a745 !important;
 }
 
-/* Navigation buttons */
+/* Navigation links */
 .navigation-buttons {
     display: flex;
     justify-content: space-between;
@@ -113,13 +113,12 @@
     margin-top: 20px;
 }
 
-#prev-day, #next-day, #prev-day-bottom, #next-day-bottom {
+#prev-day-bottom, #next-day-bottom {
     flex: 1;
-    border-radius: 0.375rem;
-    background-color: #6c757d;
-    border: 1px solid #6c757d;
-    color: white;
-    padding: 8px 15px;
+    background: none;
+    border: none;
+    color: inherit;
+    padding: 0;
     font-size: 0.9rem;
     cursor: pointer;
     text-align: center;
@@ -127,21 +126,14 @@
     text-decoration: none;
     margin: 0;
     line-height: 1.5;
-    vertical-align: middle;
     user-select: none;
-    transition: all 0.2s ease-in-out;
 }
 
-#prev-day:hover, #next-day:hover, #prev-day-bottom:hover, #next-day-bottom:hover {
-    background-color: #5a6268;
-    border-color: #545b62;
-    color: white;
-    text-decoration: none;
-    transform: translateY(-1px);
-}
-
-#prev-day:active, #next-day:active, #prev-day-bottom:active, #next-day-bottom:active {
-    transform: translateY(0);
+#prev-day-bottom:hover, #next-day-bottom:hover {
+    background: none;
+    border: none;
+    color: inherit;
+    text-decoration: underline;
 }
 
 /* Loading state */
@@ -199,10 +191,5 @@
     .navigation-buttons {
         flex-direction: column;
         gap: 8px;
-    }
-    
-    #prev-day, #next-day, #prev-day-bottom, #next-day-bottom {
-        padding: 10px 15px;
-        font-size: 1rem;
     }
 } 

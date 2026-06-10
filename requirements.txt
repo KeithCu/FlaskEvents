@@ -8,3 +8,5 @@ PyYAML
 Flask-CORS
 Flask-Assets
 cssmin
+phpserialize
+pymysql

@@ -26,6 +26,7 @@ function register_flask_events_widgets() {
 
 add_shortcode('flask_events', 'flask_events_shortcode');
 add_shortcode('flask_events_list', 'flask_events_list_shortcode');
+add_shortcode('flask_venues', 'flask_venues_shortcode');
 
 function flask_events_shortcode() {
     flask_events_mark_assets_needed();
@@ -37,9 +38,39 @@ function flask_events_list_shortcode() {
     return flask_events_list_markup();
 }
 
+function flask_venues_shortcode($atts) {
+    flask_events_venues_assets_needed();
+
+    $atts = shortcode_atts(array(
+        'neighborhood' => '',
+        'group_by' => 'venue_type',
+    ), $atts, 'flask_venues');
+
+    $neighborhood = trim($atts['neighborhood']);
+    if ($neighborhood === '') {
+        return '<p class="flask-venues-empty">Neighborhood is required. Example: [flask_venues neighborhood="Corktown"]</p>';
+    }
+
+    $group_by = trim($atts['group_by']);
+    if ($group_by === '') {
+        $group_by = 'venue_type';
+    }
+
+    return sprintf(
+        '<div class="flask-events-wrap flask-venues-wrap" data-neighborhood="%s" data-group-by="%s"></div>',
+        esc_attr($neighborhood),
+        esc_attr($group_by)
+    );
+}
+
 function flask_events_mark_assets_needed() {
     global $flask_events_assets_needed;
     $flask_events_assets_needed = true;
+}
+
+function flask_events_venues_assets_needed() {
+    global $flask_events_venues_assets_needed;
+    $flask_events_venues_assets_needed = true;
 }
 
 function flask_events_page_needs_assets() {
@@ -62,6 +93,20 @@ function flask_events_page_needs_assets() {
            has_shortcode($post->post_content, 'flask_events_list');
 }
 
+function flask_events_page_needs_venues_assets() {
+    global $flask_events_venues_assets_needed, $post;
+
+    if (!empty($flask_events_venues_assets_needed)) {
+        return true;
+    }
+
+    if (!is_a($post, 'WP_Post')) {
+        return false;
+    }
+
+    return has_shortcode($post->post_content, 'flask_venues');
+}
+
 add_action('wp_enqueue_scripts', 'flask_events_enqueue_assets', 999);
 
 function flask_events_asset_version($relative_path) {
@@ -70,20 +115,14 @@ function flask_events_asset_version($relative_path) {
 }
 
 function flask_events_enqueue_assets() {
-    if (!flask_events_page_needs_assets()) {
+    $needs_events = flask_events_page_needs_assets();
+    $needs_venues = flask_events_page_needs_venues_assets();
+
+    if (!$needs_events && !$needs_venues) {
         return;
     }
 
     $css_version = flask_events_asset_version('css/flask-events.css');
-    $js_version = flask_events_asset_version('js/flask-events.js');
-
-    wp_enqueue_script(
-        'fullcalendar',
-        'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js',
-        array(),
-        '6.1.17',
-        true
-    );
 
     wp_enqueue_style(
         'flask-events-style',
@@ -92,20 +131,48 @@ function flask_events_enqueue_assets() {
         $css_version
     );
 
-    wp_enqueue_script(
-        'flask-events-js',
-        plugins_url('js/flask-events.js', __FILE__),
-        array('fullcalendar'),
-        $js_version,
-        true
-    );
+    if ($needs_events) {
+        $js_version = flask_events_asset_version('js/flask-events.js');
 
-    wp_localize_script('flask-events-js', 'flaskEvents', array(
-        'flaskUrl' => FLASK_EVENTS_URL,
-        'eventsEndpoint' => '/events',
-        'eventLinkArrow' => '→',
-        'fallbackEventUrl' => 'https://thedetroitilove.com',
-    ));
+        wp_enqueue_script(
+            'fullcalendar',
+            'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js',
+            array(),
+            '6.1.17',
+            true
+        );
+
+        wp_enqueue_script(
+            'flask-events-js',
+            plugins_url('js/flask-events.js', __FILE__),
+            array('fullcalendar'),
+            $js_version,
+            true
+        );
+
+        wp_localize_script('flask-events-js', 'flaskEvents', array(
+            'flaskUrl' => FLASK_EVENTS_URL,
+            'eventsEndpoint' => '/events',
+            'eventLinkArrow' => '→',
+            'fallbackEventUrl' => 'https://thedetroitilove.com',
+        ));
+    }
+
+    if ($needs_venues) {
+        $venues_js_version = flask_events_asset_version('js/flask-venues.js');
+
+        wp_enqueue_script(
+            'flask-venues-js',
+            plugins_url('js/flask-venues.js', __FILE__),
+            array(),
+            $venues_js_version,
+            true
+        );
+
+        wp_localize_script('flask-venues-js', 'flaskEvents', array(
+            'flaskUrl' => FLASK_EVENTS_URL,
+        ));
+    }
 }
 
 // Keep Flask Events assets out of W3 Total Cache minify so updates apply immediately.
