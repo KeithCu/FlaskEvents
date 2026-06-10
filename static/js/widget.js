@@ -359,10 +359,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Add event listeners
-        prevDayBtn.addEventListener('click', goToPreviousDay);
-        nextDayBtn.addEventListener('click', goToNextDay);
-        prevDayBottomBtn.addEventListener('click', goToPreviousDay);
-        nextDayBottomBtn.addEventListener('click', goToNextDay);
+        if (prevDayBtn) prevDayBtn.addEventListener('click', goToPreviousDay);
+        if (nextDayBtn) nextDayBtn.addEventListener('click', goToNextDay);
+        if (prevDayBottomBtn) prevDayBottomBtn.addEventListener('click', goToPreviousDay);
+        if (nextDayBottomBtn) nextDayBottomBtn.addEventListener('click', goToNextDay);
 
         // Load initial events
         loadEvents(currentDate);
