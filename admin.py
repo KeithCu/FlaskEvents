@@ -1,5 +1,5 @@
 from flask_admin import Admin, BaseView, expose
-from flask_admin.contrib.sqla import ModelView
+from flask_admin.contrib.sqla import ModelView, tools as sqla_tools
 from flask_admin.form import Select2Field
 from wtforms import SelectMultipleField, TextAreaField, StringField, DateTimeField, BooleanField, SelectField
 from wtforms.validators import DataRequired, Optional
@@ -7,7 +7,7 @@ from database import Category, Event, Venue, SessionLocal, engine
 from cacheout import Cache
 from sqlalchemy import text, func
 from sqlalchemy.orm import joinedload
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from flask import render_template, request, flash, redirect, url_for, session
 import json
 
@@ -156,17 +156,25 @@ class CategoryModelView(ModelView):
 class EventModelView(ModelView):
     """Admin interface for managing events"""
     
-    column_list = ('title', 'start', 'end', 'venue', 'categories', 'is_recurring', 'is_virtual')
+    column_list = ('title', 'start', 'end', 'venue', 'categories', 'is_recurring', 'recurring_until', 'is_virtual')
     column_searchable_list = ('title', 'description')
     column_filters = ('is_recurring', 'is_virtual', 'is_hybrid', 'start_date')
     column_formatters = {
         'start': lambda v, c, m, p: m.start.strftime('%Y-%m-%d %H:%M') if m.start else '',
         'end': lambda v, c, m, p: m.end.strftime('%Y-%m-%d %H:%M') if m.end else '',
-        'categories': lambda v, c, m, p: m.categories[:50] + '...' if m.categories and len(m.categories) > 50 else m.categories or ''
+        'categories': lambda v, c, m, p: m.categories[:50] + '...' if m.categories and len(m.categories) > 50 else m.categories or '',
+        'venue': lambda v, c, m, p: m.venue.name if m.venue else '',
+        'recurring_until': lambda v, c, m, p: m.recurring_until.strftime('%Y-%m-%d') if m.recurring_until else '',
     }
     
     form_columns = ('title', 'description', 'start', 'end', 'venue', 'categories', 
                    'rrule', 'recurring_until', 'is_virtual', 'is_hybrid', 'url', 'color', 'bg')
+    
+    form_args = {
+        'venue': {
+            'get_label': 'name',
+        },
+    }
     
     form_extra_fields = {
         'description': TextAreaField('Description'),
@@ -175,6 +183,17 @@ class EventModelView(ModelView):
         'color': StringField('Color (hex)'),
         'bg': StringField('Background Color (hex)')
     }
+
+    def get_one(self, id):
+        """Convert composite PK strings back to date/int for SQLAlchemy."""
+        pk = sqla_tools.iterdecode(id)
+        if len(pk) == 2:
+            start_date, event_id = pk
+            return self.session.get(
+                self.model,
+                (date.fromisoformat(start_date), int(event_id)),
+            )
+        return super().get_one(id)
     
     def on_model_change(self, form, model, is_created):
         """Update category usage counts when event is saved"""
