@@ -204,6 +204,9 @@ class VenueModelView(ModelView):
     column_searchable_list = ('name', 'address', 'phone', 'neighborhood', 'venue_type')
     column_formatters = {
         'event_count': lambda v, c, m, p: len(m.events) if m.events else 0,
+        'neighborhood': lambda v, c, m, p: (
+            m.neighborhood[:9] + '...' if m.neighborhood and len(m.neighborhood) > 9 else m.neighborhood or ''
+        ),
         'website': lambda v, c, m, p: (
             m.website[:15] + '...' if m.website and len(m.website) > 15 else m.website or ''
         ),
