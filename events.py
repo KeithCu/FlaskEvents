@@ -98,6 +98,7 @@ def serialize_event(event):
     """Serialize an Event for JSON API responses."""
     return {
         'id': event.id,
+        'start_date': event.start_date.isoformat() if event.start_date else None,
         'title': event.title,
         'start': event.start.isoformat(),
         'end': event.end.isoformat(),
@@ -141,6 +142,8 @@ def expand_recurring_events(event, start_date, end_date):
             rrule=event.rrule,
             recurring_until=event.recurring_until,
         )
+        instance_event.id = event.id
+        instance_event.start_date = event.start_date
         venue_name = _event_venue_name(event)
         if venue_name:
             instance_event._venue_name = venue_name

@@ -2,6 +2,13 @@
 // Remove this fallback once real event URLs are populated in production.
 const DEBUG_EVENT_URL_FALLBACK = 'https://thedetroitilove.com';
 
+function getEventAdminEditUrl(event) {
+    if (!window.LOGGED_IN || !event.id || !event.start_date) {
+        return null;
+    }
+    return '/admin/events/edit/?id=' + encodeURIComponent(event.start_date + ',' + event.id);
+}
+
 function getEventArrowUrl(event) {
     return event.url || DEBUG_EVENT_URL_FALLBACK;
 }
@@ -105,8 +112,14 @@ function createEventHtml(event, isOngoing) {
     const descriptionText = event.description ? escapeHtml(event.description) : '';
     const recurrenceSuffix = getRecurrenceSuffix(event);
     const arrowUrl = getEventArrowUrl(event);
+    const adminEditUrl = getEventAdminEditUrl(event);
 
     let html = '<div class="event-line">';
+    if (adminEditUrl) {
+        html += `<a href="${escapeHtml(adminEditUrl)}" class="event-arrow-link event-admin-link" title="Edit event">`;
+        html += `<span class="event-arrow event-admin-arrow">${arrowSymbol}</span>`;
+        html += '</a>';
+    }
     html += `<a href="${escapeHtml(arrowUrl)}" target="_blank" rel="noopener" class="event-arrow-link" title="Event link">`;
     html += `<span class="event-arrow">${arrowSymbol}</span>`;
     html += '</a>';

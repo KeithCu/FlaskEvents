@@ -65,6 +65,14 @@
     cursor: pointer;
 }
 
+.event-admin-arrow {
+    color: #2d2640;
+}
+
+.event-admin-link:hover .event-admin-arrow {
+    color: #1a1528;
+}
+
 .event-text {
     color: #212529;
     font-size: 0.95rem;

@@ -56,6 +56,11 @@
         {% if upcoming_events %}
             {% for event in upcoming_events %}
             <div class="event-line">
+                {% if logged_in and event.id and event.start_date %}
+                <a href="{{ url_for('events.edit_view', id=event.start_date.isoformat() ~ ',' ~ event.id) }}" class="event-arrow-link event-admin-link" title="Edit event">
+                    <span class="event-arrow event-admin-arrow">{{ event_link_arrow }}</span>
+                </a>
+                {% endif %}
                 <a href="{{ event.url or debug_event_url }}" target="_blank" rel="noopener" class="event-arrow-link" title="Event link">
                     <span class="event-arrow">{{ event_link_arrow }}</span>
                 </a>

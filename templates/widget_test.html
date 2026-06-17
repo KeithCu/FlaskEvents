@@ -36,6 +36,9 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>window.EVENT_LINK_ARROW = {{ event_link_arrow|tojson }};</script>
+<script>
+window.EVENT_LINK_ARROW = {{ event_link_arrow|tojson }};
+window.LOGGED_IN = {{ logged_in|tojson }};
+</script>
 <script src="{{ url_for('static', filename='js/widget.js') }}"></script>
 {% endblock %} 
