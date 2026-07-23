@@ -285,7 +285,6 @@
             if (listHeight > 0) {
                 eventsListEl.style.minHeight = listHeight + 'px';
             }
-            eventsListEl.innerHTML = '<div class="loading">Loading...</div>';
             return { scrollX, scrollY };
         }
 
