@@ -423,10 +423,6 @@ def register_events(app):
             venue_id = request.form.get('venue_id')
             color = request.form.get('color', '#3788d8')
             bg = request.form.get('bg', '#3788d8')
-            
-            # Get virtual event fields
-            is_virtual = request.form.get('is_virtual') == 'on'
-            is_hybrid = request.form.get('is_hybrid') == 'on'
             url = request.form.get('url', '').strip()
             
             # Get recurring event fields
@@ -449,7 +445,7 @@ def register_events(app):
                 # Validate venue_id
                 if not venue_id:
                     flash('Please select a venue', 'error')
-                    venues = session.query(Venue).all()
+                    venues = session.query(Venue).order_by(Venue.name).all()
                     categories = session.query(Category).filter(Category.is_active == True).order_by(Category.usage_count.desc(), Category.name).all()
                     return render_template('event_form.html', 
                                         venues=venues,
@@ -461,8 +457,6 @@ def register_events(app):
                                         rrule=rrule_str,
                                         color=color,
                                         bg=bg,
-                                        is_virtual=is_virtual,
-                                        is_hybrid=is_hybrid,
                                         url=url,
                                         recurring_until=recurring_until_str)
                 
@@ -486,8 +480,8 @@ def register_events(app):
                     bg=bg,
                     is_recurring=is_recurring,
                     recurring_until=recurring_until,
-                    is_virtual=is_virtual,
-                    is_hybrid=is_hybrid,
+                    is_virtual=False,
+                    is_hybrid=False,
                     url=url if url else None,
                     categories=categories_str
                 )
@@ -515,10 +509,10 @@ def register_events(app):
             # Ensure FTS is set up and updated
             ensure_fts_setup()
             
-            return redirect(url_for('main.python_view'))
+            return redirect(url_for('home'))
         
         with get_db_session() as session:
-            venues = session.query(Venue).all()
+            venues = session.query(Venue).order_by(Venue.name).all()
             categories = session.query(Category).filter(Category.is_active == True).order_by(Category.usage_count.desc(), Category.name).all()
             return render_template('event_form.html', venues=venues, categories=categories)
 
@@ -534,10 +528,6 @@ def register_events(app):
             venue_id = request.form.get('venue_id')
             color = request.form.get('color', '#3788d8')
             bg = request.form.get('bg', '#3788d8')
-            
-            # Get virtual event fields
-            is_virtual = request.form.get('is_virtual') == 'on'
-            is_hybrid = request.form.get('is_hybrid') == 'on'
             url = request.form.get('url', '').strip()
             
             # Get recurring event fields
@@ -562,7 +552,7 @@ def register_events(app):
                 # Validate venue_id
                 if not venue_id:
                     flash('Please select a venue', 'error')
-                    venues = session.query(Venue).all()
+                    venues = session.query(Venue).order_by(Venue.name).all()
                     categories = session.query(Category).filter(Category.is_active == True).order_by(Category.usage_count.desc(), Category.name).all()
                     return render_template('event_form.html', 
                                         event=event,
@@ -575,8 +565,6 @@ def register_events(app):
                                         rrule=rrule_str,
                                         color=color,
                                         bg=bg,
-                                        is_virtual=is_virtual,
-                                        is_hybrid=is_hybrid,
                                         url=url,
                                         recurring_until=recurring_until_str)
                 
@@ -597,8 +585,6 @@ def register_events(app):
                 event.bg = bg
                 event.is_recurring = is_recurring
                 event.recurring_until = recurring_until
-                event.is_virtual = is_virtual
-                event.is_hybrid = is_hybrid
                 event.url = url if url else None
                 event.categories = categories_str
                 
@@ -613,11 +599,11 @@ def register_events(app):
             # Ensure FTS is set up and updated
             ensure_fts_setup()
             
-            return redirect(url_for('main.home'))
+            return redirect(url_for('home'))
         
         with get_db_session() as session:
             event = session.query(Event).get_or_404(id)
-            venues = session.query(Venue).all()
+            venues = session.query(Venue).order_by(Venue.name).all()
             categories = session.query(Category).filter(Category.is_active == True).order_by(Category.usage_count.desc(), Category.name).all()
             return render_template('event_form.html', event=event, venues=venues, categories=categories)
 
@@ -636,7 +622,7 @@ def register_events(app):
         # Ensure FTS is set up and updated
         ensure_fts_setup()
         
-        return redirect(url_for('main.python_view'))
+        return redirect(url_for('home'))
 
     def set_cache_headers(response, max_age=3600):
         """Set cache headers for better performance"""

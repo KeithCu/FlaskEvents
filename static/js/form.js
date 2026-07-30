@@ -65,11 +65,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Handle virtual event options visibility
-    const isVirtualCheckbox = document.getElementById('is_virtual');
-    const isHybridCheckbox = document.getElementById('is_hybrid');
-    
-    // Note: URL field is now always visible, so no conditional logic needed
 });
 
 function validateForm() {
