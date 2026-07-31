@@ -451,6 +451,7 @@ def init_admin(app):
         page_size = 50
         column_searchable_list = ('title', 'description')
         column_filters = ('is_recurring', 'is_virtual', 'is_hybrid', 'start_date')
+        column_default_sort = ('start', True)  # Newest start first
     
     class CompactVenueModelView(CompactModelView, VenueModelView):
         page_size = 100
