@@ -1,4 +1,4 @@
-from flask import render_template, request, jsonify, redirect, url_for, flash
+from flask import render_template, request, jsonify, redirect, url_for, flash, abort
 from sqlalchemy import case, text
 from datetime import datetime, timedelta
 import time
@@ -398,7 +398,6 @@ def register_events(app):
         with get_db_session() as session:
             venue = session.query(Venue).filter(Venue.id == id).first()
             if not venue:
-                from flask import abort
                 abort(404)
             upcoming_events = get_upcoming_events_for_venue(session, id)
             map_embed_url, map_is_fallback = get_venue_map_embed(venue)
@@ -521,9 +520,15 @@ def register_events(app):
             categories = session.query(Category).filter(Category.is_active == True).order_by(Category.usage_count.desc(), Category.name).all()
             return render_template('event_form.html', venues=venues, categories=categories)
 
-    @app.route('/event/<int:id>/edit', methods=['GET', 'POST'])
+    @app.route('/event/<start_date>/<int:id>/edit', methods=['GET', 'POST'])
     @login_required
-    def edit_event(id):
+    def edit_event(start_date, id):
+        try:
+            event_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        except ValueError:
+            flash('Invalid event date', 'error')
+            return redirect(url_for('home'))
+
         if request.method == 'POST':
             title = request.form['title']
             description = request.form['description']
@@ -552,7 +557,12 @@ def register_events(app):
             categories_str = ','.join(category_ids) if category_ids else ''
             
             with get_db_session() as session:
-                event = session.query(Event).get_or_404(id)
+                event = session.query(Event).filter(
+                    Event.start_date == event_date,
+                    Event.id == id
+                ).first()
+                if not event:
+                    abort(404)
                 
                 # Validate venue_id
                 if not venue_id:
@@ -607,16 +617,32 @@ def register_events(app):
             return redirect(url_for('home'))
         
         with get_db_session() as session:
-            event = session.query(Event).get_or_404(id)
+            event = session.query(Event).filter(
+                Event.start_date == event_date,
+                Event.id == id
+            ).first()
+            if not event:
+                abort(404)
             venues = get_form_venues(session)
             categories = session.query(Category).filter(Category.is_active == True).order_by(Category.usage_count.desc(), Category.name).all()
             return render_template('event_form.html', event=event, venues=venues, categories=categories)
 
-    @app.route('/event/<int:id>/delete', methods=['POST'])
+    @app.route('/event/<start_date>/<int:id>/delete', methods=['POST'])
     @login_required
-    def delete_event(id):
+    def delete_event(start_date, id):
+        try:
+            event_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        except ValueError:
+            flash('Invalid event date', 'error')
+            return redirect(url_for('home'))
+
         with get_db_session() as session:
-            event = session.query(Event).get_or_404(id)
+            event = session.query(Event).filter(
+                Event.start_date == event_date,
+                Event.id == id
+            ).first()
+            if not event:
+                abort(404)
             session.delete(event)
             session.commit()
         

@@ -6,7 +6,7 @@ function getEventAdminEditUrl(event) {
     if (!window.LOGGED_IN || !event.id || !event.start_date) {
         return null;
     }
-    return '/admin/events/edit/?id=' + encodeURIComponent(event.start_date + ',' + event.id);
+    return '/event/' + event.start_date + '/' + event.id + '/edit';
 }
 
 function getEventArrowUrl(event) {

@@ -125,12 +125,6 @@
                 <div class="form-buttons compact">
                     <button type="submit" class="btn btn-primary btn-sm">Save Event</button>
                     <a href="{{ url_for('home') }}" class="btn btn-secondary btn-sm">Cancel</a>
-                    
-                    {% if event %}
-                    <form action="{{ url_for('delete_event', id=event.id) }}" method="POST" class="d-inline">
-                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this event?')">Delete</button>
-                    </form>
-                    {% endif %}
                 </div>
             </div>
 
@@ -169,6 +163,13 @@
             </div>
         </div>
     </form>
+    {% if event %}
+    <div class="form-buttons compact mt-2">
+        <form action="{{ url_for('delete_event', start_date=event.start_date.isoformat(), id=event.id) }}" method="POST">
+            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this event?')">Delete</button>
+        </form>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
 

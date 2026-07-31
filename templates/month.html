@@ -39,7 +39,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         },
         eventClick: function(info) {
-            window.location.href = '/event/' + info.event.id + '/edit';
+            const startDate = info.event.extendedProps.start_date;
+            if (startDate) {
+                window.location.href = '/event/' + startDate + '/' + info.event.id + '/edit';
+            } else {
+                window.location.href = '/event/' + info.event.startStr.slice(0, 10) + '/' + info.event.id + '/edit';
+            }
         },
         dateClick: function(info) {
             window.location.href = '/day/' + info.dateStr;
