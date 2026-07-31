@@ -1,4 +1,4 @@
-from flask import render_template, request, jsonify, redirect, url_for, flash, abort
+from flask import render_template, request, jsonify, redirect, url_for, flash, abort, session
 from sqlalchemy import case, text
 from datetime import datetime, timedelta
 import time
@@ -656,9 +656,12 @@ def register_events(app):
         return redirect(url_for('home'))
 
     def set_cache_headers(response, max_age=3600):
-        """Set cache headers for better performance"""
-        response.headers['Cache-Control'] = f'public, max-age={max_age}'
-        response.headers['Vary'] = 'Accept-Encoding'
+        """Set cache headers; skip browser caching for logged-in admins."""
+        if session.get('logged_in'):
+            response.headers['Cache-Control'] = 'private, no-store'
+        else:
+            response.headers['Cache-Control'] = f'public, max-age={max_age}'
+        response.headers['Vary'] = 'Accept-Encoding, Cookie'
         return response
 
     def get_local_now():
