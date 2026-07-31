@@ -1,5 +1,5 @@
 from flask import render_template, request, jsonify, redirect, url_for, flash
-from sqlalchemy import text
+from sqlalchemy import case, text
 from datetime import datetime, timedelta
 import time
 from cacheout import Cache
@@ -42,6 +42,11 @@ def get_db_session():
         yield session
     finally:
         session.close()
+
+def get_form_venues(session):
+    """Venues for event form dropdown: open first (A-Z), closed last (A-Z)."""
+    is_closed = Venue.name.ilike('%closed%')
+    return session.query(Venue).order_by(case((is_closed, 1), else_=0), Venue.name).all()
 
 def get_cached_day_events(date_str):
     """Get complete day events for a specific date from cache"""
@@ -445,7 +450,7 @@ def register_events(app):
                 # Validate venue_id
                 if not venue_id:
                     flash('Please select a venue', 'error')
-                    venues = session.query(Venue).order_by(Venue.name).all()
+                    venues = get_form_venues(session)
                     categories = session.query(Category).filter(Category.is_active == True).order_by(Category.usage_count.desc(), Category.name).all()
                     return render_template('event_form.html', 
                                         venues=venues,
@@ -512,7 +517,7 @@ def register_events(app):
             return redirect(url_for('home'))
         
         with get_db_session() as session:
-            venues = session.query(Venue).order_by(Venue.name).all()
+            venues = get_form_venues(session)
             categories = session.query(Category).filter(Category.is_active == True).order_by(Category.usage_count.desc(), Category.name).all()
             return render_template('event_form.html', venues=venues, categories=categories)
 
@@ -552,7 +557,7 @@ def register_events(app):
                 # Validate venue_id
                 if not venue_id:
                     flash('Please select a venue', 'error')
-                    venues = session.query(Venue).order_by(Venue.name).all()
+                    venues = get_form_venues(session)
                     categories = session.query(Category).filter(Category.is_active == True).order_by(Category.usage_count.desc(), Category.name).all()
                     return render_template('event_form.html', 
                                         event=event,
@@ -603,7 +608,7 @@ def register_events(app):
         
         with get_db_session() as session:
             event = session.query(Event).get_or_404(id)
-            venues = session.query(Venue).order_by(Venue.name).all()
+            venues = get_form_venues(session)
             categories = session.query(Category).filter(Category.is_active == True).order_by(Category.usage_count.desc(), Category.name).all()
             return render_template('event_form.html', event=event, venues=venues, categories=categories)
 
