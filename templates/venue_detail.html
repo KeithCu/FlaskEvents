@@ -65,7 +65,7 @@
                     <span class="event-arrow">{{ event_link_arrow }}</span>
                 </a>
                 <span class="event-text">
-                    {{ event.start.strftime('%m-%d') }}:{{ event.start.strftime('%I:%M %p').lstrip('0') }}
+                    {{ event.start.strftime('%m-%d') }} :
                     <strong>{{ event.title }}</strong>
                     : {{ event.start.strftime('%I:%M %p').lstrip('0') }}-{{ event.end.strftime('%I:%M %p').lstrip('0') }}
                     {% if event.description %}
