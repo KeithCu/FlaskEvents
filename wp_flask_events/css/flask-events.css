@@ -118,7 +118,6 @@
 .flask-events-wrap .event-arrow {
     color: #dc3545;
     font-weight: bold;
-    font-size: 1.6rem;
     line-height: 1;
     cursor: pointer;
 }
@@ -250,7 +249,6 @@
 .entry-content .flask-events-wrap .event-arrow,
 .widget .flask-events-wrap .event-arrow {
     color: #dc3545 !important;
-    font-size: 1.6rem !important;
     font-weight: bold !important;
 }
 
