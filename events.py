@@ -1,6 +1,6 @@
 from flask import render_template, request, jsonify, redirect, url_for, flash, abort, session
 from sqlalchemy import case, text
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time as dt_time
 import time
 from cacheout import Cache
 from dateutil.rrule import rrulestr
@@ -33,6 +33,9 @@ LOCAL_TIMEZONE = pytz.timezone('America/New_York')  # Adjust this to your timezo
 
 # Shared event link arrow (events list + venue upcoming events)
 EVENT_LINK_ARROW = '→'
+
+# Previous-day events only count as "ongoing" if they run past this hour on the viewed day
+ONGOING_CUTOFF_HOUR = 6
 
 @contextmanager
 def get_db_session():
@@ -261,13 +264,26 @@ def register_events(app):
                             if instance.start.date() == target_date:
                                 expanded_events.append(instance)
                     
-                    # Get ongoing events from previous day that are still running
+                    # Get ongoing events from previous day that run past the morning cutoff
                     previous_date = target_date - timedelta(days=1)
-                    ongoing_events = session.query(Event).options(joinedload(Event.venue)).filter(
+                    ongoing_cutoff = datetime.combine(target_date, dt_time(hour=ONGOING_CUTOFF_HOUR))
+                    midnight = datetime.combine(target_date, dt_time.min)
+
+                    past_midnight = session.query(Event).options(joinedload(Event.venue)).filter(
                         Event.is_recurring == False,
                         Event.start_date == previous_date,
-                        Event.end > datetime.combine(target_date, datetime.min.time())  # Event ends after start of current day
+                        Event.end > midnight
                     ).order_by(Event.start).all()
+                    ongoing_events = [e for e in past_midnight if e.end > ongoing_cutoff]
+                    skipped_ongoing = len(past_midnight) - len(ongoing_events)
+                    if past_midnight:
+                        sample_ends = ', '.join(e.end.strftime('%H:%M') for e in past_midnight[:5])
+                        print(
+                            f"Ongoing cutoff {ONGOING_CUTOFF_HOUR}:00 for {date}: "
+                            f"{len(past_midnight)} previous-day past midnight, "
+                            f"{len(ongoing_events)} kept (end > cutoff), "
+                            f"{skipped_ongoing} skipped; sample ends: {sample_ends}"
+                        )
                     
                     # Get ongoing recurring events from previous day
                     ongoing_recurring = session.query(Event).options(joinedload(Event.venue)).filter(
@@ -276,17 +292,23 @@ def register_events(app):
                         (Event.recurring_until == None) | (Event.recurring_until >= previous_date)  # Ends after or on previous day
                     ).all()
                     
-                    # Expand ongoing recurring events
+                    # Expand ongoing recurring events (only if past morning cutoff)
                     ongoing_expanded = []
+                    recurring_past_midnight = 0
                     for event in ongoing_recurring:
                         instances = expand_recurring_events(event, 
                                                           datetime.combine(previous_date, datetime.min.time()),
                                                           datetime.combine(previous_date, datetime.max.time()))
-                        # Filter to only include instances that started on previous day and end after start of current day
                         for instance in instances:
-                            if (instance.start.date() == previous_date and 
-                                instance.end > datetime.combine(target_date, datetime.min.time())):
-                                ongoing_expanded.append(instance)
+                            if instance.start.date() == previous_date and instance.end > midnight:
+                                recurring_past_midnight += 1
+                                if instance.end > ongoing_cutoff:
+                                    ongoing_expanded.append(instance)
+                    if recurring_past_midnight:
+                        print(
+                            f"Ongoing recurring for {date}: {recurring_past_midnight} past midnight, "
+                            f"{len(ongoing_expanded)} kept after {ONGOING_CUTOFF_HOUR}:00 cutoff"
+                        )
                 
                 # Combine and sort all events
                 all_events = day_events + expanded_events + ongoing_events + ongoing_expanded

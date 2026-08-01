@@ -263,17 +263,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         const eventStart = new Date(event.start);
                         const eventEnd = new Date(event.end);
                         
-                        // Check if event started the previous day and is still ongoing
+                        // Check if event started the previous day and runs past morning cutoff
                         const previousDay = new Date(date);
                         previousDay.setDate(previousDay.getDate() - 1);
-                        const startOfCurrentDay = new Date(date);
-                        startOfCurrentDay.setHours(0, 0, 0, 0);
+                        const ongoingCutoff = new Date(date);
+                        ongoingCutoff.setHours(6, 0, 0, 0);
                         
-                        // Event is ongoing if it started on the previous day and ends after the start of current day
+                        // Ongoing only if previous-day start and end after 6AM on the viewed day
                         if (eventStart.getDate() === previousDay.getDate() && 
                             eventStart.getMonth() === previousDay.getMonth() && 
                             eventStart.getFullYear() === previousDay.getFullYear() &&
-                            eventEnd > startOfCurrentDay) {
+                            eventEnd > ongoingCutoff) {
                             ongoingEvents.push(event);
                         } else {
                             newEvents.push(event);

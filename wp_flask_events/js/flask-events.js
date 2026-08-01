@@ -166,13 +166,14 @@
             const eventEnd = new Date(event.end);
             const previousDay = new Date(viewingDate);
             previousDay.setDate(previousDay.getDate() - 1);
-            const startOfCurrentDay = new Date(viewingDate);
-            startOfCurrentDay.setHours(0, 0, 0, 0);
+            const ongoingCutoff = new Date(viewingDate);
+            ongoingCutoff.setHours(6, 0, 0, 0);
 
+            // Ongoing only if previous-day start and end after 6AM on the viewed day
             if (eventStart.getDate() === previousDay.getDate() &&
                 eventStart.getMonth() === previousDay.getMonth() &&
                 eventStart.getFullYear() === previousDay.getFullYear() &&
-                eventEnd > startOfCurrentDay) {
+                eventEnd > ongoingCutoff) {
                 ongoingEvents.push(event);
             } else {
                 newEvents.push(event);

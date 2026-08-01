@@ -80,7 +80,7 @@
 }
 
 .flask-events-wrap .time-header {
-    font-weight: 700;
+    font-weight: 400;
     font-size: 1.1rem;
     color: #495057;
     margin-bottom: 8px;
@@ -258,7 +258,7 @@
 .widget .flask-events-wrap .time-header {
     text-transform: none;
     text-decoration: none;
-    font-weight: 700;
+    font-weight: 400;
 }
 
 .entry-content .flask-events-wrap #selected-date-display,

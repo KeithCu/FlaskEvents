@@ -147,7 +147,7 @@ class CategoryModelView(ModelView):
         if is_created:
             model.usage_count = 0
     
-    def after_model_change(self, model, is_created):
+    def after_model_change(self, form, model, is_created):
         """Clear caches after category changes"""
         from events import clear_day_events_cache, clear_calendar_events_cache
         clear_day_events_cache()
@@ -210,7 +210,7 @@ class EventModelView(ModelView):
             finally:
                 session.close()
     
-    def after_model_change(self, model, is_created):
+    def after_model_change(self, form, model, is_created):
         """Clear caches after event changes"""
         from events import clear_day_events_cache, clear_calendar_events_cache
         clear_day_events_cache()
@@ -241,7 +241,7 @@ class VenueModelView(ModelView):
         """Handle venue changes"""
         pass
     
-    def after_model_change(self, model, is_created):
+    def after_model_change(self, form, model, is_created):
         """Clear caches after venue changes"""
         from events import clear_day_events_cache, clear_calendar_events_cache
         clear_day_events_cache()
