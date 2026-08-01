@@ -2,10 +2,11 @@ from functools import wraps
 from urllib.parse import urlparse
 
 import os
+import tempfile
 import yaml
 from flask import (
     session, redirect, url_for, request, render_template,
-    flash, jsonify, abort,
+    flash, jsonify,
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -51,6 +52,19 @@ def init_auth(config, config_path=None):
     _users = _normalize_users(config or {})
 
 
+def reload_users():
+    """Refresh in-memory users from config.yaml on disk."""
+    global _users
+    path = _config_path or _config_path_default()
+    try:
+        with open(path, 'r') as file:
+            config = yaml.safe_load(file) or {}
+    except FileNotFoundError:
+        _users = []
+        return
+    _users = _normalize_users(config)
+
+
 def get_users():
     """Return a copy of the in-memory users list."""
     return [dict(u) for u in _users]
@@ -68,7 +82,7 @@ def has_any_password_configured():
 
 
 def save_users(users):
-    """Persist users to config.yaml and refresh in-memory list."""
+    """Persist users to config.yaml atomically and refresh in-memory list."""
     global _users
     path = _config_path or _config_path_default()
     with open(path, 'r') as file:
@@ -83,20 +97,31 @@ def save_users(users):
     ]
     config.pop('admin', None)
 
-    with open(path, 'w') as file:
-        yaml.safe_dump(
-            config,
-            file,
-            default_flow_style=False,
-            sort_keys=False,
-            allow_unicode=True,
-        )
+    directory = os.path.dirname(path) or '.'
+    fd, tmp_path = tempfile.mkstemp(prefix='config.', suffix='.yaml.tmp', dir=directory)
+    try:
+        with os.fdopen(fd, 'w') as file:
+            yaml.safe_dump(
+                config,
+                file,
+                default_flow_style=False,
+                sort_keys=False,
+                allow_unicode=True,
+            )
+        os.replace(tmp_path, path)
+    except Exception:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
 
     _users = [dict(u) for u in config['users']]
 
 
 def verify_login(username, password):
     """Check username/password against configured users."""
+    reload_users()
     user = _find_user(username)
     if not user or not user.get('password_hash'):
         return False
@@ -174,6 +199,7 @@ def register_auth_routes(app):
             return redirect(url_for('home'))
 
         if request.method == 'POST':
+            reload_users()
             if not has_any_password_configured():
                 flash(
                     'No user passwords configured. Run: python hash_password.py \'your-password\'',
@@ -202,11 +228,13 @@ def register_auth_routes(app):
     @app.route('/users')
     @admin_required
     def list_users():
+        reload_users()
         return render_template('users.html', users=get_users(), admin_username=ADMIN_USERNAME)
 
     @app.route('/users/new', methods=['GET', 'POST'])
     @admin_required
     def add_user():
+        reload_users()
         if request.method == 'POST':
             username, error = _validate_username(request.form.get('username', ''))
             password = request.form.get('password', '')
@@ -231,9 +259,11 @@ def register_auth_routes(app):
     @app.route('/users/<username>/edit', methods=['GET', 'POST'])
     @admin_required
     def edit_user(username):
+        reload_users()
         user = _find_user(username)
         if not user:
-            abort(404)
+            flash('User not found.', 'error')
+            return redirect(url_for('list_users'))
 
         is_admin_user = username == ADMIN_USERNAME
 
@@ -284,11 +314,13 @@ def register_auth_routes(app):
     @app.route('/users/<username>/delete', methods=['POST'])
     @admin_required
     def delete_user(username):
+        reload_users()
         if username == ADMIN_USERNAME:
             flash('The admin account cannot be deleted.', 'error')
             return redirect(url_for('list_users'))
         if not _find_user(username):
-            abort(404)
+            flash('User not found.', 'error')
+            return redirect(url_for('list_users'))
         if len(_users) <= 1:
             flash('Cannot delete the last remaining user.', 'error')
             return redirect(url_for('list_users'))
