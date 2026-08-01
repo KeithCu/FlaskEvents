@@ -14,47 +14,34 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('home') }}">Event Calendar</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    {% if logged_in %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('add_event') }}">New Event</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/admin/venues/">Venues</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/admin/categories/">Categories</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('cache_management') }}">Cache Management</a>
-                    </li>
-                    {% if is_admin %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('list_users') }}">Users</a>
-                    </li>
-                    {% endif %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="/admin/">Admin</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
-                    </li>
-                    {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('login') }}">Login</a>
-                    </li>
-                    {% endif %}
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <header class="tdil-header">
+        <a class="tdil-logo" href="https://thedetroitilove.com/">
+            <img src="https://thedetroitilove.com/wp-content/uploads/2026/08/header-logo-scaled.jpg"
+                 alt="The Detroit I Love"
+                 width="180"
+                 height="180">
+        </a>
+        <nav class="tdil-nav" aria-label="Primary">
+            <a class="tdil-nav-link" href="https://thedetroitilove.com/">Today's List</a>
+        </nav>
+        {% if logged_in %}
+        <nav class="tdil-admin-nav" aria-label="Admin">
+            <a href="{{ url_for('add_event') }}">New Event</a>
+            <a href="/admin/venues/">Venues</a>
+            <a href="/admin/categories/">Categories</a>
+            <a href="{{ url_for('cache_management') }}">Cache Management</a>
+            {% if is_admin %}
+            <a href="{{ url_for('list_users') }}">Users</a>
+            {% endif %}
+            <a href="/admin/">Admin</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+        {% else %}
+        <nav class="tdil-admin-nav" aria-label="Account">
+            <a href="{{ url_for('login') }}">Login</a>
+        </nav>
+        {% endif %}
+    </header>
 
     <div class="container mt-4">
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -73,4 +60,4 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
     {% block extra_js %}{% endblock %}
 </body>
-</html> 
+</html>
