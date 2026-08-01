@@ -36,7 +36,7 @@
             <a href="/admin/">Admin</a>
             <a href="{{ url_for('logout') }}">Logout</a>
         </nav>
-        {% else %}
+        {% elif request.endpoint != 'venue_detail' %}
         <nav class="tdil-admin-nav" aria-label="Account">
             <a href="{{ url_for('login') }}">Login</a>
         </nav>
