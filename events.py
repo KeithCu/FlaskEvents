@@ -1,4 +1,4 @@
-from flask import render_template, request, jsonify, redirect, url_for, flash, abort, session
+from flask import render_template, request, jsonify, redirect, url_for, flash, abort, session as flask_session
 from sqlalchemy import case, text
 from datetime import datetime, timedelta, time as dt_time
 import time
@@ -229,7 +229,7 @@ def register_events(app):
         date = request.args.get('date')
         if date:
             target_date = datetime.strptime(date, '%Y-%m-%d').date()
-            use_cache = not session.get('logged_in')
+            use_cache = not flask_session.get('logged_in')
             
             # Check cache first for complete day events (anonymous only)
             cached_day_events = get_cached_day_events(date) if use_cache else None
@@ -339,7 +339,7 @@ def register_events(app):
         end_date = datetime.fromisoformat(end.replace('Z', '+00:00'))
         
         # Check cache first for calendar range (anonymous only)
-        use_cache = not session.get('logged_in')
+        use_cache = not flask_session.get('logged_in')
         start_str = start_date.date().isoformat()
         end_str = end_date.date().isoformat()
         cached_calendar = get_cached_calendar_events(start_str, end_str) if use_cache else None
@@ -710,7 +710,7 @@ def register_events(app):
 
     def set_cache_headers(response, max_age=3600):
         """Set cache headers; skip browser caching for logged-in admins."""
-        if session.get('logged_in'):
+        if flask_session.get('logged_in'):
             response.headers['Cache-Control'] = 'private, no-store'
         else:
             response.headers['Cache-Control'] = f'public, max-age={max_age}'
