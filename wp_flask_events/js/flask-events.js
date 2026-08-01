@@ -46,7 +46,8 @@
 
         let endDateStr = '';
         if (event.recurring_until) {
-            const endDate = new Date(event.recurring_until);
+            const [y, m, d] = event.recurring_until.split('-').map(Number);
+            const endDate = new Date(y, m - 1, d);
             endDateStr = endDate.toLocaleDateString('en-US', {
                 month: 'numeric',
                 day: 'numeric',

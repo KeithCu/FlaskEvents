@@ -50,7 +50,8 @@ function getRecurrenceSuffix(event) {
 
     let endDateStr = '';
     if (event.recurring_until) {
-        const endDate = new Date(event.recurring_until);
+        const [y, m, d] = event.recurring_until.split('-').map(Number);
+        const endDate = new Date(y, m - 1, d);
         endDateStr = endDate.toLocaleDateString('en-US', {
             month: 'numeric',
             day: 'numeric',
@@ -161,17 +162,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Check if we have a date parameter from URL
     if (pathParts.length >= 3 && pathParts[1] === 'day') {
-        // Parse date from URL path
-        initialDate = new Date(pathParts[2] + 'T00:00:00');
+        // Parse YYYY-MM-DD as a local calendar day
+        const [y, m, d] = pathParts[2].split('-').map(Number);
+        initialDate = new Date(y, m - 1, d);
         console.log(`Using URL date: ${pathParts[2]}, initialDate: ${initialDate}`);
     } else {
-        // Default to today
+        // Default to today (local calendar day)
         const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        initialDate = new Date(`${year}-${month}-${day}T00:00:00`);
-        console.log(`Using today's date: ${year}-${month}-${day}, initialDate: ${initialDate}`);
+        initialDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        console.log(`Using today's date: ${initialDate}`);
     }
 
     // Initialize calendar if the element exists
