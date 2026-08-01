@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}{% if user %}Edit User{% else %}New User{% endif %}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h2>{% if user %}Edit User{% else %}New User{% endif %}</h2>
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" class="form-control" id="username" name="username"
+                       value="{{ form_username }}" required autofocus
+                       {% if is_admin_user %}readonly{% endif %}>
+                {% if is_admin_user %}
+                <div class="form-text">The admin username cannot be changed.</div>
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" name="password"
+                       {% if not user %}required{% endif %}>
+                {% if user %}
+                <div class="form-text">Leave blank to keep the current password.</div>
+                {% endif %}
+            </div>
+            <button type="submit" class="btn btn-primary">{% if user %}Save{% else %}Create{% endif %}</button>
+            <a href="{{ url_for('list_users') }}" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

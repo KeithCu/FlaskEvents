@@ -50,10 +50,10 @@ database:
 # Flask Settings
 secret_key: "your-secret-key-change-this-in-production"
 
-# Admin login
-admin:
-  username: "admin"
-  password_hash: ""   # see Admin Login below
+# Login users (username "admin" can manage users in the UI)
+users:
+  - username: "admin"
+    password_hash: ""   # see Admin Login below
 
 # Timezone Settings
 timezone:
@@ -65,21 +65,25 @@ timezone:
 - **Timezone**: Set to your local timezone (e.g., "America/New_York", "America/Chicago")
 - **Database Path**: Default is "events.db" in the application root
 - **Secret Key**: Use a strong random value in production (required for session cookies)
-- **Admin Login**: Required to access `/admin/`, event create/edit/delete, and cache management
+- **Users**: At least one user with a password hash is required for login; the reserved username `admin` can manage users in the web UI
 
 The application will exit with an error if the `config.yaml` file is missing or malformed.
 
 ### Admin Login
 
-Admin credentials are stored in `config.yaml` (no user-management UI). To set up:
+Credentials are stored in `config.yaml` under `users`. Any listed user can log in and create/edit/delete events, manage venues, and use cache management. **Only the `admin` account** can create, edit, or delete users (and set passwords) at `/users`.
 
-1. Set `admin.username` to the desired login name.
+To bootstrap the first admin password:
+
+1. Keep a user with `username: "admin"` in `config.yaml`.
 2. Generate a password hash:
    ```bash
    python hash_password.py 'your-password'
    ```
-3. Paste the output into `admin.password_hash` in `config.yaml`.
-4. Log in at `/login` to access the admin panel, event forms, and cache management.
+3. Paste the output into that user's `password_hash` in `config.yaml`.
+4. Log in at `/login`, then use **Users** in the nav to add more accounts (passwords are set by admin only — no self-service password change).
+
+Legacy `admin.username` / `admin.password_hash` in `config.yaml` is still read if `users` is missing; the first save from the Users UI rewrites the file to the `users:` format.
 
 Public calendar views and the `/events` API (WordPress widgets) remain accessible without login.
 
@@ -429,8 +433,7 @@ base.html (foundation)
 ├── widget_test.html (main interface - home & day views)
 ├── month.html (monthly calendar view)
 ├── event_form.html (event creation/editing)
-├── venue_form.html (venue creation/editing)
-├── venues.html (venue management list)
+├── users.html / user_form.html (admin-only user management)
 └── cache_management.html (cache administration)
 ```
 
@@ -440,8 +443,8 @@ base.html (foundation)
 | `widget_test.html` | Home page and day view with search + calendar | `/`, `/day/<date>`, `/widget-test` |
 | `month.html` | Compact monthly calendar | `/month/<year>/<month>` |
 | `event_form.html` | Create/edit events | `/event/new`, `/event/<id>/edit` |
-| `venue_form.html` | Create/edit venues | `/venue/new`, `/venue/<id>/edit` |
-| `venues.html` | Venue list | `/venues` |
+| `users.html` | User list (admin only) | `/users` |
+| `user_form.html` | Create/edit user (admin only) | `/users/new`, `/users/<username>/edit` |
 | `cache_management.html` | Cache stats and admin | `/cache-management` |
 
 ### Performance Considerations

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a werkzeug password hash for config.yaml admin.password_hash."""
+"""Generate a werkzeug password hash for config.yaml users[].password_hash."""
 import sys
 
 from werkzeug.security import generate_password_hash
