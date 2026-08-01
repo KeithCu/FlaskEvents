@@ -10,7 +10,11 @@ function getEventAdminEditUrl(event) {
 }
 
 function getEventArrowUrl(event) {
-    return event.url || DEBUG_EVENT_URL_FALLBACK;
+    const url = event.url || DEBUG_EVENT_URL_FALLBACK;
+    if (/^https?:\/\//i.test(url)) {
+        return url;
+    }
+    return DEBUG_EVENT_URL_FALLBACK;
 }
 
 function escapeHtml(text) {

@@ -5,11 +5,20 @@ from wtforms import SelectMultipleField, TextAreaField, StringField, DateTimeFie
 from wtforms.validators import DataRequired, Optional
 from database import Category, Event, Venue, SessionLocal, AdminSession, engine
 from cacheout import Cache
-from sqlalchemy import text, func
+from sqlalchemy import text, func, tuple_
 from sqlalchemy.orm import joinedload
 from datetime import datetime, timedelta, date
-from flask import render_template, request, flash, redirect, url_for, session
+from flask import render_template, request, flash, redirect, url_for, session, current_app
+from urls import safe_http_url
 import json
+
+
+def _local_now_naive():
+    """Wall-clock now in configured local timezone, naive for DB comparisons."""
+    tz = current_app.config.get('LOCAL_TIMEZONE')
+    if tz is not None:
+        return datetime.now(tz).replace(tzinfo=None)
+    return datetime.now()
 
 # Cache for most recently used categories (session-based)
 mru_cache = Cache(maxsize=100, ttl=3600)  # 1 hour TTL
@@ -36,7 +45,8 @@ class DashboardView(AuthMixin, BaseView):
             total_categories = session.query(Category).count()
             
             # Get events by month (last 6 months)
-            six_months_ago = datetime.now() - timedelta(days=180)
+            now = _local_now_naive()
+            six_months_ago = now - timedelta(days=180)
             monthly_events = session.query(
                 func.strftime('%Y-%m', Event.start).label('month'),
                 func.count(Event.id).label('count')
@@ -45,9 +55,9 @@ class DashboardView(AuthMixin, BaseView):
             ).order_by('month').all()
             
             # Get upcoming events (next 30 days) with venue loaded
-            thirty_days_from_now = datetime.now() + timedelta(days=30)
+            thirty_days_from_now = now + timedelta(days=30)
             upcoming_events = session.query(Event).options(joinedload(Event.venue)).filter(
-                Event.start >= datetime.now(),
+                Event.start >= now,
                 Event.start <= thirty_days_from_now
             ).order_by(Event.start).limit(10).all()
             
@@ -197,6 +207,7 @@ class EventModelView(ModelView):
     
     def on_model_change(self, form, model, is_created):
         """Update category usage counts when event is saved"""
+        model.url = safe_http_url(model.url)
         if model.categories:
             session = SessionLocal()
             try:
@@ -238,8 +249,9 @@ class VenueModelView(ModelView):
     }
     
     def on_model_change(self, form, model, is_created):
-        """Handle venue changes"""
-        pass
+        """Sanitize URL fields on venue save"""
+        model.website = safe_http_url(model.website)
+        model.image_url = safe_http_url(model.image_url)
     
     def after_model_change(self, form, model, is_created):
         """Clear caches after venue changes"""
@@ -254,15 +266,26 @@ class BulkOperationsView(AuthMixin, BaseView):
     def index(self):
         if request.method == 'POST':
             operation = request.form.get('operation')
-            event_ids = request.form.getlist('event_ids')
+            event_keys = request.form.getlist('event_ids')
             
-            if not event_ids:
+            if not event_keys:
                 flash('No events selected', 'error')
                 return redirect(url_for('bulkoperations.index'))
+
+            pk_pairs = []
+            for key in event_keys:
+                try:
+                    start_date_str, event_id_str = key.split(':', 1)
+                    pk_pairs.append((date.fromisoformat(start_date_str), int(event_id_str)))
+                except (ValueError, TypeError):
+                    flash(f'Invalid event selection: {key}', 'error')
+                    return redirect(url_for('bulkoperations.index'))
             
             session = SessionLocal()
             try:
-                events = session.query(Event).filter(Event.id.in_(event_ids)).all()
+                events = session.query(Event).filter(
+                    tuple_(Event.start_date, Event.id).in_(pk_pairs)
+                ).all()
                 
                 if operation == 'delete':
                     for event in events:
@@ -359,7 +382,7 @@ class EventManagementView(AuthMixin, BaseView):
             pagination = Pagination(events, page, per_page, total_events, total_pages, has_prev, has_next)
             
             # Get quick stats
-            upcoming_events = session.query(Event).filter(Event.start >= datetime.now()).count()
+            upcoming_events = session.query(Event).filter(Event.start >= _local_now_naive()).count()
             virtual_events = session.query(Event).filter(Event.is_virtual == True).count()
             recurring_events = session.query(Event).filter(Event.is_recurring == True).count()
             

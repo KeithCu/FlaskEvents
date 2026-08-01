@@ -1,17 +1,19 @@
 """Apply venue neighborhood data from data/venue_neighborhoods.json on startup."""
 
 import json
+import logging
 import os
 from typing import Dict, Optional
 
 from database import SessionLocal, Venue, basedir
+
+logger = logging.getLogger(__name__)
 
 DATA_PATH = os.path.join(basedir, 'data', 'venue_neighborhoods.json')
 
 
 def load_neighborhood_data(path: str = DATA_PATH) -> Optional[Dict]:
     if not os.path.isfile(path):
-        print(f'Venue neighborhood data not found at {path}; skipping migration.')
         return None
 
     with open(path, encoding='utf-8') as handle:
@@ -19,7 +21,7 @@ def load_neighborhood_data(path: str = DATA_PATH) -> Optional[Dict]:
 
     venues = payload.get('venues')
     if not isinstance(venues, dict):
-        print('Invalid venue neighborhood data: missing "venues" object.')
+        logger.error('Invalid venue neighborhood data: missing "venues" object.')
         return None
 
     return venues
@@ -73,20 +75,13 @@ def migrate_venue_neighborhoods() -> None:
             (Venue.neighborhood == None) | (Venue.neighborhood == '')  # noqa: E711
         ).count()
         if empty_count == 0:
-            print('All venues already have neighborhoods; skipping neighborhood migration.')
             return
 
-        stats = apply_neighborhood_mappings(session, venues, only_empty=True)
+        apply_neighborhood_mappings(session, venues, only_empty=True)
         session.commit()
-        print(
-            'Venue neighborhood migration: '
-            f"{stats['updated']} updated, "
-            f"{stats['skipped_set']} already set, "
-            f"{stats['skipped_missing']} names not in database."
-        )
     except Exception as exc:
         session.rollback()
-        print(f'Venue neighborhood migration failed: {exc}')
+        logger.error('Venue neighborhood migration failed: %s', exc)
     finally:
         session.close()
 

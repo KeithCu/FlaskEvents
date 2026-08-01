@@ -4,8 +4,8 @@
 
 {% block content %}
 <div class="venue-page">
-    {% if venue.image_url %}
-    <img src="{{ venue.image_url }}" alt="{{ venue.name }}" class="venue-image">
+    {% if venue.image_url|safe_url %}
+    <img src="{{ venue.image_url|safe_url }}" alt="{{ venue.name }}" class="venue-image">
     {% endif %}
     <h1 class="venue-title">{{ venue.name }}</h1>
 
@@ -40,8 +40,8 @@
         <div>
             {% if venue.phone %}{{ venue.phone }}{% endif %}
             {% if venue.phone and venue.website %} : {% endif %}
-            {% if venue.website %}
-            <a href="{{ venue.website }}" target="_blank" rel="noopener">{{ venue.website.replace('https://', '').replace('http://', '') }}</a>
+            {% if venue.website|safe_url %}
+            <a href="{{ venue.website|safe_url }}" target="_blank" rel="noopener">{{ venue.website.replace('https://', '').replace('http://', '') }}</a>
             {% endif %}
         </div>
         {% endif %}
@@ -61,7 +61,7 @@
                     <span class="event-arrow event-admin-arrow">{{ event_link_arrow }}</span>
                 </a>
                 {% endif %}
-                <a href="{{ event.url or debug_event_url }}" target="_blank" rel="noopener" class="event-arrow-link" title="Event link">
+                <a href="{{ (event.url|safe_url) or debug_event_url }}" target="_blank" rel="noopener" class="event-arrow-link" title="Event link">
                     <span class="event-arrow">{{ event_link_arrow }}</span>
                 </a>
                 <span class="event-text">

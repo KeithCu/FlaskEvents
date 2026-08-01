@@ -11,6 +11,7 @@
     </div>
 
     <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card">
@@ -36,7 +37,7 @@
                                     {% for event in events %}
                                     <tr>
                                         <td>
-                                            <input type="checkbox" name="event_ids" value="{{ event.id }}" class="event-checkbox">
+                                            <input type="checkbox" name="event_ids" value="{{ event.start_date.isoformat() }}:{{ event.id }}" class="event-checkbox">
                                         </td>
                                         <td>{{ event.title }}</td>
                                         <td>{{ event.start.strftime('%Y-%m-%d %H:%M') if event.start else '' }}</td>

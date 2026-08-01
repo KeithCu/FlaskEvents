@@ -1,10 +1,31 @@
+import logging
 import os
+import yaml
 from sqlalchemy import create_engine, text, PrimaryKeyConstraint, Column, String, Float, DateTime, Integer, Date, ForeignKey, Text, Index, Boolean, Table
 from sqlalchemy.orm import sessionmaker, scoped_session, declarative_base, relationship
 
+logger = logging.getLogger(__name__)
+
 # Get the directory where the files are located
 basedir = os.path.abspath(os.path.dirname(__file__))
-db_path = os.path.join(basedir, 'events.db')
+
+
+def _resolve_db_path():
+    """Resolve SQLite path from config.yaml (relative paths are basedir-relative)."""
+    config_path = os.path.join(basedir, 'config.yaml')
+    path = 'events.db'
+    try:
+        with open(config_path, 'r') as file:
+            config = yaml.safe_load(file) or {}
+        path = config.get('database', {}).get('path', path) or path
+    except Exception:
+        pass
+    if not os.path.isabs(path):
+        path = os.path.join(basedir, path)
+    return path
+
+
+db_path = _resolve_db_path()
 
 # Add connection pooling for better performance
 engine = create_engine(
@@ -25,13 +46,11 @@ def configure_database():
             # Check if any tables exist
             result = conn.execute(text("SELECT name FROM sqlite_master WHERE type='table'")).fetchall()
             if result:
-                print("Database already has tables, cannot change page size")
                 return
     
     # Set page size to 16KB (16384 bytes)
     with engine.connect() as conn:
         conn.execute(text('PRAGMA page_size = 16384'))
-        print("Database page size set to 16KB")
 
 def optimize_database():
     """Set SQLite optimizations for read-heavy workloads with large database but recent event access"""
@@ -59,8 +78,6 @@ def optimize_database():
         
         # Disable WAL mode features that add overhead for small DBs
         conn.execute(text('PRAGMA wal_autocheckpoint = 0'))
-        
-        print("Database optimized for read-heavy workload with large database but recent event access")
 
 def migrate_database():
     """Migrate database to add categories support"""
@@ -72,7 +89,6 @@ def migrate_database():
         """)).fetchone()
         
         if not category_table_exists:
-            print("Creating category table...")
             conn.execute(text("""
                 CREATE TABLE category (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -82,7 +98,6 @@ def migrate_database():
                 )
             """))
             conn.commit()
-            print("Created category table")
         
         # Check if event table exists before trying to add columns
         event_table_exists = conn.execute(text("""
@@ -99,16 +114,10 @@ def migrate_database():
             column_names = [col[1] for col in columns]
             
             if 'categories' not in column_names:
-                print("Adding categories column to event table...")
                 conn.execute(text("""
                     ALTER TABLE event ADD COLUMN categories TEXT DEFAULT ''
                 """))
                 conn.commit()
-                print("Added categories column to event table")
-            else:
-                print("Categories column already exists in event table")
-        else:
-            print("Event table doesn't exist yet, skipping column addition")
         
         # Insert default categories if they don't exist
         default_categories = [
@@ -126,7 +135,6 @@ def migrate_database():
             """), {"name": category_name})
         
         conn.commit()
-        print(f"Inserted {len(default_categories)} default categories")
 
         # Add venue detail columns if venue table exists
         venue_table_exists = conn.execute(text("""
@@ -139,39 +147,31 @@ def migrate_database():
             venue_column_names = [col[1] for col in venue_columns]
 
             if 'description' not in venue_column_names:
-                print("Adding description column to venue table...")
                 conn.execute(text("ALTER TABLE venue ADD COLUMN description TEXT"))
                 conn.commit()
 
             if 'phone' not in venue_column_names:
-                print("Adding phone column to venue table...")
                 conn.execute(text("ALTER TABLE venue ADD COLUMN phone VARCHAR(50)"))
                 conn.commit()
 
             if 'website' not in venue_column_names:
-                print("Adding website column to venue table...")
                 conn.execute(text("ALTER TABLE venue ADD COLUMN website VARCHAR(500)"))
                 conn.commit()
 
             if 'image_url' not in venue_column_names:
-                print("Adding image_url column to venue table...")
                 conn.execute(text("ALTER TABLE venue ADD COLUMN image_url VARCHAR(500)"))
                 conn.commit()
 
             if 'neighborhood' not in venue_column_names:
-                print("Adding neighborhood column to venue table...")
                 conn.execute(text("ALTER TABLE venue ADD COLUMN neighborhood VARCHAR(100)"))
                 conn.commit()
 
             if 'venue_type' not in venue_column_names:
-                print("Adding venue_type column to venue table...")
                 conn.execute(text("ALTER TABLE venue ADD COLUMN venue_type VARCHAR(100)"))
                 conn.commit()
 
     from migrate_venue_neighborhoods import migrate_venue_neighborhoods
     migrate_venue_neighborhoods()
-
-    print("Database migration completed successfully!")
 
 def check_database_stats():
     with engine.connect() as conn:
@@ -181,26 +181,12 @@ def check_database_stats():
         page_size = conn.execute(text('PRAGMA page_size')).scalar()
         
         # Calculate fragmentation
-        total_size = page_count * page_size
-        free_size = free_pages * page_size
         fragmentation = (free_pages / page_count * 100) if page_count > 0 else 0
-        
-        print(f"Database stats:")
-        print(f"Total pages: {page_count}")
-        print(f"Free pages: {free_pages}")
-        print(f"Page size: {page_size} bytes")
-        print(f"Total size: {total_size/1024:.1f} KB")
-        print(f"Free space: {free_size/1024:.1f} KB")
-        print(f"Fragmentation: {fragmentation:.1f}%")
         
         # Only vacuum if fragmentation is significant
         if fragmentation > 10:  # More than 10% fragmented
-            print("Fragmentation is high, running VACUUM...")
-            with engine.begin() as conn:
-                conn.execute(text('VACUUM'))
-            print("Database vacuum completed")
-        else:
-            print("Database is well-optimized, skipping VACUUM")
+            with engine.begin() as vacuum_conn:
+                vacuum_conn.execute(text('VACUUM'))
 
 Base = declarative_base()
 SessionLocal = sessionmaker(bind=engine)
@@ -303,18 +289,12 @@ class Venue(Base):
 
 # Add this after the SessionLocal definition
 def get_next_event_id(session, start_date):
-    print(f"Getting next ID for date: {start_date}")
     # Get the max ID for the specific date
     query = text("SELECT MAX(id) FROM event WHERE start_date = :start_date")
-    print(f"Executing query with params: {{'start_date': {start_date}}}")
     result = session.execute(query, {"start_date": start_date}).scalar()
-    print(f"Query result: {result}")
-    next_id = (result or 0) + 1
-    print(f"Generated next ID: {next_id}")
-    return next_id
+    return (result or 0) + 1
 
 def get_next_event_ids(session, events):
-    print("Getting next IDs for multiple events")
     # Group events by date
     date_to_events = {}
     for event in events:
@@ -322,12 +302,9 @@ def get_next_event_ids(session, events):
             date_to_events[event.start_date] = []
         date_to_events[event.start_date].append(event)
     
-    print(f"Grouped events by date: {date_to_events.keys()}")
-    
     # Assign IDs for each date
     for start_date, date_events in date_to_events.items():
         next_id = get_next_event_id(session, start_date)
         for event in date_events:
             event.id = next_id
             next_id += 1
-            print(f"Assigned ID {event.id} to event '{event.title}' on {start_date}")

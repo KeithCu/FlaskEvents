@@ -1,5 +1,7 @@
 Flask
 Flask-SQLAlchemy
+Flask-Admin
+Flask-WTF
 python-dateutil
 cacheout
 Flask-Compress
@@ -10,3 +12,4 @@ Flask-Assets
 cssmin
 phpserialize
 pymysql
+openpyxl

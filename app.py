@@ -2,24 +2,38 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, f
 from flask_compress import Compress
 from flask_cors import CORS
 from flask_assets import Environment, Bundle
-from sqlalchemy import text
+from flask_wtf.csrf import CSRFProtect
 from datetime import datetime
-from sqlalchemy.orm import joinedload
+import logging
 import yaml
 import os
 import sys
-import time
 import traceback
 import pytz
 from markupsafe import escape
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from fts import setup_fts_triggers, ensure_fts_setup, search_events
-from database import engine, db_path, Base, SessionLocal, AdminSession, Event, Venue, EventFTS, migrate_database, get_next_event_id
+from database import engine, db_path, SessionLocal, AdminSession, Event, migrate_database
 from admin import init_admin
 from auth import init_auth, register_auth_routes
-from events import serialize_event, EVENT_LINK_ARROW
+from events import EVENT_LINK_ARROW, register_events
+from cache import register_cache_routes
+
+
+def configure_logging():
+    """Only emit ERROR and above from the app and Werkzeug access logger."""
+    logging.basicConfig(
+        level=logging.ERROR,
+        format='%(asctime)s %(levelname)s [%(name)s] %(message)s',
+        force=True,
+    )
+    logging.getLogger('werkzeug').setLevel(logging.ERROR)
+    logging.getLogger('flask_wtf').setLevel(logging.ERROR)
+
+
+configure_logging()
+logger = logging.getLogger(__name__)
 
 
 def load_config():
@@ -32,17 +46,13 @@ def load_config():
                 raise ValueError("config.yaml is empty")
             return config
     except FileNotFoundError:
-        print(f"ERROR: config.yaml not found at {config_path}")
-        print("Please create a config.yaml file with the required settings.")
-        print("See README.md for configuration details.")
+        logger.error("config.yaml not found at %s", config_path)
         sys.exit(1)
     except yaml.YAMLError as e:
-        print(f"ERROR: Invalid YAML in config.yaml: {e}")
-        print("Please fix the YAML syntax in your config.yaml file.")
+        logger.error("Invalid YAML in config.yaml: %s", e)
         sys.exit(1)
     except ValueError as e:
-        print(f"ERROR: {e}")
-        print("Please ensure config.yaml contains valid configuration.")
+        logger.error("%s", e)
         sys.exit(1)
 
 
@@ -51,9 +61,21 @@ config = load_config()
 init_auth(config)
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{config["database"]["path"]}'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = config.get('secret_key', 'dev-secret-key-change-in-production')
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['WTF_CSRF_TIME_LIMIT'] = None
+
+# Set timezone to local timezone instead of UTC
+LOCAL_TIMEZONE = pytz.timezone(config['timezone']['local'])
+app.config['LOCAL_TIMEZONE'] = LOCAL_TIMEZONE
+
+app.logger.setLevel(logging.ERROR)
+
+csrf = CSRFProtect(app)
 
 @app.context_processor
 def inject_template_globals():
@@ -67,12 +89,7 @@ CORS_ORIGINS = [
 CORS(app,
      origins=CORS_ORIGINS,
      methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-     allow_headers=['Content-Type', 'Authorization'])
-
-# Set timezone to local timezone instead of UTC
-# You can change this to your specific timezone if needed
-# Common options: 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles'
-LOCAL_TIMEZONE = pytz.timezone(config['timezone']['local'])  # Adjust this to your timezone
+     allow_headers=['Content-Type', 'Authorization', 'X-CSRFToken', 'X-CSRF-Token'])
 
 def get_local_now():
     """Get current datetime in local timezone"""
@@ -105,15 +122,6 @@ def favicon():
         mimetype='image/vnd.microsoft.icon',
     )
 
-# Future JavaScript bundle (for when you add JS files)
-# js_bundle = Bundle(
-#     'js/calendar.js',
-#     'js/forms.js',
-#     filters='jsmin',
-#     output='gen/packed.js'
-# )
-# assets.register('js_all', js_bundle)
-
 # Home route (widget test page)
 @app.route('/')
 def home():
@@ -130,79 +138,34 @@ def month_view(year, month):
 # Daily view
 @app.route('/day/<date>')
 def day_view(date):
-    print(f"DAY VIEW ENDPOINT CALLED for date: {date}")
-    
     try:
-        # Parse the date string into a datetime object
         date_obj = datetime.strptime(date, '%Y-%m-%d')
         session = SessionLocal()
         try:
-            # Get events for the specified day using start_date
             day_events = session.query(Event).filter(
                 Event.start_date == date_obj.date()
             ).order_by(Event.start).all()
-            
-            print(f"Found {len(day_events)} events for {date}")
-            
-            return render_template('widget_test.html', 
-                                 year=date_obj.year, 
-                                 month=date_obj.month, 
+
+            return render_template('widget_test.html',
+                                 year=date_obj.year,
+                                 month=date_obj.month,
                                  day=date_obj.day,
-                                 date=date,  # Pass the original date string
+                                 date=date,
                                  events=day_events)
         finally:
             session.close()
     except ValueError:
-        print(f"Invalid date format: {date}")
-        # If date parsing fails, redirect to home
         return redirect(url_for('home'))
 
 @app.route('/widget-test')
 def widget_test():
     return render_template('widget_test.html')
 
-@app.route('/search')
-def search():
-    query = request.args.get('q', '')
-    print(f"Search query received: {query}")
-    
-    if not query:
-        return jsonify([])
-    
-    session = SessionLocal()
-    try:
-        results = search_events(query, session)
-        print(f"Search results count: {len(results)}")
-
-        if results:
-            event_ids = [event.id for event in results]
-            results = session.query(Event).options(joinedload(Event.venue)).filter(
-                Event.id.in_(event_ids)
-            ).all()
-            id_order = {event_id: index for index, event_id in enumerate(event_ids)}
-            results.sort(key=lambda event: id_order.get(event.id, 0))
-
-        event_list = [serialize_event(event) for event in results]
-        return jsonify(event_list)
-    except Exception as e:
-        print(f"Error in search: {e}")
-        return jsonify([])
-    finally:
-        session.close()
-
 # Run migration automatically after models are defined
 try:
     migrate_database()
 except Exception as e:
-    print(f"Migration failed: {e}")
-    print("Continuing with app startup...")
-
-# Initialize FTS automatically when the app starts
-try:
-    ensure_fts_setup()
-except Exception as e:
-    print(f"FTS setup failed: {e}")
-    print("Starting app without FTS...")
+    logger.error("Migration failed: %s", e, exc_info=True)
 
 # Auth routes (login/logout) before admin
 register_auth_routes(app)
@@ -210,32 +173,29 @@ register_auth_routes(app)
 # Initialize Flask-Admin
 init_admin(app)
 
+# Register routes from other modules
+register_events(app)
+register_cache_routes(app)
+
 @app.teardown_appcontext
 def shutdown_admin_session(exception=None):
     AdminSession.remove()
-
-# Only initialize FTS if this file is run directly
-if __name__ == '__main__':
-    app.run(debug=True)
-
-# WSGI application
-application = app 
-
 
 def set_cache_headers(response, max_age=3600):
     """Set cache headers for better performance"""
     response.headers['Cache-Control'] = f'public, max-age={max_age}'
     response.headers['Vary'] = 'Accept-Encoding'
-    return response 
+    return response
 
 def monitor_connection_pool():
     """Monitor connection pool usage"""
     pool = engine.pool
-    print(f"Connection pool stats:")
-    print(f"  Size: {pool.size()}")
-    print(f"  Checked out: {pool.checkedout()}")
-    print(f"  Overflow: {pool.overflow()}")
-    print(f"  Checked in: {pool.checkedin()}")
+    return {
+        'pool_size': pool.size(),
+        'checked_out': pool.checkedout(),
+        'overflow': pool.overflow(),
+        'checked_in': pool.checkedin(),
+    }
 
 @app.errorhandler(500)
 def internal_error(error):
@@ -244,7 +204,6 @@ def internal_error(error):
     tb = getattr(original, '__traceback__', None)
     exc_info = (type(original), original, tb)
     app.logger.error('Internal server error', exc_info=exc_info)
-    traceback.print_exception(*exc_info)
 
     if session.get('logged_in'):
         tb_text = ''.join(traceback.format_exception(*exc_info))
@@ -277,11 +236,11 @@ def pool_stats():
         'checked_in': pool.checkedin(),
         'total_connections': pool.size() + pool.overflow()
     }
-    return jsonify(stats) 
+    return jsonify(stats)
 
-# Register routes from other modules
-from events import register_events
-from cache import register_cache_routes
-register_events(app)
-register_cache_routes(app)
+# WSGI application
+application = app
 
+if __name__ == '__main__':
+    app.config['SESSION_COOKIE_SECURE'] = False
+    app.run(debug=True)

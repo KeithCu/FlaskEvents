@@ -3,7 +3,6 @@ import random
 from faker import Faker
 import argparse
 
-from fts import setup_fts_triggers
 from app import Base, engine, SessionLocal, Event, Venue
 from database import get_next_event_ids, migrate_database
 
@@ -213,11 +212,6 @@ def populate_events(total_events=50000):
                 print(f"Venue {v.name}: {venue_counts[v.id]} events")
         
         print(f"All events have been added successfully! Total indefinite events: {indefinite_events_total}/10")
-        
-        # Set up FTS after populating events
-        print("Setting up FTS for search functionality...")
-        setup_fts_triggers()
-        print("FTS setup completed!")
         
     except Exception as e:
         print(f"An error occurred: {e}")

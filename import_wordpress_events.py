@@ -17,7 +17,6 @@ import pytz
 from sqlalchemy import text
 
 from database import Base, Event, Venue, engine, get_next_event_ids, migrate_database, SessionLocal
-from fts import setup_fts_triggers
 
 DEFAULT_TIMEZONE = 'America/Detroit'
 DEFAULT_COLOR = '#3788d8'
@@ -751,7 +750,6 @@ def import_data(data: ExtractedData, dry_run: bool = False) -> ImportStats:
             session.bulk_save_objects(batch)
             session.commit()
 
-        setup_fts_triggers()
         return stats
     except Exception:
         session.rollback()

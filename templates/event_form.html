@@ -11,6 +11,7 @@
     </div>
 
     <form method="POST" id="eventForm" onsubmit="return validateForm()">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="row">
             <!-- Main Form Content -->
             <div class="col-md-9">
@@ -166,6 +167,7 @@
     {% if event %}
     <div class="form-buttons compact mt-2">
         <form action="{{ url_for('delete_event', start_date=event.start_date.isoformat(), id=event.id) }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this event?')">Delete</button>
         </form>
     </div>

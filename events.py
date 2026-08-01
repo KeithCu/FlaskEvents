@@ -1,7 +1,6 @@
 from flask import render_template, request, jsonify, redirect, url_for, flash, abort, session as flask_session
 from sqlalchemy import case, text
 from datetime import datetime, timedelta, time as dt_time
-import time
 from cacheout import Cache
 from dateutil.rrule import rrulestr
 from contextlib import contextmanager
@@ -11,8 +10,8 @@ import pytz
 from urllib.parse import quote_plus
 
 from database import SessionLocal, Event, Venue, Category, get_next_event_id
-from fts import ensure_fts_setup
 from auth import login_required
+from urls import safe_http_url
 
 # Global cache configuration - can be adjusted
 CACHE_TTL_SECONDS = 5 * 60  # 5 minutes
@@ -27,8 +26,8 @@ day_events_cache = Cache(maxsize=30, ttl=CACHE_TTL_SECONDS)
 # Value: list of events for the calendar range
 calendar_events_cache = Cache(maxsize=10, ttl=CACHE_TTL_SECONDS)
 
-# Set timezone to local timezone instead of UTC
-LOCAL_TIMEZONE = pytz.timezone('America/New_York')  # Adjust this to your timezone
+# Default; overridden from app config in register_events()
+LOCAL_TIMEZONE = pytz.timezone('America/New_York')
 
 # Shared event link arrow (events list + venue upcoming events)
 EVENT_LINK_ARROW = '→'
@@ -61,9 +60,6 @@ def set_cached_day_events(date_str, events):
     """Cache complete day events for a specific date"""
     if day_events_cache is not None:
         day_events_cache.set(date_str, events)
-        print(f"Cached {len(events)} complete day events for {date_str}")
-    else:
-        print(f"Failed to cache events for {date_str}: cache not initialized")
 
 def get_cached_calendar_events(start_str, end_str):
     """Get calendar events for a date range from cache"""
@@ -77,23 +73,16 @@ def set_cached_calendar_events(start_str, end_str, events):
     if calendar_events_cache is not None:
         cache_key = f"calendar_{start_str}_{end_str}"
         calendar_events_cache.set(cache_key, events)
-        print(f"Cached {len(events)} calendar events for {start_str} to {end_str}")
 
 def clear_day_events_cache():
     """Clear the complete day events cache - call this when events are modified"""
     if day_events_cache is not None:
         day_events_cache.clear()
-        print("Cleared complete day events cache")
-    else:
-        print("Attempted to clear cache but cache not initialized")
 
 def clear_calendar_events_cache():
     """Clear the calendar events cache - call this when events are modified"""
     if calendar_events_cache is not None:
         calendar_events_cache.clear()
-        print("Cleared calendar events cache")
-    else:
-        print("Attempted to clear calendar cache but cache not initialized")
 
 def _event_venue_name(event):
     """Venue name for persisted or expanded (transient) event instances."""
@@ -204,6 +193,14 @@ def get_venue_map_embed(venue):
     return embed_url, is_fallback
 
 def register_events(app):
+    global LOCAL_TIMEZONE
+    tz = app.config.get('LOCAL_TIMEZONE')
+    if tz is not None:
+        LOCAL_TIMEZONE = tz
+
+    @app.template_filter('safe_url')
+    def safe_url_filter(url):
+        return safe_http_url(url) or ''
 
     def get_events_in_batches(session, start_date, end_date, batch_size=1000):
         events = []
@@ -223,8 +220,6 @@ def register_events(app):
 
     @app.route('/events')
     def get_events():
-        start_time = time.time()
-        
         # Check if this is a single-day request (from events list widget)
         date = request.args.get('date')
         if date:
@@ -235,8 +230,6 @@ def register_events(app):
             cached_day_events = get_cached_day_events(date) if use_cache else None
             
             if cached_day_events is not None:
-                # Use cached complete day events
-                print(f"Cache HIT for {date}: {len(cached_day_events)} events")
                 event_list = cached_day_events
             else:
                 with get_db_session() as session:
@@ -275,15 +268,6 @@ def register_events(app):
                         Event.end > midnight
                     ).order_by(Event.start).all()
                     ongoing_events = [e for e in past_midnight if e.end > ongoing_cutoff]
-                    skipped_ongoing = len(past_midnight) - len(ongoing_events)
-                    if past_midnight:
-                        sample_ends = ', '.join(e.end.strftime('%H:%M') for e in past_midnight[:5])
-                        print(
-                            f"Ongoing cutoff {ONGOING_CUTOFF_HOUR}:00 for {date}: "
-                            f"{len(past_midnight)} previous-day past midnight, "
-                            f"{len(ongoing_events)} kept (end > cutoff), "
-                            f"{skipped_ongoing} skipped; sample ends: {sample_ends}"
-                        )
                     
                     # Get ongoing recurring events from previous day
                     ongoing_recurring = session.query(Event).options(joinedload(Event.venue)).filter(
@@ -294,27 +278,18 @@ def register_events(app):
                     
                     # Expand ongoing recurring events (only if past morning cutoff)
                     ongoing_expanded = []
-                    recurring_past_midnight = 0
                     for event in ongoing_recurring:
                         instances = expand_recurring_events(event, 
                                                           datetime.combine(previous_date, datetime.min.time()),
                                                           datetime.combine(previous_date, datetime.max.time()))
                         for instance in instances:
                             if instance.start.date() == previous_date and instance.end > midnight:
-                                recurring_past_midnight += 1
                                 if instance.end > ongoing_cutoff:
                                     ongoing_expanded.append(instance)
-                    if recurring_past_midnight:
-                        print(
-                            f"Ongoing recurring for {date}: {recurring_past_midnight} past midnight, "
-                            f"{len(ongoing_expanded)} kept after {ONGOING_CUTOFF_HOUR}:00 cutoff"
-                        )
                 
                 # Combine and sort all events
                 all_events = day_events + expanded_events + ongoing_events + ongoing_expanded
                 all_events.sort(key=lambda x: x.start)
-                
-                print(f"Cache MISS for {date}: found {len(day_events)} non-recurring + {len(expanded_events)} recurring + {len(ongoing_events)} ongoing + {len(ongoing_expanded)} ongoing recurring = {len(all_events)} total events")
                 
                 event_list = []
                 for event in all_events:
@@ -324,19 +299,19 @@ def register_events(app):
                 if use_cache:
                     set_cached_day_events(date, event_list)
             
-            elapsed_time = time.time() - start_time
-            print(f"Single day request completed in {elapsed_time:.3f}s")
-            
             response = jsonify(event_list)
             return set_cache_headers(response, max_age=300)  # Cache for 5 minutes
         
         # Calendar widget request (date range)
         start = request.args.get('start')
         end = request.args.get('end')
-        
-        # Convert string dates to datetime objects
-        start_date = datetime.fromisoformat(start.replace('Z', '+00:00'))
-        end_date = datetime.fromisoformat(end.replace('Z', '+00:00'))
+        if not start or not end:
+            return jsonify({'error': 'start and end query parameters are required'}), 400
+        try:
+            start_date = datetime.fromisoformat(start.replace('Z', '+00:00'))
+            end_date = datetime.fromisoformat(end.replace('Z', '+00:00'))
+        except (ValueError, TypeError, AttributeError):
+            return jsonify({'error': 'Invalid start or end datetime'}), 400
         
         # Check cache first for calendar range (anonymous only)
         use_cache = not flask_session.get('logged_in')
@@ -345,8 +320,6 @@ def register_events(app):
         cached_calendar = get_cached_calendar_events(start_str, end_str) if use_cache else None
         
         if cached_calendar is not None:
-            # Use cached calendar events
-            print(f"Calendar cache HIT: {len(cached_calendar)} events")
             event_list = cached_calendar
         else:
             with get_db_session() as session:
@@ -374,8 +347,6 @@ def register_events(app):
                 all_events = non_recurring + expanded_events
                 all_events.sort(key=lambda x: x.start)
                 
-                print(f"Calendar cache MISS: {len(non_recurring)} non-recurring + {len(expanded_events)} recurring = {len(all_events)} total events")
-                
                 event_list = []
                 for event in all_events:
                     event_list.append(serialize_event(event))
@@ -383,9 +354,6 @@ def register_events(app):
                 # Cache the calendar events (anonymous only)
                 if use_cache:
                     set_cached_calendar_events(start_str, end_str, event_list)
-        
-        elapsed_time = time.time() - start_time
-        print(f"Calendar request completed in {elapsed_time:.3f}s")
         
         response = jsonify(event_list)
         return set_cache_headers(response, max_age=300)  # Cache for 5 minutes
@@ -438,12 +406,7 @@ def register_events(app):
     @app.route('/event/new', methods=['GET', 'POST'])
     @login_required
     def add_event():
-        print("="*50)
-        print("ADD EVENT ENDPOINT CALLED")
-        print("="*50)
-        
         if request.method == 'POST':
-            print("Processing POST request")
             title = request.form['title']
             description = request.form['description']
             start = datetime.fromisoformat(request.form['start'])
@@ -452,7 +415,7 @@ def register_events(app):
             venue_id = request.form.get('venue_id')
             color = request.form.get('color', '#3788d8')
             bg = request.form.get('bg', '#3788d8')
-            url = request.form.get('url', '').strip()
+            url = safe_http_url(request.form.get('url', ''))
             
             # Get recurring event fields
             recurring_until_str = request.form.get('recurring_until', '').strip()
@@ -486,10 +449,8 @@ def register_events(app):
                                         rrule=rrule_str,
                                         color=color,
                                         bg=bg,
-                                        url=url,
+                                        url=url or '',
                                         recurring_until=recurring_until_str)
-                
-                print(f"Creating event: {title} on {start.date()}")
                 
                 # Determine if this is a recurring event
                 is_recurring = bool(rrule_str and rrule_str.strip())
@@ -511,32 +472,19 @@ def register_events(app):
                     recurring_until=recurring_until,
                     is_virtual=False,
                     is_hybrid=False,
-                    url=url if url else None,
+                    url=url,
                     categories=categories_str
                 )
                 
                 # Generate ID for the new event based on its date
                 event.id = get_next_event_id(session, event.start_date)
-                print(f"Generated ID {event.id} for event on {event.start_date}")
-                print(f"Event is recurring: {is_recurring}, until: {recurring_until}")
-                print(f"Added categories: {categories_str}")
                 
                 session.add(event)
                 session.commit()
-                
-                # Verify the event was stored
-                stored_event = session.query(Event).filter(
-                    Event.start_date == event.start_date,
-                    Event.id == event.id
-                ).first()
-                print(f"Stored event: {stored_event.title if stored_event else 'Not found'}")
             
             # Clear cache since we added a new event
             clear_day_events_cache()
             clear_calendar_events_cache()
-            
-            # Ensure FTS is set up and updated
-            ensure_fts_setup()
             
             return redirect(url_for('home'))
         
@@ -563,7 +511,7 @@ def register_events(app):
             venue_id = request.form.get('venue_id')
             color = request.form.get('color', '#3788d8')
             bg = request.form.get('bg', '#3788d8')
-            url = request.form.get('url', '').strip()
+            url = safe_http_url(request.form.get('url', ''))
             
             # Get recurring event fields
             recurring_until_str = request.form.get('recurring_until', '').strip()
@@ -605,7 +553,7 @@ def register_events(app):
                                         rrule=rrule_str,
                                         color=color,
                                         bg=bg,
-                                        url=url,
+                                        url=url or '',
                                         recurring_until=recurring_until_str)
                 
                 # Determine if this is a recurring event
@@ -631,14 +579,10 @@ def register_events(app):
                         recurring_until=recurring_until,
                         is_virtual=event.is_virtual,
                         is_hybrid=event.is_hybrid,
-                        url=url if url else None,
+                        url=url,
                         categories=categories_str,
                     )
                     new_event.id = get_next_event_id(session, new_date)
-                    print(
-                        f"Moved event PK from {event.start_date},{event.id} "
-                        f"to {new_date},{new_event.id}"
-                    )
                     session.delete(event)
                     session.add(new_event)
                 else:
@@ -653,19 +597,14 @@ def register_events(app):
                     event.bg = bg
                     event.is_recurring = is_recurring
                     event.recurring_until = recurring_until
-                    event.url = url if url else None
+                    event.url = url
                     event.categories = categories_str
-                
-                print(f"Updated event with categories: {categories_str}")
                 
                 session.commit()
             
             # Clear cache since we modified an event
             clear_day_events_cache()
             clear_calendar_events_cache()
-            
-            # Ensure FTS is set up and updated
-            ensure_fts_setup()
             
             return redirect(url_for('home'))
         
@@ -702,9 +641,6 @@ def register_events(app):
         # Clear cache since we deleted an event
         clear_day_events_cache()
         clear_calendar_events_cache()
-        
-        # Ensure FTS is set up and updated
-        ensure_fts_setup()
         
         return redirect(url_for('home'))
 
