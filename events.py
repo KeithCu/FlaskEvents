@@ -15,8 +15,7 @@ from fts import ensure_fts_setup
 from auth import login_required
 
 # Global cache configuration - can be adjusted
-CACHE_TTL_HOURS = 1
-CACHE_TTL_SECONDS = CACHE_TTL_HOURS * 3600
+CACHE_TTL_SECONDS = 5 * 60  # 5 minutes
 
 # Initialize cache for complete day events
 # Key format: f"{date_str}" (e.g., "2025-01-15")
@@ -230,9 +229,10 @@ def register_events(app):
         date = request.args.get('date')
         if date:
             target_date = datetime.strptime(date, '%Y-%m-%d').date()
+            use_cache = not session.get('logged_in')
             
-            # Check cache first for complete day events
-            cached_day_events = get_cached_day_events(date)
+            # Check cache first for complete day events (anonymous only)
+            cached_day_events = get_cached_day_events(date) if use_cache else None
             
             if cached_day_events is not None:
                 # Use cached complete day events
@@ -320,8 +320,9 @@ def register_events(app):
                 for event in all_events:
                     event_list.append(serialize_event(event))
                 
-                # Cache the complete day events
-                set_cached_day_events(date, event_list)
+                # Cache the complete day events (anonymous only)
+                if use_cache:
+                    set_cached_day_events(date, event_list)
             
             elapsed_time = time.time() - start_time
             print(f"Single day request completed in {elapsed_time:.3f}s")
@@ -337,10 +338,11 @@ def register_events(app):
         start_date = datetime.fromisoformat(start.replace('Z', '+00:00'))
         end_date = datetime.fromisoformat(end.replace('Z', '+00:00'))
         
-        # Check cache first for calendar range
+        # Check cache first for calendar range (anonymous only)
+        use_cache = not session.get('logged_in')
         start_str = start_date.date().isoformat()
         end_str = end_date.date().isoformat()
-        cached_calendar = get_cached_calendar_events(start_str, end_str)
+        cached_calendar = get_cached_calendar_events(start_str, end_str) if use_cache else None
         
         if cached_calendar is not None:
             # Use cached calendar events
@@ -378,8 +380,9 @@ def register_events(app):
                 for event in all_events:
                     event_list.append(serialize_event(event))
                 
-                # Cache the calendar events
-                set_cached_calendar_events(start_str, end_str, event_list)
+                # Cache the calendar events (anonymous only)
+                if use_cache:
+                    set_cached_calendar_events(start_str, end_str, event_list)
         
         elapsed_time = time.time() - start_time
         print(f"Calendar request completed in {elapsed_time:.3f}s")
