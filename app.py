@@ -14,7 +14,7 @@ import pytz
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from fts import setup_fts_triggers, ensure_fts_setup, search_events
-from database import engine, db_path, Base, SessionLocal, Event, Venue, EventFTS, migrate_database, get_next_event_id
+from database import engine, db_path, Base, SessionLocal, AdminSession, Event, Venue, EventFTS, migrate_database, get_next_event_id
 from admin import init_admin
 from auth import init_auth, register_auth_routes
 from events import serialize_event, EVENT_LINK_ARROW
@@ -207,6 +207,10 @@ register_auth_routes(app)
 
 # Initialize Flask-Admin
 init_admin(app)
+
+@app.teardown_appcontext
+def shutdown_admin_session(exception=None):
+    AdminSession.remove()
 
 # Only initialize FTS if this file is run directly
 if __name__ == '__main__':

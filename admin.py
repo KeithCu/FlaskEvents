@@ -3,7 +3,7 @@ from flask_admin.contrib.sqla import ModelView, tools as sqla_tools
 from flask_admin.form import Select2Field
 from wtforms import SelectMultipleField, TextAreaField, StringField, DateTimeField, BooleanField, SelectField
 from wtforms.validators import DataRequired, Optional
-from database import Category, Event, Venue, SessionLocal, engine
+from database import Category, Event, Venue, SessionLocal, AdminSession, engine
 from cacheout import Cache
 from sqlalchemy import text, func
 from sqlalchemy.orm import joinedload
@@ -457,9 +457,9 @@ def init_admin(app):
         page_size = 100
         column_searchable_list = ('name', 'address')
     
-    admin.add_view(CompactCategoryModelView(Category, SessionLocal(), name='Categories', endpoint='categories'))
-    admin.add_view(CompactEventModelView(Event, SessionLocal(), name='Events', endpoint='events'))
-    admin.add_view(CompactVenueModelView(Venue, SessionLocal(), name='Venues', endpoint='venues'))
+    admin.add_view(CompactCategoryModelView(Category, AdminSession, name='Categories', endpoint='categories'))
+    admin.add_view(CompactEventModelView(Event, AdminSession, name='Events', endpoint='events'))
+    admin.add_view(CompactVenueModelView(Venue, AdminSession, name='Venues', endpoint='venues'))
     
     return admin
 

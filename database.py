@@ -1,6 +1,6 @@
 import os
 from sqlalchemy import create_engine, text, PrimaryKeyConstraint, Column, String, Float, DateTime, Integer, Date, ForeignKey, Text, Index, Boolean, Table
-from sqlalchemy.orm import sessionmaker, declarative_base, relationship
+from sqlalchemy.orm import sessionmaker, scoped_session, declarative_base, relationship
 
 # Get the directory where the files are located
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -204,6 +204,7 @@ def check_database_stats():
 
 Base = declarative_base()
 SessionLocal = sessionmaker(bind=engine)
+AdminSession = scoped_session(SessionLocal)
 
 # Configure and initialize database
 configure_database()
