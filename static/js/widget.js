@@ -187,8 +187,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 right: 'next'
             },
             dateClick: function(info) {
-                // Update the events list for the clicked date
-                currentDate = new Date(info.dateStr);
+                // Parse YYYY-MM-DD as a local calendar day (date-only ISO is UTC and off-by-one in US TZ)
+                const [y, m, d] = info.dateStr.split('-').map(Number);
+                currentDate = new Date(y, m - 1, d);
                 loadEvents(currentDate);
             },
             height: 'auto',

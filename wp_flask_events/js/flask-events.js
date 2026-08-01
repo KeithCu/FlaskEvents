@@ -234,7 +234,9 @@
                 dateClick: function(info) {
                     const eventsListEl = document.getElementById('events-list');
                     if (eventsListEl && typeof window.flaskEventsLoadDay === 'function') {
-                        window.flaskEventsLoadDay(new Date(info.dateStr + 'T00:00:00'));
+                        // Parse YYYY-MM-DD as a local calendar day (date-only ISO is UTC and off-by-one in US TZ)
+                        const [y, m, d] = info.dateStr.split('-').map(Number);
+                        window.flaskEventsLoadDay(new Date(y, m - 1, d));
                     } else if (apiBase) {
                         window.location.href = apiUrl('/day/' + info.dateStr);
                     }
