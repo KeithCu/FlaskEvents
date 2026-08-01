@@ -3,14 +3,20 @@ from flask_admin.contrib.sqla import ModelView, tools as sqla_tools
 from flask_admin.form import Select2Field
 from wtforms import SelectMultipleField, TextAreaField, StringField, DateTimeField, BooleanField, SelectField
 from wtforms.validators import DataRequired, Optional
-from database import Category, Event, Venue, SessionLocal, AdminSession, engine
+from database import Category, Event, Venue, SessionLocal, AdminSession, engine, db_path
 from cacheout import Cache
 from sqlalchemy import text, func, tuple_
 from sqlalchemy.orm import joinedload
 from datetime import datetime, timedelta, date
-from flask import render_template, request, flash, redirect, url_for, session, current_app
+from flask import (
+    render_template, request, flash, redirect, url_for, session, current_app,
+    send_file, abort, after_this_request,
+)
 from urls import safe_http_url
 import json
+import os
+import sqlite3
+import tempfile
 
 
 def _local_now_naive():
@@ -135,6 +141,47 @@ class DatabaseStatsView(AuthMixin, BaseView):
                              category_usage=category_usage)
         finally:
             session.close()
+
+    @expose('/download')
+    def download(self):
+        """Download a consistent SQLite backup of the events database."""
+        if not os.path.isfile(db_path):
+            abort(404)
+
+        stamp = _local_now_naive().strftime('%Y%m%d-%H%M%S')
+        download_name = f'events-{stamp}.db'
+        fd, tmp_path = tempfile.mkstemp(suffix='.db', prefix='events-backup-')
+        os.close(fd)
+
+        try:
+            src = sqlite3.connect(db_path)
+            try:
+                dst = sqlite3.connect(tmp_path)
+                try:
+                    src.backup(dst)
+                finally:
+                    dst.close()
+            finally:
+                src.close()
+        except Exception:
+            if os.path.isfile(tmp_path):
+                os.unlink(tmp_path)
+            raise
+
+        @after_this_request
+        def _cleanup(response):
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+            return response
+
+        return send_file(
+            tmp_path,
+            as_attachment=True,
+            download_name=download_name,
+            mimetype='application/x-sqlite3',
+        )
 
 class CategoryModelView(ModelView):
     """Admin interface for managing categories"""
