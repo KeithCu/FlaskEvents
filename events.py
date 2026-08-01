@@ -611,19 +611,47 @@ def register_events(app):
                 # If recurring and no end date specified, use default (2 years from start)
                 if is_recurring and not recurring_until:
                     recurring_until = start.date().replace(year=start.date().year + 2)
-                
-                event.title = title
-                event.description = description
-                event.start = start
-                event.end = end
-                event.rrule = rrule_str
-                event.venue_id = venue_id
-                event.color = color
-                event.bg = bg
-                event.is_recurring = is_recurring
-                event.recurring_until = recurring_until
-                event.url = url if url else None
-                event.categories = categories_str
+
+                new_date = start.date()
+                if event.start_date != new_date:
+                    # Composite PK includes start_date — recreate row for the new day
+                    new_event = Event(
+                        title=title,
+                        description=description,
+                        start=start,
+                        end=end,
+                        rrule=rrule_str,
+                        venue_id=venue_id,
+                        color=color,
+                        bg=bg,
+                        is_recurring=is_recurring,
+                        recurring_until=recurring_until,
+                        is_virtual=event.is_virtual,
+                        is_hybrid=event.is_hybrid,
+                        url=url if url else None,
+                        categories=categories_str,
+                    )
+                    new_event.id = get_next_event_id(session, new_date)
+                    print(
+                        f"Moved event PK from {event.start_date},{event.id} "
+                        f"to {new_date},{new_event.id}"
+                    )
+                    session.delete(event)
+                    session.add(new_event)
+                else:
+                    event.title = title
+                    event.description = description
+                    event.start = start
+                    event.end = end
+                    event.start_date = new_date
+                    event.rrule = rrule_str
+                    event.venue_id = venue_id
+                    event.color = color
+                    event.bg = bg
+                    event.is_recurring = is_recurring
+                    event.recurring_until = recurring_until
+                    event.url = url if url else None
+                    event.categories = categories_str
                 
                 print(f"Updated event with categories: {categories_str}")
                 

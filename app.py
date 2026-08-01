@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, send_from_directory
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, send_from_directory, session
 from flask_compress import Compress
 from flask_cors import CORS
 from flask_assets import Environment, Bundle
@@ -9,7 +9,9 @@ import yaml
 import os
 import sys
 import time
+import traceback
 import pytz
+from markupsafe import escape
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -237,8 +239,26 @@ def monitor_connection_pool():
 
 @app.errorhandler(500)
 def internal_error(error):
-    """Handle internal server errors gracefully"""
-    print(f"Internal server error: {error}")
+    """Log full traceback; show details only to logged-in admins."""
+    original = getattr(error, 'original_exception', None) or error
+    tb = getattr(original, '__traceback__', None)
+    exc_info = (type(original), original, tb)
+    app.logger.error('Internal server error', exc_info=exc_info)
+    traceback.print_exception(*exc_info)
+
+    if session.get('logged_in'):
+        tb_text = ''.join(traceback.format_exception(*exc_info))
+        html = (
+            '<!DOCTYPE html><html><head><title>500 Internal Server Error</title></head>'
+            '<body style="font-family: monospace; margin: 2rem;">'
+            '<h1>500 Internal Server Error</h1>'
+            f'<p><strong>{escape(type(original).__name__)}:</strong> {escape(str(original))}</p>'
+            f'<pre style="white-space: pre-wrap; background: #f5f5f5; padding: 1rem; '
+            f'border: 1px solid #ccc;">{escape(tb_text)}</pre>'
+            '</body></html>'
+        )
+        return html, 500
+
     return jsonify({'error': 'Internal server error'}), 500
 
 @app.errorhandler(404)
