@@ -149,14 +149,15 @@ def expand_recurring_events(event, start_date, end_date):
 
 def get_upcoming_events_for_venue(session, venue_id, limit=5, horizon_days=90):
     """Return the next upcoming events at a venue, including expanded recurring instances."""
-    now = datetime.now()
+    # Events are stored as America/New_York naive; never compare to UTC datetime.now().
+    now = datetime.now(pytz.UTC).astimezone(LOCAL_TIMEZONE).replace(tzinfo=None)
     horizon_end = now + timedelta(days=horizon_days)
     today = now.date()
 
     non_recurring = session.query(Event).options(joinedload(Event.venue)).filter(
         Event.venue_id == venue_id,
         Event.is_recurring == False,
-        Event.start >= now
+        Event.end >= now
     ).order_by(Event.start).all()
 
     recurring = session.query(Event).options(joinedload(Event.venue)).filter(
@@ -169,7 +170,7 @@ def get_upcoming_events_for_venue(session, venue_id, limit=5, horizon_days=90):
     for event in recurring:
         instances = expand_recurring_events(event, now, horizon_end)
         for instance in instances:
-            if instance.start >= now:
+            if instance.end >= now:
                 expanded.append(instance)
 
     all_events = list(non_recurring) + expanded
