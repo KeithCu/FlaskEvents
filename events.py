@@ -5,6 +5,7 @@ from cacheout import Cache
 from dateutil.rrule import rrulestr
 from contextlib import contextmanager
 from sqlalchemy.orm import joinedload
+from types import SimpleNamespace
 import logging
 import os
 import pytz
@@ -27,7 +28,7 @@ day_events_cache = Cache(maxsize=30, ttl=CACHE_TTL_SECONDS)
 # Initialize cache for calendar range events
 # Key format: f"calendar_{start_str}_{end_str}"
 # Value: list of events for the calendar range
-calendar_events_cache = Cache(maxsize=10, ttl=CACHE_TTL_SECONDS)
+calendar_events_cache = Cache(maxsize=40, ttl=CACHE_TTL_SECONDS)
 
 # Default; overridden from app config in register_events()
 LOCAL_TIMEZONE = pytz.timezone('America/New_York')
@@ -89,20 +90,30 @@ def clear_calendar_events_cache():
 
 def _event_venue_name(event):
     """Venue name for persisted or expanded (transient) event instances."""
-    if event.venue is not None:
-        return event.venue.name
+    venue = getattr(event, 'venue', None)
+    if venue is not None:
+        return venue.name
     return getattr(event, '_venue_name', None)
 
-def serialize_event(event):
-    """Serialize an Event for JSON API responses."""
-    return {
+def serialize_event(event, *, slim=False):
+    """Serialize an Event (or lightweight occurrence) for JSON API responses.
+
+    slim=True omits description/rrule/flags — enough for FullCalendar month views.
+    """
+    payload = {
         'id': event.id,
-        'start_date': event.start_date.isoformat() if event.start_date else None,
         'title': event.title,
         'start': event.start.isoformat(),
         'end': event.end.isoformat(),
-        'description': event.description,
         'venue': _event_venue_name(event),
+        'color': event.color,
+        'backgroundColor': event.bg,
+    }
+    if slim:
+        return payload
+    payload.update({
+        'start_date': event.start_date.isoformat() if event.start_date else None,
+        'description': event.description,
         'venue_id': event.venue_id,
         'is_virtual': event.is_virtual,
         'is_hybrid': event.is_hybrid,
@@ -110,9 +121,8 @@ def serialize_event(event):
         'is_recurring': event.is_recurring,
         'rrule': event.rrule,
         'recurring_until': event.recurring_until.isoformat() if event.recurring_until else None,
-        'color': event.color,
-        'backgroundColor': event.bg,
-    }
+    })
+    return payload
 
 def normalize_rrule(raw):
     """Strip noise and empty segments (no silent syntax rewrites)."""
@@ -144,6 +154,7 @@ def validate_rrule(raw, dtstart=None):
 
 
 def expand_recurring_events(event, start_date, end_date):
+    """Expand an RRULE into lightweight occurrence objects (not ORM Event instances)."""
     raw = event.rrule
     if not raw or not str(raw).strip():
         return [event]
@@ -166,32 +177,29 @@ def expand_recurring_events(event, start_date, end_date):
         )
         return []
 
+    duration = event.end - event.start
+    venue_name = _event_venue_name(event)
     expanded_events = []
     for instance_start in instances:
-        duration = event.end - event.start
-        instance_end = instance_start + duration
-
-        instance_event = Event(
+        expanded_events.append(SimpleNamespace(
+            id=event.id,
+            start_date=event.start_date,
             title=event.title,
             description=event.description,
             start=instance_start,
-            end=instance_end,
+            end=instance_start + duration,
             venue_id=event.venue_id,
+            venue=None,
+            _venue_name=venue_name,
             color=event.color,
             bg=event.bg,
             is_virtual=event.is_virtual,
             is_hybrid=event.is_hybrid,
             url=event.url,
-            is_recurring=event.is_recurring,
+            is_recurring=True,
             rrule=normalized,
             recurring_until=event.recurring_until,
-        )
-        instance_event.id = event.id
-        instance_event.start_date = event.start_date
-        venue_name = _event_venue_name(event)
-        if venue_name:
-            instance_event._venue_name = venue_name
-        expanded_events.append(instance_event)
+        ))
 
     return expanded_events
 
@@ -202,12 +210,15 @@ def get_upcoming_events_for_venue(session, venue_id, min_count=10, window_days=1
     horizon_end = now + timedelta(days=horizon_days)
     window_end = now + timedelta(days=window_days)
     today = now.date()
+    fetch_limit = max(min_count * 3, 50)
 
+    # Bound by horizon + LIMIT so popular venues don't load 1000+ future rows
     non_recurring = session.query(Event).options(joinedload(Event.venue)).filter(
         Event.venue_id == venue_id,
         Event.is_recurring == False,
-        Event.end >= now
-    ).order_by(Event.start).all()
+        Event.end >= now,
+        Event.start <= horizon_end,
+    ).order_by(Event.start).limit(fetch_limit).all()
 
     recurring = session.query(Event).options(joinedload(Event.venue)).filter(
         Event.venue_id == venue_id,
@@ -225,7 +236,9 @@ def get_upcoming_events_for_venue(session, venue_id, min_count=10, window_days=1
     all_events = list(non_recurring) + expanded
     all_events.sort(key=lambda x: x.start)
     in_window = [e for e in all_events if e.start <= window_end]
-    return in_window if len(in_window) >= min_count else all_events[:min_count]
+    if len(in_window) >= min_count:
+        return in_window
+    return all_events[:min_count]
 
 DOWNTOWN_DETROIT_MAP_QUERY = "Downtown Detroit, MI"
 
@@ -283,70 +296,49 @@ def register_events(app):
             if cached_day_events is not None:
                 event_list = cached_day_events
             else:
+                previous_date = target_date - timedelta(days=1)
+                ongoing_cutoff = datetime.combine(target_date, dt_time(hour=ONGOING_CUTOFF_HOUR))
+                midnight = datetime.combine(target_date, dt_time.min)
+                expand_start = datetime.combine(previous_date, datetime.min.time())
+                expand_end = datetime.combine(target_date, datetime.max.time())
+
                 with get_db_session() as session:
-                    # Get non-recurring events for this specific day
-                    day_events = session.query(Event).options(joinedload(Event.venue)).filter(
-                        Event.is_recurring == False,
-                        Event.start_date == target_date
+                    # PK seek on start_date only (avoid idx_recurring full scan); split in Python
+                    day_rows = session.query(Event).options(joinedload(Event.venue)).filter(
+                        Event.start_date.in_([previous_date, target_date])
                     ).order_by(Event.start).all()
-                    
-                    # Get recurring events that might occur on this day
+
+                    day_events = []
+                    ongoing_events = []
+                    for event in day_rows:
+                        if event.is_recurring:
+                            continue
+                        if event.start_date == target_date:
+                            day_events.append(event)
+                        elif event.end > midnight and event.end > ongoing_cutoff:
+                            ongoing_events.append(event)
+
+                    # One recurring query covering both target and previous-day ongoing
                     recurring_events = session.query(Event).options(joinedload(Event.venue)).filter(
                         Event.is_recurring == True,
-                        Event.start_date <= target_date,  # Started before or on this day
-                        (Event.recurring_until == None) | (Event.recurring_until >= target_date)  # Ends after or on this day
+                        Event.start_date <= target_date,
+                        (Event.recurring_until == None) | (Event.recurring_until >= previous_date)
                     ).all()
-                    
-                    # Expand recurring events for this specific day
-                    expanded_events = []
-                    for event in recurring_events:
-                        instances = expand_recurring_events(event, 
-                                                          datetime.combine(target_date, datetime.min.time()),
-                                                          datetime.combine(target_date, datetime.max.time()))
-                        # Filter to only include instances that fall on the target date
-                        for instance in instances:
-                            if instance.start.date() == target_date:
-                                expanded_events.append(instance)
-                    
-                    # Get ongoing events from previous day that run past the morning cutoff
-                    previous_date = target_date - timedelta(days=1)
-                    ongoing_cutoff = datetime.combine(target_date, dt_time(hour=ONGOING_CUTOFF_HOUR))
-                    midnight = datetime.combine(target_date, dt_time.min)
 
-                    past_midnight = session.query(Event).options(joinedload(Event.venue)).filter(
-                        Event.is_recurring == False,
-                        Event.start_date == previous_date,
-                        Event.end > midnight
-                    ).order_by(Event.start).all()
-                    ongoing_events = [e for e in past_midnight if e.end > ongoing_cutoff]
-                    
-                    # Get ongoing recurring events from previous day
-                    ongoing_recurring = session.query(Event).options(joinedload(Event.venue)).filter(
-                        Event.is_recurring == True,
-                        Event.start_date <= previous_date,  # Started before or on previous day
-                        (Event.recurring_until == None) | (Event.recurring_until >= previous_date)  # Ends after or on previous day
-                    ).all()
-                    
-                    # Expand ongoing recurring events (only if past morning cutoff)
+                    expanded_events = []
                     ongoing_expanded = []
-                    for event in ongoing_recurring:
-                        instances = expand_recurring_events(event, 
-                                                          datetime.combine(previous_date, datetime.min.time()),
-                                                          datetime.combine(previous_date, datetime.max.time()))
-                        for instance in instances:
-                            if instance.start.date() == previous_date and instance.end > midnight:
-                                if instance.end > ongoing_cutoff:
-                                    ongoing_expanded.append(instance)
-                
-                # Combine and sort all events
+                    for event in recurring_events:
+                        for instance in expand_recurring_events(event, expand_start, expand_end):
+                            inst_date = instance.start.date()
+                            if inst_date == target_date:
+                                expanded_events.append(instance)
+                            elif inst_date == previous_date and instance.end > midnight and instance.end > ongoing_cutoff:
+                                ongoing_expanded.append(instance)
+
                 all_events = day_events + expanded_events + ongoing_events + ongoing_expanded
                 all_events.sort(key=lambda x: x.start)
-                
-                event_list = []
-                for event in all_events:
-                    event_list.append(serialize_event(event))
-                
-                # Cache the complete day events (anonymous only)
+                event_list = [serialize_event(event) for event in all_events]
+
                 if use_cache:
                     set_cached_day_events(date, event_list)
             
@@ -374,35 +366,27 @@ def register_events(app):
             event_list = cached_calendar
         else:
             with get_db_session() as session:
-                # Get non-recurring events in range
-                non_recurring = session.query(Event).filter(
-                    Event.is_recurring == False,
+                # PK range seek: filter by start_date only, then drop recurring in Python
+                range_rows = session.query(Event).filter(
                     Event.start_date >= start_date.date(),
                     Event.start_date <= end_date.date()
                 ).options(joinedload(Event.venue)).all()
+                non_recurring = [e for e in range_rows if not e.is_recurring]
 
-                # Get recurring events that might affect this range
                 recurring = session.query(Event).filter(
                     Event.is_recurring == True,
-                    Event.start_date <= end_date.date(),  # Started before or during range
-                    (Event.recurring_until == None) | (Event.recurring_until >= start_date.date())  # Ends after or during range
+                    Event.start_date <= end_date.date(),
+                    (Event.recurring_until == None) | (Event.recurring_until >= start_date.date())
                 ).options(joinedload(Event.venue)).all()
                 
-                # Expand recurring events for the date range
                 expanded_events = []
                 for event in recurring:
-                    instances = expand_recurring_events(event, start_date, end_date)
-                    expanded_events.extend(instances)
+                    expanded_events.extend(expand_recurring_events(event, start_date, end_date))
                 
-                # Combine all events
                 all_events = non_recurring + expanded_events
                 all_events.sort(key=lambda x: x.start)
+                event_list = [serialize_event(event, slim=True) for event in all_events]
                 
-                event_list = []
-                for event in all_events:
-                    event_list.append(serialize_event(event))
-                
-                # Cache the calendar events (anonymous only)
                 if use_cache:
                     set_cached_calendar_events(start_str, end_str, event_list)
         

@@ -241,6 +241,10 @@ class EventModelView(ModelView):
         'bg': StringField('Background Color (hex)')
     }
 
+    def get_query(self):
+        """Eager-load venue to avoid N+1 on list formatting."""
+        return super().get_query().options(joinedload(Event.venue))
+
     def get_one(self, id):
         """Convert composite PK strings back to date/int for SQLAlchemy."""
         pk = sqla_tools.iterdecode(id)
@@ -280,7 +284,7 @@ class VenueModelView(ModelView):
     column_list = ('name', 'neighborhood', 'venue_type', 'image_url', 'address', 'phone', 'website', 'event_count')
     column_searchable_list = ('name', 'address', 'phone', 'neighborhood', 'venue_type')
     column_formatters = {
-        'event_count': lambda v, c, m, p: len(m.events) if m.events else 0,
+        'event_count': lambda v, c, m, p: getattr(v, '_venue_event_counts', {}).get(m.id, 0),
         'neighborhood': lambda v, c, m, p: (
             m.neighborhood[:9] + '...' if m.neighborhood and len(m.neighborhood) > 9 else m.neighborhood or ''
         ),
@@ -294,6 +298,23 @@ class VenueModelView(ModelView):
         'address': TextAreaField('Address'),
         'description': TextAreaField('Description')
     }
+
+    def get_list(self, page, sort_column, sort_desc, search, filters,
+                 execute=True, page_size=None):
+        """Batch-load event counts so list pages don't lazy-load every venue's events."""
+        count, data = super().get_list(
+            page, sort_column, sort_desc, search, filters,
+            execute=execute, page_size=page_size,
+        )
+        if execute and data:
+            ids = [row.id for row in data]
+            rows = self.session.query(Event.venue_id, func.count(Event.id)).filter(
+                Event.venue_id.in_(ids)
+            ).group_by(Event.venue_id).all()
+            self._venue_event_counts = dict(rows)
+        else:
+            self._venue_event_counts = {}
+        return count, data
     
     def on_model_change(self, form, model, is_created):
         """Sanitize URL fields on venue save"""

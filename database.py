@@ -170,6 +170,13 @@ def migrate_database():
                 conn.execute(text("ALTER TABLE venue ADD COLUMN venue_type VARCHAR(100)"))
                 conn.commit()
 
+        # Indexes for hot-path lookups (create_all won't add these to existing DBs)
+        if event_table_exists:
+            conn.execute(text(
+                "CREATE INDEX IF NOT EXISTS idx_venue_id ON event(venue_id)"
+            ))
+            conn.commit()
+
     from migrate_venue_neighborhoods import migrate_venue_neighborhoods
     migrate_venue_neighborhoods()
 
@@ -251,6 +258,7 @@ class Event(Base):
         Index('idx_title', 'title'),
         Index('idx_recurring', 'is_recurring', 'recurring_until'),  # Index for recurring queries
         Index('idx_virtual', 'is_virtual', 'is_hybrid'),  # Index for virtual/hybrid queries
+        Index('idx_venue_id', 'venue_id'),
     )
     
     def __init__(self, **kwargs):
