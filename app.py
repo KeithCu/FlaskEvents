@@ -114,6 +114,15 @@ css_bundle = Bundle(
 )
 assets.register('css_all', css_bundle)
 
+TDIL_HOME = 'https://thedetroitilove.com/'
+
+
+def public_site_redirect():
+    """Send anonymous visitors to the public WordPress site."""
+    if not session.get('logged_in'):
+        return redirect(TDIL_HOME)
+    return None
+
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(
@@ -125,6 +134,9 @@ def favicon():
 # Home route (widget test page)
 @app.route('/')
 def home():
+    bounced = public_site_redirect()
+    if bounced:
+        return bounced
     now = get_local_now()
     today_str = now.strftime('%Y-%m-%d')
     return render_template('widget_test.html', date=today_str)
@@ -133,16 +145,22 @@ def home():
 # Monthly view
 @app.route('/month/<int:year>/<int:month>')
 def month_view(year, month):
+    bounced = public_site_redirect()
+    if bounced:
+        return bounced
     return render_template('month.html', year=year, month=month)
 
 # Daily view
 @app.route('/day/<date>')
 def day_view(date):
+    bounced = public_site_redirect()
+    if bounced:
+        return bounced
     try:
         date_obj = datetime.strptime(date, '%Y-%m-%d')
-        session = SessionLocal()
+        db_session = SessionLocal()
         try:
-            day_events = session.query(Event).filter(
+            day_events = db_session.query(Event).filter(
                 Event.start_date == date_obj.date()
             ).order_by(Event.start).all()
 
@@ -153,12 +171,15 @@ def day_view(date):
                                  date=date,
                                  events=day_events)
         finally:
-            session.close()
+            db_session.close()
     except ValueError:
         return redirect(url_for('home'))
 
 @app.route('/widget-test')
 def widget_test():
+    bounced = public_site_redirect()
+    if bounced:
+        return bounced
     return render_template('widget_test.html')
 
 # Run migration automatically after models are defined
