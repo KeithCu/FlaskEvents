@@ -195,11 +195,12 @@ def expand_recurring_events(event, start_date, end_date):
 
     return expanded_events
 
-def get_upcoming_events_for_venue(session, venue_id, limit=5, horizon_days=90):
-    """Return the next upcoming events at a venue, including expanded recurring instances."""
+def get_upcoming_events_for_venue(session, venue_id, min_count=5, window_days=14, horizon_days=90):
+    """Return upcoming events at a venue: all in the next window_days, or at least min_count."""
     # Events are stored as America/New_York naive; never compare to UTC datetime.now().
     now = datetime.now(pytz.UTC).astimezone(LOCAL_TIMEZONE).replace(tzinfo=None)
     horizon_end = now + timedelta(days=horizon_days)
+    window_end = now + timedelta(days=window_days)
     today = now.date()
 
     non_recurring = session.query(Event).options(joinedload(Event.venue)).filter(
@@ -223,7 +224,8 @@ def get_upcoming_events_for_venue(session, venue_id, limit=5, horizon_days=90):
 
     all_events = list(non_recurring) + expanded
     all_events.sort(key=lambda x: x.start)
-    return all_events[:limit]
+    in_window = [e for e in all_events if e.start <= window_end]
+    return in_window if len(in_window) >= min_count else all_events[:min_count]
 
 DOWNTOWN_DETROIT_MAP_QUERY = "Downtown Detroit, MI"
 
