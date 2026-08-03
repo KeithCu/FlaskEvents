@@ -411,9 +411,9 @@ def register_events(app):
             query = session.query(Venue)
 
             if neighborhood:
-                query = query.filter(Venue.neighborhood.ilike(neighborhood))
+                query = query.filter(Venue.neighborhood == neighborhood)
             if venue_type:
-                query = query.filter(Venue.venue_type.ilike(venue_type))
+                query = query.filter(Venue.venue_type == venue_type)
 
             venues = query.order_by(Venue.venue_type, Venue.name).all()
             venue_list = [venue_to_dict(v) for v in venues]

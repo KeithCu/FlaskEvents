@@ -36,6 +36,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js"></script>
 <script>
 window.EVENT_LINK_ARROW = {{ event_link_arrow|tojson }};
 window.LOGGED_IN = {{ logged_in|tojson }};

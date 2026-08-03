@@ -177,6 +177,15 @@ def migrate_database():
             ))
             conn.commit()
 
+        if venue_table_exists:
+            conn.execute(text(
+                "CREATE INDEX IF NOT EXISTS idx_venue_neighborhood ON venue(neighborhood)"
+            ))
+            conn.execute(text(
+                "CREATE INDEX IF NOT EXISTS idx_venue_type ON venue(venue_type)"
+            ))
+            conn.commit()
+
     from migrate_venue_neighborhoods import migrate_venue_neighborhoods
     migrate_venue_neighborhoods()
 
@@ -294,6 +303,11 @@ class Venue(Base):
     venue_type = Column(String(100))
     
     events = relationship("Event", back_populates="venue")
+
+    __table_args__ = (
+        Index('idx_venue_neighborhood', 'neighborhood'),
+        Index('idx_venue_type', 'venue_type'),
+    )
 
 # Add this after the SessionLocal definition
 def get_next_event_id(session, start_date):
