@@ -195,7 +195,7 @@ def expand_recurring_events(event, start_date, end_date):
 
     return expanded_events
 
-def get_upcoming_events_for_venue(session, venue_id, min_count=5, window_days=14, horizon_days=90):
+def get_upcoming_events_for_venue(session, venue_id, min_count=10, window_days=14, horizon_days=90):
     """Return upcoming events at a venue: all in the next window_days, or at least min_count."""
     # Events are stored as America/New_York naive; never compare to UTC datetime.now().
     now = datetime.now(pytz.UTC).astimezone(LOCAL_TIMEZONE).replace(tzinfo=None)
