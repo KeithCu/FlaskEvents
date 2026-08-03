@@ -87,8 +87,9 @@
                         <div class="form-group mb-2">
                             <label for="rrule" class="form-label">Recurrence Rule</label>
                             <input type="text" class="form-control form-control-sm" id="rrule" name="rrule"
-                                   value="{{ event.rrule if event else '' }}"
+                                   value="{{ rrule if rrule is defined else (event.rrule if event else '') }}"
                                    placeholder="FREQ=WEEKLY;BYDAY=MO">
+                            <div class="invalid-feedback">Use iCalendar RRULE form, e.g. FREQ=WEEKLY;BYDAY=MO</div>
                         </div>
                     </div>
                     <div class="col-md-3">

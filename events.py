@@ -5,6 +5,7 @@ from cacheout import Cache
 from dateutil.rrule import rrulestr
 from contextlib import contextmanager
 from sqlalchemy.orm import joinedload
+import logging
 import os
 import pytz
 from urllib.parse import quote_plus
@@ -12,6 +13,8 @@ from urllib.parse import quote_plus
 from database import SessionLocal, Event, Venue, Category, get_next_event_id
 from auth import login_required
 from urls import safe_http_url
+
+logger = logging.getLogger(__name__)
 
 # Global cache configuration - can be adjusted
 CACHE_TTL_SECONDS = 5 * 60  # 5 minutes
@@ -111,12 +114,57 @@ def serialize_event(event):
         'backgroundColor': event.bg,
     }
 
+def normalize_rrule(raw):
+    """Strip noise and empty segments (no silent syntax rewrites)."""
+    if raw is None:
+        return ''
+    s = str(raw).strip()
+    if not s:
+        return ''
+    if s.upper().startswith('RRULE:'):
+        s = s[6:].strip()
+    parts = [p.strip() for p in s.split(';') if p.strip()]
+    return ';'.join(parts)
+
+
+def validate_rrule(raw, dtstart=None):
+    """Return (normalized, None) or (None, error_message). Blank input -> (None, None)."""
+    if raw is None or not str(raw).strip():
+        return None, None
+    normalized = normalize_rrule(raw)
+    if not normalized:
+        return None, None
+    if not any(p.upper().startswith('FREQ=') for p in normalized.split(';')):
+        return None, 'must include FREQ=... (example: FREQ=WEEKLY;BYDAY=MO)'
+    try:
+        rrulestr(normalized, dtstart=dtstart or datetime(2020, 1, 1))
+    except (ValueError, TypeError) as exc:
+        return None, str(exc)
+    return normalized, None
+
+
 def expand_recurring_events(event, start_date, end_date):
-    if not event.rrule:
+    raw = event.rrule
+    if not raw or not str(raw).strip():
         return [event]
 
-    rule = rrulestr(event.rrule, dtstart=event.start)
-    instances = rule.between(start_date, end_date)
+    normalized = normalize_rrule(raw)
+    if not normalized:
+        logger.error(
+            'Invalid empty RRULE after normalize for event id=%s title=%r rrule=%r',
+            getattr(event, 'id', None), getattr(event, 'title', None), raw,
+        )
+        return []
+
+    try:
+        rule = rrulestr(normalized, dtstart=event.start)
+        instances = rule.between(start_date, end_date)
+    except (ValueError, TypeError) as exc:
+        logger.error(
+            'Invalid RRULE for event id=%s title=%r rrule=%r: %s',
+            getattr(event, 'id', None), getattr(event, 'title', None), raw, exc,
+        )
+        return []
 
     expanded_events = []
     for instance_start in instances:
@@ -135,7 +183,7 @@ def expand_recurring_events(event, start_date, end_date):
             is_hybrid=event.is_hybrid,
             url=event.url,
             is_recurring=event.is_recurring,
-            rrule=event.rrule,
+            rrule=normalized,
             recurring_until=event.recurring_until,
         )
         instance_event.id = event.id
@@ -417,6 +465,27 @@ def register_events(app):
             color = request.form.get('color', '#3788d8')
             bg = request.form.get('bg', '#3788d8')
             url = safe_http_url(request.form.get('url', ''))
+
+            normalized_rrule, rrule_error = validate_rrule(rrule_str, dtstart=start)
+            if rrule_error:
+                flash(f'Invalid recurrence rule: {rrule_error}', 'error')
+                with get_db_session() as session:
+                    venues = get_form_venues(session)
+                    categories = session.query(Category).filter(Category.is_active == True).order_by(Category.usage_count.desc(), Category.name).all()
+                    return render_template(
+                        'event_form.html',
+                        venues=venues,
+                        categories=categories,
+                        title=title,
+                        description=description,
+                        start=start,
+                        end=end,
+                        rrule=rrule_str or '',
+                        color=color,
+                        bg=bg,
+                        url=url or '',
+                        recurring_until=request.form.get('recurring_until', '').strip(),
+                    )
             
             # Get recurring event fields
             recurring_until_str = request.form.get('recurring_until', '').strip()
@@ -454,7 +523,7 @@ def register_events(app):
                                         recurring_until=recurring_until_str)
                 
                 # Determine if this is a recurring event
-                is_recurring = bool(rrule_str and rrule_str.strip())
+                is_recurring = bool(normalized_rrule)
                 
                 # If recurring and no end date specified, use default (2 years from start)
                 if is_recurring and not recurring_until:
@@ -465,7 +534,7 @@ def register_events(app):
                     description=description, 
                     start=start, 
                     end=end,
-                    rrule=rrule_str, 
+                    rrule=normalized_rrule, 
                     venue_id=venue_id, 
                     color=color, 
                     bg=bg,
@@ -513,6 +582,26 @@ def register_events(app):
             color = request.form.get('color', '#3788d8')
             bg = request.form.get('bg', '#3788d8')
             url = safe_http_url(request.form.get('url', ''))
+
+            normalized_rrule, rrule_error = validate_rrule(rrule_str, dtstart=start)
+            if rrule_error:
+                flash(f'Invalid recurrence rule: {rrule_error}', 'error')
+                with get_db_session() as session:
+                    event = session.query(Event).filter(
+                        Event.start_date == event_date,
+                        Event.id == id
+                    ).first()
+                    if not event:
+                        abort(404)
+                    venues = get_form_venues(session)
+                    categories = session.query(Category).filter(Category.is_active == True).order_by(Category.usage_count.desc(), Category.name).all()
+                    return render_template(
+                        'event_form.html',
+                        event=event,
+                        venues=venues,
+                        categories=categories,
+                        rrule=rrule_str or '',
+                    )
             
             # Get recurring event fields
             recurring_until_str = request.form.get('recurring_until', '').strip()
@@ -558,7 +647,7 @@ def register_events(app):
                                         recurring_until=recurring_until_str)
                 
                 # Determine if this is a recurring event
-                is_recurring = bool(rrule_str and rrule_str.strip())
+                is_recurring = bool(normalized_rrule)
                 
                 # If recurring and no end date specified, use default (2 years from start)
                 if is_recurring and not recurring_until:
@@ -572,7 +661,7 @@ def register_events(app):
                         description=description,
                         start=start,
                         end=end,
-                        rrule=rrule_str,
+                        rrule=normalized_rrule,
                         venue_id=venue_id,
                         color=color,
                         bg=bg,
@@ -592,7 +681,7 @@ def register_events(app):
                     event.start = start
                     event.end = end
                     event.start_date = new_date
-                    event.rrule = rrule_str
+                    event.rrule = normalized_rrule
                     event.venue_id = venue_id
                     event.color = color
                     event.bg = bg

@@ -1,3 +1,43 @@
+function normalizeRrule(raw) {
+    if (!raw) {
+        return '';
+    }
+    let s = String(raw).trim();
+    if (!s) {
+        return '';
+    }
+    if (s.toUpperCase().startsWith('RRULE:')) {
+        s = s.slice(6).trim();
+    }
+    return s.split(';').map((p) => p.trim()).filter(Boolean).join(';');
+}
+
+function validateRruleClient(raw) {
+    if (!raw || !String(raw).trim()) {
+        return { ok: true, normalized: '' };
+    }
+    const normalized = normalizeRrule(raw);
+    if (!normalized) {
+        return { ok: false, message: 'Recurrence rule is empty after cleanup.' };
+    }
+    const parts = normalized.split(';');
+    if (!parts.some((p) => p.toUpperCase().startsWith('FREQ='))) {
+        return {
+            ok: false,
+            message: 'Recurrence rule must include FREQ=... (example: FREQ=WEEKLY;BYDAY=MO)',
+        };
+    }
+    for (const part of parts) {
+        if (!part.includes('=')) {
+            return {
+                ok: false,
+                message: `Invalid RRULE part "${part}" — use name=value (example: FREQ=WEEKLY;BYDAY=MO)`,
+            };
+        }
+    }
+    return { ok: true, normalized };
+}
+
 // Set default times when the page loads
 document.addEventListener('DOMContentLoaded', function() {
     if (!document.getElementById('start').value) {
@@ -45,7 +85,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    rruleInput.addEventListener('input', toggleRecurringOptions);
+    rruleInput.addEventListener('input', function() {
+        rruleInput.classList.remove('is-invalid');
+        toggleRecurringOptions();
+    });
     toggleRecurringOptions(); // Initial state
     
     // Update recurring until date when start date changes
@@ -73,6 +116,19 @@ function validateForm() {
         venueSelect.classList.add('is-invalid');
         return false;
     }
+
+    const rruleInput = document.getElementById('rrule');
+    const result = validateRruleClient(rruleInput.value);
+    if (!result.ok) {
+        rruleInput.classList.add('is-invalid');
+        alert(result.message);
+        rruleInput.focus();
+        return false;
+    }
+    if (result.normalized) {
+        rruleInput.value = result.normalized;
+    }
+    rruleInput.classList.remove('is-invalid');
     return true;
 }
 
